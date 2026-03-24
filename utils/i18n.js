@@ -1,4 +1,5 @@
- de: {
+export const messages = {
+  de: {
     fileTooLarge: "Die Datei ist zu groß. Bitte lade eine kleinere Datei hoch.",
     downloadFailed: "Die Datei konnte nicht heruntergeladen werden.",
     invalidFileTypeJson: "Bitte lade eine .json Datei hoch.",

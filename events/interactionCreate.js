@@ -1,6 +1,7 @@
 import { Events, EmbedBuilder } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
+import { buildInfoEmbed } from '../utils/infoEmbed.js';
 
 export default {
   name: Events.InteractionCreate,
@@ -48,8 +49,6 @@ export default {
 
         language = getGuildConfig(interaction.guild.id).language || language;
 
-        import { buildInfoEmbed } from '../utils/infoEmbed.js';
-
         if (interaction.customId === 'stepmodz_setup_help') {
           const embed = new EmbedBuilder()
             .setTitle(t(language, 'setupHelpTitle'))
@@ -65,9 +64,9 @@ export default {
           return;
         }
 
-        if (interaction.customId === 'stepmodz_validator_help') {
+        if (interaction.customId === 'stepmodz_open_info') {
           await interaction.reply({
-            content: t(language, 'validatorHelp'),
+            embeds: [buildInfoEmbed(language)],
             ephemeral: true
           });
           return;

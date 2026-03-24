@@ -18,45 +18,45 @@ export function buildInfoEmbed(language = 'de') {
     )
     .addFields(
       {
-        name: isEn ? '⚡ Quick Setup via Dropdown' : '⚡ Schnell Einrichtung über Dropdown',
+        name: isEn ? '⚡ Automatic setup via dropdown' : '⚡ Automatische Einrichtung über Dropdown',
         value: isEn
-          ? 'Use the dropdown in the main bot channel and choose **Step BOT Quick Setup**. The bot will automatically create the main categories and info channels for you.'
-          : 'Nutze das Dropdown im Haupt-Channel des Bots und wähle **Step BOT Schnell Einrichtung**. Der Bot erstellt dann automatisch die wichtigsten Kategorien und Info-Channels für dich.',
+          ? 'Use the dropdown in the main bot channel and choose **Step BOT Quick Setup**. This is the only option that automatically creates the full base structure.'
+          : 'Nutze das Dropdown im Haupt-Channel des Bots und wähle **Step BOT Schnell Einrichtung**. Nur diese Option erstellt die komplette Grundstruktur automatisch.',
         inline: false
       },
       {
-        name: isEn ? '🛠️ Manual Setup' : '🛠️ Manuelles Setup',
+        name: isEn ? '🛠️ Manual setup with /setup' : '🛠️ Manuelles Setup mit /setup',
         value: isEn
-          ? 'You can still use **/setup** if you want to configure roles and channels manually.'
-          : 'Du kannst weiterhin **/setup** nutzen, wenn du Rollen und Channels manuell setzen möchtest.',
+          ? '`/setup` only saves settings like roles and categories. It does not create channels or categories automatically.'
+          : '`/setup` speichert nur Einstellungen wie Rollen und Kategorien. Es erstellt keine Channels oder Kategorien automatisch.',
         inline: false
       },
       {
         name: isEn ? '🎫 Ticket System' : '🎫 Ticket System',
         value: isEn
-          ? 'Use **/ticket-panel** after setup to send the ticket button panel.'
-          : 'Nutze nach dem Setup **/ticket-panel**, um das Ticket-Panel zu senden.',
+          ? 'Use `/ticket-panel` after the structure is ready.'
+          : 'Nutze `/ticket-panel`, sobald die Struktur vorbereitet ist.',
         inline: false
       },
       {
         name: isEn ? '📋 Whitelist System' : '📋 Whitelist System',
         value: isEn
-          ? 'Use **/whitelist-panel** after setup to send the whitelist panel.'
-          : 'Nutze nach dem Setup **/whitelist-panel**, um das Whitelist-Panel zu senden.',
+          ? 'Use `/whitelist-panel` after the structure is ready.'
+          : 'Nutze `/whitelist-panel`, sobald die Struktur vorbereitet ist.',
         inline: false
       },
       {
         name: isEn ? '🔐 Verify System' : '🔐 Verify System',
         value: isEn
-          ? 'Verify is optional. If needed, set a verify role and use **/verify-panel**.'
-          : 'Verify ist optional. Wenn du es nutzen willst, setze eine Verify Rolle und nutze **/verify-panel**.',
+          ? 'Verify is optional. If needed, set a verify role and use `/verify-panel`.'
+          : 'Verify ist optional. Wenn du es nutzen willst, setze eine Verify Rolle und nutze `/verify-panel`.',
         inline: false
       },
       {
         name: isEn ? '🧪 Validator' : '🧪 Validator',
         value: isEn
-          ? 'Use **/validate** to check JSON, XML and DayZ files automatically.'
-          : 'Nutze **/validate**, um JSON-, XML- und DayZ-Dateien automatisch zu prüfen.',
+          ? 'Use `/validate` to check JSON, XML and DayZ files automatically.'
+          : 'Nutze `/validate`, um JSON-, XML- und DayZ-Dateien automatisch zu prüfen.',
         inline: false
       }
     )

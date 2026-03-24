@@ -6,37 +6,37 @@ export function getHelpMenuOptions(language = 'de') {
       {
         label: 'Step BOT Quick Setup',
         value: 'quicksetup',
-        description: 'Let the bot automatically set up everything'
+        description: 'Automatically create the full base structure'
       },
       {
         label: 'Setup',
         value: 'setup',
-        description: 'How to configure the bot for your server'
+        description: 'Learn how manual setup works'
       },
       {
         label: 'Verify System',
         value: 'verify',
-        description: 'How verification works and how to set it up'
+        description: 'What the verify system does and how to enable it'
       },
       {
         label: 'Ticket System',
         value: 'tickets',
-        description: 'Create and manage support tickets'
+        description: 'What the ticket system does and how to enable it'
       },
       {
         label: 'Whitelist System',
         value: 'whitelist',
-        description: 'How DayZ whitelist applications work'
+        description: 'What the whitelist system does and how to enable it'
       },
       {
         label: 'Validator',
         value: 'validator',
-        description: 'Validate JSON, XML and DayZ files'
+        description: 'What the validator does and how to use it'
       },
       {
         label: 'Settings',
         value: 'settings',
-        description: 'Show and review the saved bot settings'
+        description: 'Show saved bot settings'
       }
     ];
   }
@@ -45,37 +45,37 @@ export function getHelpMenuOptions(language = 'de') {
     {
       label: 'Step BOT Schnell Einrichtung',
       value: 'quicksetup',
-      description: 'Lass den Bot alles automatisch einrichten'
+      description: 'Erstellt automatisch die komplette Grundstruktur'
     },
     {
       label: 'Setup',
       value: 'setup',
-      description: 'Wie du den Bot für deinen Server einrichtest'
+      description: 'Erklärt das manuelle Setup'
     },
     {
       label: 'Verify System',
       value: 'verify',
-      description: 'Wie Verifizierung funktioniert und eingerichtet wird'
+      description: 'Erklärt das Verify System und wie man es aktiviert'
     },
     {
       label: 'Ticket System',
       value: 'tickets',
-      description: 'Support-Tickets erstellen und verwalten'
+      description: 'Erklärt das Ticket System und wie man es aktiviert'
     },
     {
       label: 'Whitelist System',
       value: 'whitelist',
-      description: 'Wie DayZ Whitelist-Bewerbungen funktionieren'
+      description: 'Erklärt das Whitelist System und wie man es aktiviert'
     },
     {
       label: 'Validator',
       value: 'validator',
-      description: 'JSON, XML und DayZ-Dateien prüfen'
+      description: 'Erklärt den JSON / XML / DayZ Validator'
     },
     {
       label: 'Settings',
       value: 'settings',
-      description: 'Gespeicherte Bot-Einstellungen anzeigen'
+      description: 'Zeigt die gespeicherten Bot-Einstellungen'
     }
   ];
 }
@@ -86,127 +86,139 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       quicksetup: {
         title: '⚡ Step BOT Schnell Einrichtung',
         description:
-          'Mit dieser Funktion kann der Bot die Grundstruktur automatisch einrichten.\n\n' +
+          'Mit dieser Funktion richtet der Bot die komplette Grundstruktur automatisch für dich ein.\n\n' +
           '**Was automatisch erstellt wird:**\n' +
-          '- Kategorie **Welcome**\n' +
-          '- Kategorie **Roles**\n' +
-          '- Kategorie **Ticket**\n' +
-          '- Kategorie **Whitelist**\n' +
-          '- Kategorie **Validator**\n' +
+          '- Welcome\n' +
+          '- Roles\n' +
+          '- Ticket\n' +
+          '- Whitelist\n' +
+          '- Validator\n' +
           '- passende Info-Channels\n\n' +
-          '**Was du danach noch machen kannst:**\n' +
+          '**Was danach noch gemacht werden kann:**\n' +
           '- `/ticket-panel`\n' +
           '- `/whitelist-panel`\n' +
           '- `/verify-panel`\n' +
           '- `/setup-welcome`\n\n' +
-          'Wenn du im Dropdown diese Option auswählst, richtet der Bot alles direkt automatisch ein.'
+          '**Wichtig:**\n' +
+          'Nur diese Dropdown-Option erstellt automatisch alles.'
       },
       setup: {
-        title: '🛠️ Setup Hilfe',
+        title: '🛠️ Setup',
         description:
-          'Mit **/setup** richtest du Step Mod!Z BOT für deinen Server manuell ein.\n\n' +
-          '**Was du tun musst:**\n' +
-          '1. Nutze **/setup**\n' +
-          '2. Wähle nur die Rollen und Channels aus, die du wirklich brauchst\n' +
-          '3. Verify ist **optional** und kann leer bleiben\n' +
-          '4. Danach kannst du die passenden Panels senden'
+          'Mit `/setup` speicherst du Einstellungen wie Rollen und Kategorien.\n\n' +
+          '**Wichtig:**\n' +
+          '`/setup` erstellt **keine** Channels oder Kategorien automatisch.\n\n' +
+          '**Wenn du alles automatisch erstellen willst:**\n' +
+          'Nutze im Dropdown **Step BOT Schnell Einrichtung**.'
       },
       verify: {
         title: '🔐 Verify System',
         description:
-          'Das Verify System ist **optional**.\n\n' +
-          '**Einrichtung:**\n' +
-          '1. Optional in **/setup** eine Verify Rolle setzen\n' +
-          '2. Danach **/verify-panel** nutzen\n' +
-          '3. Der Bot sendet ein Panel mit Button zum Verifizieren'
+          'Das Verify System ist optional.\n\n' +
+          '**Wenn du es nutzen möchtest:**\n' +
+          '1. Optional in `/setup` eine Verify Rolle setzen\n' +
+          '2. Danach `/verify-panel` benutzen\n' +
+          '3. Nutzer klicken auf den Verify Button'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
-          'Mit dem Ticket System können Nutzer private Support-Tickets öffnen.\n\n' +
-          '**Einrichtung:**\n' +
-          '1. In **/setup** eine Ticket Kategorie setzen oder Schnell Einrichtung nutzen\n' +
-          '2. Optional eine Support Rolle setzen\n' +
-          '3. Danach **/ticket-panel** ausführen'
+          'Das Ticket System erstellt private Support-Tickets.\n\n' +
+          '**Wenn du es nutzen möchtest:**\n' +
+          '1. Entweder Ticket Kategorie manuell in `/setup` setzen\n' +
+          '2. Oder **Step BOT Schnell Einrichtung** nutzen\n' +
+          '3. Danach `/ticket-panel` benutzen'
       },
       whitelist: {
         title: '📋 Whitelist System',
         description:
           'Das Whitelist System erstellt Bewerbungs-Channels für DayZ.\n\n' +
-          '**Einrichtung:**\n' +
-          '1. In **/setup** eine Whitelist Kategorie setzen oder Schnell Einrichtung nutzen\n' +
-          '2. Optional eine Review Rolle setzen\n' +
-          '3. Optional eine Approved Rolle setzen\n' +
-          '4. Danach **/whitelist-panel** ausführen'
+          '**Wenn du es nutzen möchtest:**\n' +
+          '1. Entweder Whitelist Kategorie manuell in `/setup` setzen\n' +
+          '2. Oder **Step BOT Schnell Einrichtung** nutzen\n' +
+          '3. Danach `/whitelist-panel` benutzen'
       },
       validator: {
-        title: '🧪 Validator Hilfe',
+        title: '🧪 Validator',
         description:
-          'Mit **/validate** kannst du JSON-, XML- und DayZ-Dateien prüfen.\n\n' +
+          'Mit `/validate` kannst du JSON-, XML- und DayZ-Dateien prüfen.\n\n' +
           '**Benutzung:**\n' +
-          '1. Nutze **/validate**\n' +
-          '2. Lade eine Datei hoch\n' +
-          '3. Wähle optional die Sprache\n' +
-          '4. Der Bot zeigt Fehler oder Hinweise an'
+          '1. `/validate` nutzen\n' +
+          '2. Datei hochladen\n' +
+          '3. Bot erkennt den Typ automatisch\n' +
+          '4. Ergebnis lesen'
       },
       settings: {
-        title: '⚙️ Settings Hilfe',
+        title: '⚙️ Settings',
         description:
-          'Mit **/settings** kannst du die aktuell gespeicherten Einstellungen deines Servers sehen.'
+          'Mit `/settings` kannst du prüfen, welche Rollen, Kategorien und Channels aktuell gespeichert sind.'
       }
     },
     en: {
       quicksetup: {
         title: '⚡ Step BOT Quick Setup',
         description:
-          'This option lets the bot automatically prepare the full base structure.\n\n' +
+          'This option lets the bot automatically create the full base structure.\n\n' +
           '**Automatically created:**\n' +
-          '- **Welcome** category\n' +
-          '- **Roles** category\n' +
-          '- **Ticket** category\n' +
-          '- **Whitelist** category\n' +
-          '- **Validator** category\n' +
+          '- Welcome\n' +
+          '- Roles\n' +
+          '- Ticket\n' +
+          '- Whitelist\n' +
+          '- Validator\n' +
           '- matching info channels\n\n' +
           '**After that you can still use:**\n' +
           '- `/ticket-panel`\n' +
           '- `/whitelist-panel`\n' +
           '- `/verify-panel`\n' +
           '- `/setup-welcome`\n\n' +
-          'If you select this dropdown option, the bot will set everything up automatically.'
+          '**Important:**\n' +
+          'Only this dropdown option creates everything automatically.'
       },
       setup: {
-        title: '🛠️ Setup Help',
+        title: '🛠️ Setup',
         description:
-          'Use **/setup** to configure Step Mod!Z BOT manually for your server.'
+          'Use `/setup` to save settings like roles and categories.\n\n' +
+          '**Important:**\n' +
+          '`/setup` does **not** create channels or categories automatically.\n\n' +
+          '**If you want everything created automatically:**\n' +
+          'Use **Step BOT Quick Setup** in the dropdown.'
       },
       verify: {
         title: '🔐 Verify System',
         description:
-          'The verify system is **optional**.\n\n' +
-          '**Setup:**\n' +
-          '1. Optionally set a verify role in **/setup**\n' +
-          '2. Then use **/verify-panel**\n' +
-          '3. The bot sends a panel with a verification button'
+          'The verify system is optional.\n\n' +
+          'If you want to use it:\n' +
+          '1. Optionally set a verify role in `/setup`\n' +
+          '2. Then use `/verify-panel`\n' +
+          '3. Users click the verify button'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
-          'The ticket system allows users to open private support tickets.'
+          'The ticket system creates private support tickets.\n\n' +
+          'If you want to use it:\n' +
+          '1. Either set a ticket category manually in `/setup`\n' +
+          '2. Or use **Step BOT Quick Setup**\n' +
+          '3. Then use `/ticket-panel`'
       },
       whitelist: {
         title: '📋 Whitelist System',
         description:
-          'The whitelist system creates application channels for DayZ.'
+          'The whitelist system creates application channels for DayZ.\n\n' +
+          'If you want to use it:\n' +
+          '1. Either set a whitelist category manually in `/setup`\n' +
+          '2. Or use **Step BOT Quick Setup**\n' +
+          '3. Then use `/whitelist-panel`'
       },
       validator: {
-        title: '🧪 Validator Help',
+        title: '🧪 Validator',
         description:
-          'Use **/validate** to check JSON, XML and DayZ files.'
+          'Use `/validate` to check JSON, XML and DayZ files.'
       },
       settings: {
-        title: '⚙️ Settings Help',
+        title: '⚙️ Settings',
         description:
-          'Use **/settings** to view the currently saved server configuration.'
+          'Use `/settings` to review which roles, categories and channels are currently saved.'
       }
     }
   };

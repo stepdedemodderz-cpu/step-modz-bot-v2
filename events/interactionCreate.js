@@ -3,6 +3,7 @@ import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { buildInfoEmbed } from '../utils/infoEmbed.js';
 import { buildHelpEmbed } from '../utils/helpMenu.js';
+import { runAutoSetup } from '../utils/autosetup.js';
 import { createTicketChannel } from '../utils/tickets.js';
 import {
   buildWhitelistModal,
@@ -121,6 +122,56 @@ export default {
 
         if (interaction.customId === 'stepmodz_help_menu') {
           const selected = interaction.values[0];
+
+          if (selected === 'quicksetup') {
+            await interaction.deferReply({ ephemeral: true });
+
+            const result = await runAutoSetup(interaction.guild);
+
+            const embed = new EmbedBuilder()
+              .setTitle(
+                language === 'en'
+                  ? '⚡ Quick setup completed'
+                  : '⚡ Schnell Einrichtung abgeschlossen'
+              )
+              .setDescription(
+                language === 'en'
+                  ? 'The bot has automatically created the main categories and info channels for you.'
+                  : 'Der Bot hat die wichtigsten Kategorien und Info-Channels automatisch für dich eingerichtet.'
+              )
+              .addFields(
+                {
+                  name: language === 'en' ? 'Created categories' : 'Erstellte Kategorien',
+                  value: [
+                    `• ${result.welcomeCategory.name}`,
+                    `• ${result.rolesCategory.name}`,
+                    `• ${result.ticketCategory.name}`,
+                    `• ${result.whitelistCategory.name}`,
+                    `• ${result.validatorCategory.name}`
+                  ].join('\n'),
+                  inline: false
+                },
+                {
+                  name: language === 'en' ? 'Next steps' : 'Nächste Schritte',
+                  value: [
+                    '`/ticket-panel`',
+                    '`/whitelist-panel`',
+                    '`/verify-panel`',
+                    '`/setup-welcome`',
+                    '`/settings`'
+                  ].join('\n'),
+                  inline: false
+                }
+              )
+              .setColor(0x22c55e)
+              .setFooter({ text: 'Step Mod!Z BOT' })
+              .setTimestamp();
+
+            await interaction.editReply({
+              embeds: [embed]
+            });
+            return;
+          }
 
           await interaction.reply({
             embeds: [buildHelpEmbed(language, selected)],

@@ -2,6 +2,12 @@ import { Events, EmbedBuilder } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { buildInfoEmbed } from '../utils/infoEmbed.js';
+import { createTicketChannel } from '../utils/tickets.js';
+import {
+  buildWhitelistModal,
+  createWhitelistChannel,
+  handleWhitelistDecision
+} from '../utils/whitelist.js';
 
 export default {
   name: Events.InteractionCreate,
@@ -72,7 +78,83 @@ export default {
           return;
         }
 
+        if (interaction.customId === 'stepmodz_validator_help') {
+          await interaction.reply({
+            content: t(language, 'validatorHelp'),
+            ephemeral: true
+          });
+          return;
+        }
+
+        // TICKET BUTTON
+        if (interaction.customId === 'stepmodz_open_ticket') {
+          const result = await createTicketChannel(interaction);
+
+          await interaction.reply({
+            content: result.exists
+              ? `ℹ️ Du hast bereits ein Ticket: ${result.channel}`
+              : `✅ Dein Ticket wurde erstellt: ${result.channel}`,
+            ephemeral: true
+          });
+          return;
+        }
+
+        if (interaction.customId === 'stepmodz_close_ticket') {
+          await interaction.reply({
+            content: '🔒 Ticket wird geschlossen...',
+            ephemeral: true
+          });
+
+          setTimeout(async () => {
+            await interaction.channel.delete().catch(() => null);
+          }, 3000);
+
+          return;
+        }
+
+        // WHITELIST BUTTONS
+        if (interaction.customId === 'stepmodz_open_whitelist') {
+          await interaction.showModal(buildWhitelistModal());
+          return;
+        }
+
+        if (interaction.customId === 'stepmodz_whitelist_accept') {
+          await handleWhitelistDecision(interaction, true);
+          await interaction.reply({
+            content: '✅ Bewerbung angenommen.',
+            ephemeral: true
+          });
+          return;
+        }
+
+        if (interaction.customId === 'stepmodz_whitelist_deny') {
+          await handleWhitelistDecision(interaction, false);
+          await interaction.reply({
+            content: '❌ Bewerbung abgelehnt.',
+            ephemeral: true
+          });
+          return;
+        }
+
         return;
+      }
+
+      if (interaction.isModalSubmit()) {
+        if (interaction.customId !== 'stepmodz_whitelist_modal') return;
+
+        const data = {
+          gamertag: interaction.fields.getTextInputValue('gamertag'),
+          age: interaction.fields.getTextInputValue('age'),
+          experience: interaction.fields.getTextInputValue('experience'),
+          reason: interaction.fields.getTextInputValue('reason')
+        };
+
+        const channel = await createWhitelistChannel(interaction, data);
+
+        await interaction.reply({
+          content: `✅ Deine Whitelist-Bewerbung wurde gesendet: ${channel}`,
+          ephemeral: true
+        });
       }
     } catch (error) {
       console.error('InteractionCreate Fehler:', error);

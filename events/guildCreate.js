@@ -4,10 +4,12 @@ import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  StringSelectMenuBuilder
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
+import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
 export default {
   name: 'guildCreate',
@@ -20,7 +22,6 @@ export default {
         setGuildConfig(guild.id, { language: 'de' });
       }
 
-      // 1. Kategorie suchen oder erstellen
       let category = guild.channels.cache.find(
         (c) =>
           c.type === ChannelType.GuildCategory &&
@@ -40,7 +41,6 @@ export default {
         });
       }
 
-      // 2. Textchannel in der Kategorie suchen oder erstellen
       let channel = guild.channels.cache.find(
         (c) =>
           c.type === ChannelType.GuildText &&
@@ -67,29 +67,24 @@ export default {
       }
 
       const embed = new EmbedBuilder()
-        .setTitle(t(language, 'welcomeChannelTitle'))
-        .setDescription(t(language, 'welcomeChannelDescription'))
+        .setTitle('Step Mod!Z BOT')
+        .setDescription(
+          'Ich bin **Step Mod!Z BOT**.\n\n' +
+          'Klicke auf **Info**, bekomme eine Übersicht & Einrichtung.\n\n' +
+          'Wähle eine Kategorie aus dem Dropdown-Menü,\n' +
+          'um meine Befehlsliste anzuzeigen.\n' +
+          'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.'
+        )
         .setColor(0x5865f2)
         .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
         .setFooter({ text: t(language, 'checkedBy') })
         .setTimestamp();
 
-      const row1 = new ActionRowBuilder().addComponents(
+      const buttonRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId('stepmodz_open_info')
           .setLabel(t(language, 'buttonInfo'))
           .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('stepmodz_setup_help')
-          .setLabel(t(language, 'buttonSetup'))
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setCustomId('stepmodz_validator_help')
-          .setLabel(t(language, 'buttonValidator'))
-          .setStyle(ButtonStyle.Secondary)
-      );
-
-      const row2 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId('stepmodz_lang_de')
           .setLabel('Deutsch')
@@ -100,9 +95,20 @@ export default {
           .setStyle(ButtonStyle.Secondary)
       );
 
+      const menuRow = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('stepmodz_help_menu')
+          .setPlaceholder(
+            language === 'en'
+              ? 'Choose a help category'
+              : 'Wähle eine Hilfekategorie'
+          )
+          .addOptions(getHelpMenuOptions(language))
+      );
+
       await channel.send({
         embeds: [embed],
-        components: [row1, row2]
+        components: [buttonRow, menuRow]
       });
     } catch (err) {
       console.error('guildCreate Fehler:', err);

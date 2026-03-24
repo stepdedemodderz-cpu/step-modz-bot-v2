@@ -2,6 +2,7 @@ import { Events, EmbedBuilder } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { buildInfoEmbed } from '../utils/infoEmbed.js';
+import { buildHelpEmbed } from '../utils/helpMenu.js';
 import { createTicketChannel } from '../utils/tickets.js';
 import {
   buildWhitelistModal,
@@ -55,21 +56,6 @@ export default {
 
         language = getGuildConfig(interaction.guild.id).language || language;
 
-        if (interaction.customId === 'stepmodz_setup_help') {
-          const embed = new EmbedBuilder()
-            .setTitle(t(language, 'setupHelpTitle'))
-            .setDescription(t(language, 'setupHelpDescription'))
-            .setColor(0x22c55e)
-            .setFooter({ text: t(language, 'checkedBy') })
-            .setTimestamp();
-
-          await interaction.reply({
-            embeds: [embed],
-            ephemeral: true
-          });
-          return;
-        }
-
         if (interaction.customId === 'stepmodz_open_info') {
           await interaction.reply({
             embeds: [buildInfoEmbed(language)],
@@ -78,15 +64,6 @@ export default {
           return;
         }
 
-        if (interaction.customId === 'stepmodz_validator_help') {
-          await interaction.reply({
-            content: t(language, 'validatorHelp'),
-            ephemeral: true
-          });
-          return;
-        }
-
-        // TICKET BUTTON
         if (interaction.customId === 'stepmodz_open_ticket') {
           const result = await createTicketChannel(interaction);
 
@@ -112,7 +89,6 @@ export default {
           return;
         }
 
-        // WHITELIST BUTTONS
         if (interaction.customId === 'stepmodz_open_whitelist') {
           await interaction.showModal(buildWhitelistModal());
           return;
@@ -131,6 +107,23 @@ export default {
           await handleWhitelistDecision(interaction, false);
           await interaction.reply({
             content: '❌ Bewerbung abgelehnt.',
+            ephemeral: true
+          });
+          return;
+        }
+
+        return;
+      }
+
+      if (interaction.isStringSelectMenu()) {
+        const config = getGuildConfig(interaction.guild.id);
+        const language = config.language || 'de';
+
+        if (interaction.customId === 'stepmodz_help_menu') {
+          const selected = interaction.values[0];
+
+          await interaction.reply({
+            embeds: [buildHelpEmbed(language, selected)],
             ephemeral: true
           });
           return;

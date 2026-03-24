@@ -11,11 +11,11 @@
     "logChannelId": null
   },
   "1485785119443914764": {
-    "verifyRoleId": "1485786271891722291",
+    "verifyRoleId": "1485786428976660510",
     "unverifiedRoleId": null,
     "welcomeChannelId": null,
-    "ticketCategoryId": "1485786727414104206",
-    "ticketSupportRoleId": "1485786271891722291",
+    "ticketCategoryId": null,
+    "ticketSupportRoleId": null,
     "whitelistCategoryId": null,
     "whitelistReviewRoleId": null,
     "whitelistApprovedRoleId": null,

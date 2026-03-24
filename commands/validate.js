@@ -3,31 +3,18 @@ import { t } from '../utils/i18n.js';
 import {
   isAllowedSize,
   downloadAttachmentContent,
-  validateJson,
-  validateXml,
   validateByExtension
 } from '../utils/validator.js';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('validate')
-    .setDescription('Prüft eine JSON- oder XML-Datei auf Fehler.')
+    .setDescription('Prüft automatisch eine JSON- oder XML-Datei auf Fehler.')
     .addAttachmentOption((option) =>
       option
         .setName('datei')
         .setDescription('Die Datei, die geprüft werden soll')
         .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName('typ')
-        .setDescription('Dateityp oder automatische Erkennung')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Auto', value: 'auto' },
-          { name: 'JSON', value: 'json' },
-          { name: 'XML', value: 'xml' }
-        )
     )
     .addStringOption((option) =>
       option
@@ -42,7 +29,6 @@ export default {
 
   async execute(interaction) {
     const language = interaction.options.getString('sprache') || 'de';
-    const mode = interaction.options.getString('typ', true);
     const attachment = interaction.options.getAttachment('datei', true);
 
     if (!isAllowedSize(attachment.size)) {
@@ -57,43 +43,19 @@ export default {
 
     try {
       const content = await downloadAttachmentContent(attachment.url);
+      const result = validateByExtension(attachment.name, content);
 
-      let result;
-      let typeLabel = 'Unknown';
-
-      if (mode === 'json') {
-        if (!attachment.name?.toLowerCase().endsWith('.json')) {
-          await interaction.editReply({
-            content: `❌ ${t(language, 'invalidFileTypeJson')}`
-          });
-          return;
-        }
-        result = validateJson(content);
-        typeLabel = 'JSON';
-      } else if (mode === 'xml') {
-        if (!attachment.name?.toLowerCase().endsWith('.xml')) {
-          await interaction.editReply({
-            content: `❌ ${t(language, 'invalidFileTypeXml')}`
-          });
-          return;
-        }
-        result = validateXml(content);
-        typeLabel = 'XML';
-      } else {
-        result = validateByExtension(attachment.name, content);
-
-        if (result.type === 'unknown') {
-          await interaction.editReply({
-            content: `❌ ${t(language, 'unsupportedExtension')}`
-          });
-          return;
-        }
-
-        typeLabel =
-          result.type === 'json'
-            ? t(language, 'dayzJsonLabel')
-            : t(language, 'dayzXmlLabel');
+      if (result.type === 'unknown') {
+        await interaction.editReply({
+          content: `❌ ${t(language, 'unsupportedExtension')}`
+        });
+        return;
       }
+
+      const typeLabel =
+        result.type === 'json'
+          ? t(language, 'dayzJsonLabel')
+          : t(language, 'dayzXmlLabel');
 
       if (result.valid) {
         const embed = new EmbedBuilder()
@@ -124,9 +86,7 @@ export default {
       const hint =
         result.type === 'json'
           ? t(language, 'jsonHint')
-          : result.type === 'xml'
-            ? t(language, 'xmlHint')
-            : t(language, 'dayzHint');
+          : t(language, 'xmlHint');
 
       const embed = new EmbedBuilder()
         .setTitle(t(language, 'validationFailedTitle'))

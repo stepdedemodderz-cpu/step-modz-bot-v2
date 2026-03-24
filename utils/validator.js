@@ -1,6 +1,6 @@
 import { XMLValidator } from 'fast-xml-parser';
 
-const MAX_FILE_SIZE = 1024 * 1024 * 4; // 4 MB
+const MAX_FILE_SIZE = 1024 * 1024 * 4;
 
 export function isAllowedSize(size) {
   return size <= MAX_FILE_SIZE;

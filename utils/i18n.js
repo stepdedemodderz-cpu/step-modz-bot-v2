@@ -1,5 +1,4 @@
-export const messages = {
-  de: {
+ de: {
     fileTooLarge: "Die Datei ist zu groß. Bitte lade eine kleinere Datei hoch.",
     downloadFailed: "Die Datei konnte nicht heruntergeladen werden.",
     invalidFileTypeJson: "Bitte lade eine .json Datei hoch.",
@@ -20,7 +19,10 @@ export const messages = {
     jsonHint: "Prüfe Kommas, Klammern oder Anführungszeichen.",
     xmlHint: "Prüfe Tags oder Struktur.",
     dayzHint: "Prüfe die Datei auf Fehler.",
-    checkedBy: "Step Mod!Z BOT Validator"
+    checkedBy: "Step Mod!Z BOT Validator",
+    unsupportedExtension: "Dieser Dateityp wird noch nicht unterstützt.",
+    dayzJsonLabel: "DayZ JSON",
+    dayzXmlLabel: "DayZ XML"
   },
 
   en: {
@@ -44,10 +46,14 @@ export const messages = {
     jsonHint: "Check commas and brackets.",
     xmlHint: "Check tags.",
     dayzHint: "Check file.",
-    checkedBy: "Step Mod!Z BOT Validator"
+    checkedBy: "Step Mod!Z BOT Validator",
+    unsupportedExtension: "This file type is not supported yet.",
+    dayzJsonLabel: "DayZ JSON",
+    dayzXmlLabel: "DayZ XML"
   }
 };
 
-export function t(lang, key) {
-  return messages[lang]?.[key] || key;
+export function t(lang = "de", key) {
+  const shortLang = typeof lang === "string" ? lang.split("-")[0] : "de";
+  return messages[shortLang]?.[key] || messages.de?.[key] || key;
 }

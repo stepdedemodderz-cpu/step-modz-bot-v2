@@ -22,21 +22,32 @@ const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
 
 for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const commandModule = await import(`file://${filePath}`);
-  const command = commandModule.default;
+  try {
+    const filePath = path.join(commandsPath, file);
+    const commandModule = await import(`file://${filePath}`);
+    const command = commandModule.default;
 
-  if (command?.data) {
-    commands.push(command.data.toJSON());
+    if (command?.data) {
+      commands.push(command.data.toJSON());
+      console.log(`✅ Loaded: ${file}`);
+    } else {
+      console.log(`⚠️ Skipped: ${file}`);
+    }
+  } catch (error) {
+    console.log(`❌ ERROR in ${file}`);
+    console.error(error);
   }
 }
 
 const rest = new REST({ version: '10' }).setToken(token);
 
 try {
-  console.log('Registriere globale Slash Commands...');
-  await rest.put(Routes.applicationCommands(clientId), { body: commands });
-  console.log('Globale Slash Commands erfolgreich registriert.');
+  console.log('🚀 Registering global slash commands...');
+  await rest.put(Routes.applicationCommands(clientId), {
+    body: commands
+  });
+  console.log('✅ Global slash commands registered successfully.');
 } catch (error) {
-  console.error('Fehler beim Registrieren der Commands:', error);
+  console.error('❌ Deploy error:');
+  console.error(error);
 }

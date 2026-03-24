@@ -33,7 +33,7 @@ export function saveGuildConfigs(data) {
 
 export function getGuildConfig(guildId) {
   const configs = loadGuildConfigs();
-  return configs[guildId] || null;
+  return configs[guildId] || {};
 }
 
 export function setGuildConfig(guildId, config) {

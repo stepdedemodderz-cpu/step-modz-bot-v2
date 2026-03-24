@@ -1,69 +1,64 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { getGuildConfig } from '../utils/config.js';
+import { t } from '../utils/i18n.js';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('info')
-    .setDescription('Zeigt alle Funktionen und Setup-Anleitung'),
+    .setDescription('Zeigt eine Übersicht über alle Funktionen und die Einrichtung'),
 
   async execute(interaction) {
-    const embed = new EmbedBuilder()
-      .setTitle('📘 Step Mod!Z BOT – Anleitung')
-      .setColor(0x22c55e)
-      .setDescription('Hier ist alles, was du wissen musst:')
+    const config = getGuildConfig(interaction.guild.id);
+    const language = config.language || 'de';
 
+    const embed = new EmbedBuilder()
+      .setTitle(t(language, 'infoTitle'))
+      .setColor(0x22c55e)
+      .setDescription(t(language, 'infoDescription'))
       .addFields(
         {
-          name: '⚙️ Setup',
-          value:
-`/setup  
-➡️ Grundsetup starten
-
-/verify-panel  
-➡️ Verifizierung aktivieren
-
-/ticket-panel  
-➡️ Support Tickets aktivieren
-
-/setup-welcome  
-➡️ Welcome System einstellen`,
+          name: t(language, 'infoQuickstartTitle'),
+          value: t(language, 'infoQuickstartValue'),
+          inline: false
         },
-
         {
-          name: '🧪 Validator (NEU 🔥)',
-          value:
-`/validate  
-➡️ JSON oder XML prüfen
-
-✔ Erkennt Fehler  
-✔ Zeigt Position  
-✔ DayZ Spezialchecks  
-✔ Deutsch / Englisch`,
+          name: t(language, 'infoVerifyTitle'),
+          value: t(language, 'infoVerifyValue'),
+          inline: false
         },
-
         {
-          name: '🛠️ Funktionen',
-          value:
-`✔ Verify System  
-✔ Ticket System  
-✔ Welcome System  
-✔ Settings speichern  
-✔ DayZ File Checker`,
+          name: t(language, 'infoWelcomeTitle'),
+          value: t(language, 'infoWelcomeValue'),
+          inline: false
         },
-
         {
-          name: '📦 Installation',
-          value:
-`1. /setup ausführen  
-2. Rollen auswählen  
-3. Channel setzen  
-4. Panels erstellen  
-
-FERTIG ✅`,
+          name: t(language, 'infoTicketTitle'),
+          value: t(language, 'infoTicketValue'),
+          inline: false
+        },
+        {
+          name: t(language, 'infoWhitelistTitle'),
+          value: t(language, 'infoWhitelistValue'),
+          inline: false
+        },
+        {
+          name: t(language, 'infoValidatorTitle'),
+          value: t(language, 'infoValidatorValue'),
+          inline: false
+        },
+        {
+          name: t(language, 'infoCommandsTitle'),
+          value: t(language, 'infoCommandsValue'),
+          inline: false
         }
       )
+      .setImage('https://imgur.com/a/uSuzkaj')
+      .setFooter({ text: t(language, 'checkedBy') })
+      .setTimestamp();
 
-      .setFooter({ text: 'Step Mod!Z BOT by StepDede_ModderZ' });
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({
+      embeds: [embed],
+      ephemeral: true
+    });
   }
 };

@@ -1,53 +1,111 @@
-import { ChannelType, PermissionsBitField, EmbedBuilder } from 'discord.js';
+import {
+  ChannelType,
+  PermissionsBitField,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} from 'discord.js';
+import { getGuildConfig, setGuildConfig } from '../utils/config.js';
+import { t } from '../utils/i18n.js';
 
 export default {
   name: 'guildCreate',
   async execute(guild) {
     try {
-      // Check ob Channel schon existiert
+      const config = getGuildConfig(guild.id);
+      const language = config.language || 'de';
+
+      if (!config.language) {
+        setGuildConfig(guild.id, { language: 'de' });
+      }
+
+      // 1. Kategorie suchen oder erstellen
+      let category = guild.channels.cache.find(
+        (c) =>
+          c.type === ChannelType.GuildCategory &&
+          c.name === 'Step Mod!Z BOT'
+      );
+
+      if (!category) {
+        category = await guild.channels.create({
+          name: 'Step Mod!Z BOT',
+          type: ChannelType.GuildCategory,
+          permissionOverwrites: [
+            {
+              id: guild.roles.everyone.id,
+              allow: [PermissionsBitField.Flags.ViewChannel]
+            }
+          ]
+        });
+      }
+
+      // 2. Textchannel in der Kategorie suchen oder erstellen
       let channel = guild.channels.cache.find(
-        (c) => c.name === 'step-modz-bot'
+        (c) =>
+          c.type === ChannelType.GuildText &&
+          c.name === 'step-modz-bot' &&
+          c.parentId === category.id
       );
 
       if (!channel) {
         channel = await guild.channels.create({
           name: 'step-modz-bot',
           type: ChannelType.GuildText,
+          parent: category.id,
           permissionOverwrites: [
             {
-              id: guild.roles.everyone,
-              allow: [PermissionsBitField.Flags.ViewChannel],
-            },
-          ],
+              id: guild.roles.everyone.id,
+              allow: [
+                PermissionsBitField.Flags.ViewChannel,
+                PermissionsBitField.Flags.SendMessages,
+                PermissionsBitField.Flags.ReadMessageHistory
+              ]
+            }
+          ]
         });
       }
 
       const embed = new EmbedBuilder()
-        .setTitle('👋 Willkommen!')
-        .setDescription(
-`Hallo User 👋
-
-Mein Name ist **Step Mod!Z BOT** 🤖  
-Ich wurde erstellt von **StepDede_ModderZ**  
-
-Ich werde dir jetzt helfen 🚀
-
-📌 **Starte hier:**
-Gib in diesem Channel ein:
-👉 \`/info\`
-
-Du bekommst:
-✔ Übersicht aller Features  
-✔ Setup Anleitung  
-✔ Erklärung aller Commands  
-
-🔥 Viel Spaß mit deinem Server!`
-        )
+        .setTitle(t(language, 'welcomeChannelTitle'))
+        .setDescription(t(language, 'welcomeChannelDescription'))
         .setColor(0x5865f2)
-        .setFooter({ text: 'Step Mod!Z BOT' });
+        // HIER deinen echten Bildlink eintragen:
+        // .setThumbnail('https://i.imgur.com/DEINBILD.png')
+        // .setImage('https://i.imgur.com/DEINBILD.png')
+        .setFooter({ text: t(language, 'checkedBy') })
+        .setTimestamp();
 
-      await channel.send({ embeds: [embed] });
+      const row1 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('stepmodz_open_info')
+          .setLabel(t(language, 'buttonInfo'))
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('stepmodz_setup_help')
+          .setLabel(t(language, 'buttonSetup'))
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId('stepmodz_validator_help')
+          .setLabel(t(language, 'buttonValidator'))
+          .setStyle(ButtonStyle.Secondary)
+      );
 
+      const row2 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('stepmodz_lang_de')
+          .setLabel('Deutsch')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('stepmodz_lang_en')
+          .setLabel('English')
+          .setStyle(ButtonStyle.Secondary)
+      );
+
+      await channel.send({
+        embeds: [embed],
+        components: [row1, row2]
+      });
     } catch (err) {
       console.error('guildCreate Fehler:', err);
     }

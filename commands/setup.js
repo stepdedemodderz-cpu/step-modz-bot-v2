@@ -15,7 +15,7 @@ export default {
       option
         .setName('verify_role')
         .setDescription('Rolle für Nutzer nach erfolgreicher Verifizierung')
-        .setRequired(true)
+        .setRequired(false)
     )
     .addRoleOption((option) =>
       option

@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  EmbedBuilder
+} from 'discord.js';
 import { buildTicketPanelEmbed, buildTicketPanelRow } from '../utils/tickets.js';
 import { getGuildConfig } from '../utils/config.js';
 
@@ -12,8 +16,24 @@ export default {
     const config = getGuildConfig(interaction.guild.id);
 
     if (!config?.ticketCategoryId) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Ticket Setup fehlt')
+        .setDescription(
+          [
+            'Für diesen Server wurde noch keine Ticket-Kategorie gesetzt.',
+            '',
+            'Nutze **`/setup`** und wähle:',
+            '• eine **Ticket Kategorie**',
+            '• optional eine **Ticket Support Rolle**',
+            '',
+            'Danach kannst du das Ticket Panel senden.'
+          ].join('\n')
+        )
+        .setFooter({ text: 'Step Mod!Z BOT • Ticket Hilfe' })
+        .setTimestamp();
+
       await interaction.reply({
-        content: '❌ Bitte zuerst /setup ausführen und eine Ticket-Kategorie setzen.',
+        embeds: [embed],
         ephemeral: true
       });
       return;
@@ -25,7 +45,7 @@ export default {
     });
 
     await interaction.reply({
-      content: '✅ Ticket Panel wurde gesendet.',
+      content: '✅ Das Ticket-Panel wurde erfolgreich in diesem Channel gesendet.',
       ephemeral: true
     });
   }

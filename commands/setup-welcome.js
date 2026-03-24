@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  EmbedBuilder
+} from 'discord.js';
 import { buildWelcomeEmbed } from '../utils/welcome.js';
 import { getGuildConfig } from '../utils/config.js';
 
@@ -12,8 +16,22 @@ export default {
     const config = getGuildConfig(interaction.guild.id);
 
     if (!config?.welcomeChannelId) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Welcome Setup fehlt')
+        .setDescription(
+          [
+            'Für diesen Server wurde noch kein Welcome-Channel gesetzt.',
+            '',
+            'Nutze **`/setup`** und wähle einen **Welcome Channel** aus.',
+            '',
+            'Danach kann der Bot dort Begrüßungsnachrichten senden.'
+          ].join('\n')
+        )
+        .setFooter({ text: 'Step Mod!Z BOT • Welcome Hilfe' })
+        .setTimestamp();
+
       await interaction.reply({
-        content: '❌ Bitte zuerst /setup ausführen und einen Welcome-Channel setzen.',
+        embeds: [embed],
         ephemeral: true
       });
       return;
@@ -25,7 +43,7 @@ export default {
 
     if (!channel || !channel.isTextBased()) {
       await interaction.reply({
-        content: '❌ Der gespeicherte Welcome-Channel ist ungültig.',
+        content: '❌ Der gespeicherte Welcome-Channel ist ungültig oder nicht mehr vorhanden.',
         ephemeral: true
       });
       return;
@@ -36,7 +54,7 @@ export default {
     });
 
     await interaction.reply({
-      content: `✅ Welcome Nachricht wurde in ${channel} gesendet.`,
+      content: `✅ Die Welcome Nachricht wurde erfolgreich in ${channel} gesendet.`,
       ephemeral: true
     });
   }

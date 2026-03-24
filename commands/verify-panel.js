@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  EmbedBuilder
+} from 'discord.js';
 import { buildVerifyEmbed, buildVerifyRow } from '../utils/verify.js';
 import { getGuildConfig } from '../utils/config.js';
 
@@ -12,8 +16,22 @@ export default {
     const config = getGuildConfig(interaction.guild.id);
 
     if (!config?.verifyRoleId) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Verify Setup fehlt')
+        .setDescription(
+          [
+            'Für diesen Server wurde noch keine Verify Rolle gesetzt.',
+            '',
+            'Nutze **`/setup`** und setze dort mindestens die **Verify Rolle**.',
+            '',
+            'Danach kannst du das Verify Panel senden.'
+          ].join('\n')
+        )
+        .setFooter({ text: 'Step Mod!Z BOT • Verify Hilfe' })
+        .setTimestamp();
+
       await interaction.reply({
-        content: '❌ Bitte zuerst /setup ausführen und eine Verify-Rolle setzen.',
+        embeds: [embed],
         ephemeral: true
       });
       return;
@@ -25,7 +43,7 @@ export default {
     });
 
     await interaction.reply({
-      content: '✅ Verify Panel wurde gesendet.',
+      content: '✅ Das Verifizierungs-Panel wurde erfolgreich in diesem Channel gesendet.',
       ephemeral: true
     });
   }

@@ -1,7 +1,8 @@
 import {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  ChannelType
+  ChannelType,
+  EmbedBuilder
 } from 'discord.js';
 import { setGuildConfig } from '../utils/config.js';
 
@@ -13,58 +14,58 @@ export default {
     .addRoleOption((option) =>
       option
         .setName('verify_role')
-        .setDescription('Rolle für verifizierte Nutzer')
+        .setDescription('Rolle für Nutzer nach erfolgreicher Verifizierung')
         .setRequired(true)
     )
     .addRoleOption((option) =>
       option
         .setName('unverified_role')
-        .setDescription('Rolle für nicht verifizierte Nutzer')
+        .setDescription('Optionale Rolle für neue, noch nicht verifizierte Nutzer')
         .setRequired(false)
     )
     .addChannelOption((option) =>
       option
         .setName('welcome_channel')
-        .setDescription('Welcome Channel')
+        .setDescription('Channel für Begrüßungsnachrichten bei neuen Mitgliedern')
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
     )
     .addChannelOption((option) =>
       option
         .setName('ticket_category')
-        .setDescription('Kategorie für Tickets')
+        .setDescription('Kategorie, in der neue Support-Tickets erstellt werden')
         .addChannelTypes(ChannelType.GuildCategory)
         .setRequired(false)
     )
     .addRoleOption((option) =>
       option
         .setName('ticket_support_role')
-        .setDescription('Support Rolle für Tickets')
+        .setDescription('Rolle, die Zugriff auf Support-Tickets bekommen soll')
         .setRequired(false)
     )
     .addChannelOption((option) =>
       option
         .setName('whitelist_category')
-        .setDescription('Kategorie für Whitelist Bewerbungen')
+        .setDescription('Kategorie, in der neue Whitelist-Bewerbungen erstellt werden')
         .addChannelTypes(ChannelType.GuildCategory)
         .setRequired(false)
     )
     .addRoleOption((option) =>
       option
         .setName('whitelist_review_role')
-        .setDescription('Rolle für Whitelist Team')
+        .setDescription('Rolle, die Whitelist-Bewerbungen prüfen darf')
         .setRequired(false)
     )
     .addRoleOption((option) =>
       option
         .setName('whitelist_approved_role')
-        .setDescription('Rolle nach angenommener Whitelist')
+        .setDescription('Rolle, die Nutzer nach angenommener Whitelist erhalten')
         .setRequired(false)
     )
     .addChannelOption((option) =>
       option
         .setName('log_channel')
-        .setDescription('Log Channel')
+        .setDescription('Optionaler Log-Channel für wichtige Bot-Aktionen')
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
     ),
@@ -84,8 +85,96 @@ export default {
 
     setGuildConfig(interaction.guild.id, config);
 
+    const embed = new EmbedBuilder()
+      .setTitle('⚙️ Step Mod!Z BOT Setup gespeichert')
+      .setDescription(
+        [
+          `Der Bot wurde erfolgreich für **${interaction.guild.name}** eingerichtet.`,
+          '',
+          'Hier siehst du direkt, was gesetzt wurde und wofür es ist.'
+        ].join('\n')
+      )
+      .addFields(
+        {
+          name: '🔐 Verify Rolle',
+          value: config.verifyRoleId
+            ? `<@&${config.verifyRoleId}>\nDiese Rolle erhalten Nutzer nach erfolgreicher Verifizierung.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '🚫 Unverified Rolle',
+          value: config.unverifiedRoleId
+            ? `<@&${config.unverifiedRoleId}>\nDiese Rolle kann neuen Nutzern vor der Verifizierung gegeben werden.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '👋 Welcome Channel',
+          value: config.welcomeChannelId
+            ? `<#${config.welcomeChannelId}>\nHier sendet der Bot Begrüßungsnachrichten für neue Mitglieder.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '🎫 Ticket Kategorie',
+          value: config.ticketCategoryId
+            ? `<#${config.ticketCategoryId}>\nIn dieser Kategorie erstellt der Bot neue Support-Tickets.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '🛡️ Ticket Support Rolle',
+          value: config.ticketSupportRoleId
+            ? `<@&${config.ticketSupportRoleId}>\nDiese Rolle kann Support-Tickets sehen und bearbeiten.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '📋 Whitelist Kategorie',
+          value: config.whitelistCategoryId
+            ? `<#${config.whitelistCategoryId}>\nIn dieser Kategorie erstellt der Bot neue Whitelist-Bewerbungen.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '👀 Whitelist Review Rolle',
+          value: config.whitelistReviewRoleId
+            ? `<@&${config.whitelistReviewRoleId}>\nDiese Rolle darf Whitelist-Bewerbungen annehmen oder ablehnen.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '✅ Whitelist Approved Rolle',
+          value: config.whitelistApprovedRoleId
+            ? `<@&${config.whitelistApprovedRoleId}>\nDiese Rolle wird nach angenommener Whitelist vergeben.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '📝 Log Channel',
+          value: config.logChannelId
+            ? `<#${config.logChannelId}>\nHier kann der Bot wichtige Informationen und Logs senden.`
+            : 'Nicht gesetzt',
+          inline: false
+        },
+        {
+          name: '🚀 Nächste Schritte',
+          value: [
+            '`/settings` → Zeigt die aktuelle Konfiguration',
+            '`/verify-panel` → Sendet das Verifizierungs-Panel',
+            '`/ticket-panel` → Sendet das Ticket-Panel',
+            '`/whitelist-panel` → Sendet das Whitelist-Panel',
+            '`/setup-welcome` → Sendet eine Welcome-Nachricht in den Welcome-Channel'
+          ].join('\n'),
+          inline: false
+        }
+      )
+      .setFooter({ text: 'Step Mod!Z BOT • Deutsches Setup-System' })
+      .setTimestamp();
+
     await interaction.reply({
-      content: '✅ Step Mod!Z BOT wurde für diesen Server eingerichtet.',
+      embeds: [embed],
       ephemeral: true
     });
   }

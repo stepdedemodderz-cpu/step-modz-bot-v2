@@ -86,7 +86,6 @@ export default {
     setGuildConfig(interaction.guild.id, config);
 
     const embed = new EmbedBuilder()
-      .setImage('https://imgur.com/a/uSuzkaj')
       .setTitle('⚙️ Step Mod!Z BOT Setup gespeichert')
       .setDescription(
         [

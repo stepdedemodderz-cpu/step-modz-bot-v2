@@ -48,13 +48,7 @@ export default {
 
         language = getGuildConfig(interaction.guild.id).language || language;
 
-        if (interaction.customId === 'stepmodz_open_info') {
-          await interaction.reply({
-            content: t(language, 'infoButtonReply'),
-            ephemeral: true
-          });
-          return;
-        }
+        import { buildInfoEmbed } from '../utils/infoEmbed.js';
 
         if (interaction.customId === 'stepmodz_setup_help') {
           const embed = new EmbedBuilder()

@@ -86,7 +86,7 @@ export default {
     setGuildConfig(interaction.guild.id, config);
 
     const embed = new EmbedBuilder()
-      .setImage('https://cdn.discordapp.com/attachments/1468693516942180372/1485943376179237026/25882009-b8b1-4350-bdaa-9652c0bfead3.png?ex=69c3b41c&is=69c2629c&hm=06fb2176062774d470971c3fdd5c9d03b262e02e860c1b491e669c424dc96547&')
+      .setImage('https://media.discordapp.net/attachments/1468693516942180372/1485943376179237026/25882009-b8b1-4350-bdaa-9652c0bfead3.png?ex=69c3b41c&is=69c2629c&hm=06fb2176062774d470971c3fdd5c9d03b262e02e860c1b491e669c424dc96547&=&format=webp&quality=lossless')
       .setTitle('⚙️ Step Mod!Z BOT Setup gespeichert')
       .setDescription(
         [

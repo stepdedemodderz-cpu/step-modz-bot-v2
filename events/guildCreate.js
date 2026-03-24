@@ -70,7 +70,7 @@ export default {
         .setTitle(t(language, 'welcomeChannelTitle'))
         .setDescription(t(language, 'welcomeChannelDescription'))
         .setColor(0x5865f2)
-        .setImage('https://imgur.com/a/uSuzkaj')
+        .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
         .setFooter({ text: t(language, 'checkedBy') })
         .setTimestamp();
 

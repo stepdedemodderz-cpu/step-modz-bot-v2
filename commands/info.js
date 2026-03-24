@@ -14,6 +14,7 @@ export default {
     const embed = new EmbedBuilder()
       .setTitle(t(language, 'infoTitle'))
       .setColor(0x22c55e)
+      .setImage('https://cdn.discordapp.com/attachments/1468693516942180372/1485943376179237026/25882009-b8b1-4350-bdaa-9652c0bfead3.png?ex=69c3b41c&is=69c2629c&hm=06fb2176062774d470971c3fdd5c9d03b262e02e860c1b491e669c424dc96547&')
       .setDescription(t(language, 'infoDescription'))
       .addFields(
         {
@@ -52,7 +53,6 @@ export default {
           inline: false
         }
       )
-      .setImage('https://imgur.com/a/uSuzkaj')
       .setFooter({ text: t(language, 'checkedBy') })
       .setTimestamp();
 

@@ -1,0 +1,24 @@
+{
+  "1166421432348180480": {
+    "verifyRoleId": "1473034397241446586",
+    "unverifiedRoleId": null,
+    "welcomeChannelId": null,
+    "ticketCategoryId": null,
+    "ticketSupportRoleId": null,
+    "whitelistCategoryId": null,
+    "whitelistReviewRoleId": null,
+    "whitelistApprovedRoleId": null,
+    "logChannelId": null
+  },
+  "1485785119443914764": {
+    "verifyRoleId": "1485786271891722291",
+    "unverifiedRoleId": null,
+    "welcomeChannelId": null,
+    "ticketCategoryId": "1485786727414104206",
+    "ticketSupportRoleId": "1485786271891722291",
+    "whitelistCategoryId": null,
+    "whitelistReviewRoleId": null,
+    "whitelistApprovedRoleId": null,
+    "logChannelId": null
+  }
+}

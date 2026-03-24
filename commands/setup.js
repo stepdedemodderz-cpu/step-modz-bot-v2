@@ -121,13 +121,6 @@ export default {
         .setName('whitelist_approved_role')
         .setDescription('Optional: Rolle nach angenommener Whitelist')
         .setRequired(false)
-    )
-    .addChannelOption((option) =>
-      option
-        .setName('log_channel')
-        .setDescription('Optional: Log-Channel für Bot-Aktionen')
-        .addChannelTypes(ChannelType.GuildText)
-        .setRequired(false)
     ),
 
   async execute(interaction) {
@@ -143,108 +136,91 @@ export default {
       ticketSupportRoleId: interaction.options.getRole('ticket_support_role')?.id || null,
       whitelistCategoryId: interaction.options.getChannel('whitelist_category')?.id || null,
       whitelistReviewRoleId: interaction.options.getRole('whitelist_review_role')?.id || null,
-      whitelistApprovedRoleId: interaction.options.getRole('whitelist_approved_role')?.id || null,
-      logChannelId: interaction.options.getChannel('log_channel')?.id || null
+      whitelistApprovedRoleId: interaction.options.getRole('whitelist_approved_role')?.id || null
     };
 
-    // Zentrale Setup-Kategorie
-    const setupCategory = await ensureCategory(guild, 'Step Mod!Z BOT Setup');
+    // WELCOME
+    const welcomeCategory = await ensureCategory(guild, 'Welcome');
+    const welcomeInfoChannel = await ensureTextChannel(guild, 'welcome-info', welcomeCategory.id);
 
-    // Allgemeiner Info-Channel
-    const botInfoChannel = await ensureTextChannel(guild, 'bot-info', setupCategory.id);
-    await botInfoChannel.send({
-      embeds: [
-        buildInfoEmbed(
-          '🤖 Step Mod!Z BOT – Nächste Schritte',
-          [
-            `Hallo **${guild.name}** 👋`,
-            '',
-            'Dein Grundsetup wurde gespeichert.',
-            '',
-            '**Was du jetzt machen kannst:**',
-            '• `/info` → Übersicht & Einrichtung',
-            '• `/settings` → aktuelle Konfiguration ansehen',
-            '• Nutze die Setup-Hilfe-Channels unten für die einzelnen Systeme'
-          ].join('\n')
-        )
-      ]
-    });
-
-    // Welcome-System
-    if (!config.welcomeChannelId) {
-      const welcomeChannel = await ensureTextChannel(guild, 'welcome', setupCategory.id);
-      config.welcomeChannelId = welcomeChannel.id;
-    }
-
-    const welcomeInfoChannel = await ensureTextChannel(guild, 'welcome-info', setupCategory.id);
     await welcomeInfoChannel.send({
       embeds: [
         buildInfoEmbed(
-          '👋 Welcome System',
+          '👋 Welcome',
           [
-            'Hier erklärst du das Welcome-System.',
+            'Hier findest du die Hilfe für das Welcome-System.',
             '',
             '**So aktivierst du es:**',
-            '1. Prüfe mit `/settings`, ob ein Welcome-Channel gesetzt ist',
-            '2. Nutze `/setup-welcome`, um eine Welcome-Nachricht zu senden',
-            '3. Neue Mitglieder bekommen dann Begrüßungen im gesetzten Channel'
+            '1. Setze mit `/setup` optional einen Welcome Channel',
+            '2. Nutze danach `/setup-welcome`',
+            '3. Der Bot sendet dann eine Welcome-Nachricht in den gesetzten Channel',
+            '',
+            '**Tipp:**',
+            'Wenn du noch keinen Welcome Channel gesetzt hast, kannst du `/setup` einfach nochmal benutzen.'
           ].join('\n'),
           'Step Mod!Z BOT • Welcome Hilfe'
         )
       ]
     });
 
-    // Verify-System (nur wenn Rolle gesetzt)
-    if (config.verifyRoleId) {
-      const verifyInfoChannel = await ensureTextChannel(guild, 'verify-info', setupCategory.id);
-      await verifyInfoChannel.send({
-        embeds: [
-          buildInfoEmbed(
-            '🔐 Verify System',
-            [
-              'Das Verify-System ist aktiviert, weil eine Verify-Rolle gesetzt wurde.',
-              '',
-              '**So aktivierst du es vollständig:**',
-              '1. Nutze `/verify-panel` in dem Channel, in dem das Verify-Panel erscheinen soll',
-              '2. Nutzer klicken dort auf den Verify-Button',
-              '3. Nach erfolgreicher Verifizierung bekommen sie die Verify-Rolle'
-            ].join('\n'),
-            'Step Mod!Z BOT • Verify Hilfe'
-          )
-        ]
-      });
-    }
+    // ROLES
+    const rolesCategory = await ensureCategory(guild, 'Roles');
+    const rolesInfoChannel = await ensureTextChannel(guild, 'roles-info', rolesCategory.id);
 
-    // Ticket-System
+    await rolesInfoChannel.send({
+      embeds: [
+        buildInfoEmbed(
+          '🛡️ Roles',
+          [
+            'Hier findest du die Hilfe für Rollen und Verifizierung.',
+            '',
+            '**Verify Rolle:**',
+            'Optional. Nutzer bekommen diese Rolle nach erfolgreicher Verifizierung.',
+            '',
+            '**Unverified Rolle:**',
+            'Optional. Diese Rolle kann neuen Nutzern vor der Verifizierung gegeben werden.',
+            '',
+            '**So aktivierst du Verify:**',
+            '1. Setze optional eine Verify Rolle in `/setup`',
+            '2. Nutze danach `/verify-panel`',
+            '3. Nutzer klicken auf den Verify Button'
+          ].join('\n'),
+          'Step Mod!Z BOT • Roles Hilfe'
+        )
+      ]
+    });
+
+    // TICKET
     let ticketCategory = null;
     if (config.ticketCategoryId) {
       ticketCategory = guild.channels.cache.get(config.ticketCategoryId) || null;
     }
     if (!ticketCategory) {
-      ticketCategory = await ensureCategory(guild, 'Tickets');
+      ticketCategory = await ensureCategory(guild, 'Ticket');
       config.ticketCategoryId = ticketCategory.id;
     }
 
     const ticketInfoChannel = await ensureTextChannel(guild, 'ticket-info', ticketCategory.id);
+
     await ticketInfoChannel.send({
       embeds: [
         buildInfoEmbed(
-          '🎫 Ticket System',
+          '🎫 Ticket',
           [
-            'Diese Kategorie ist für dein Ticket-System vorbereitet.',
+            'Hier findest du die Hilfe für das Ticket-System.',
             '',
             '**So aktivierst du es:**',
-            '1. Optional: Setze in `/setup` eine Ticket Support Rolle',
-            '2. Nutze `/ticket-panel` in dem Channel, in dem das Ticket-Panel erscheinen soll',
-            '3. Nutzer klicken auf den Button',
-            '4. Der Bot erstellt danach private Support-Tickets in dieser Kategorie'
+            '1. Prüfe, ob die Kategorie **Ticket** gesetzt ist',
+            '2. Setze optional in `/setup` eine Ticket Support Rolle',
+            '3. Nutze danach `/ticket-panel` in dem Channel, in dem das Ticket-Panel erscheinen soll',
+            '4. Nutzer klicken auf den Button und der Bot erstellt Tickets in dieser Kategorie'
           ].join('\n'),
           'Step Mod!Z BOT • Ticket Hilfe'
         )
       ]
     });
 
-    // Whitelist-System
+    // WHITELIST
     let whitelistCategory = null;
     if (config.whitelistCategoryId) {
       whitelistCategory = guild.channels.cache.get(config.whitelistCategoryId) || null;
@@ -255,32 +231,36 @@ export default {
     }
 
     const whitelistInfoChannel = await ensureTextChannel(guild, 'whitelist-info', whitelistCategory.id);
+
     await whitelistInfoChannel.send({
       embeds: [
         buildInfoEmbed(
-          '📋 Whitelist System',
+          '📋 Whitelist',
           [
-            'Diese Kategorie ist für dein Whitelist-System vorbereitet.',
+            'Hier findest du die Hilfe für das Whitelist-System.',
             '',
             '**So aktivierst du es:**',
-            '1. Optional: Setze in `/setup` eine Review Rolle',
-            '2. Optional: Setze in `/setup` eine Approved Rolle',
-            '3. Nutze `/whitelist-panel` in dem Channel, in dem das Whitelist-Panel erscheinen soll',
-            '4. Nutzer können sich dann direkt bewerben'
+            '1. Prüfe, ob die Kategorie **Whitelist** gesetzt ist',
+            '2. Setze optional in `/setup` eine Review Rolle',
+            '3. Setze optional in `/setup` eine Approved Rolle',
+            '4. Nutze danach `/whitelist-panel` in dem Channel, in dem das Panel erscheinen soll',
+            '5. Nutzer können sich danach direkt bewerben'
           ].join('\n'),
           'Step Mod!Z BOT • Whitelist Hilfe'
         )
       ]
     });
 
-    // Validator-Hilfe
-    const validatorInfoChannel = await ensureTextChannel(guild, 'validator-info', setupCategory.id);
-    await validatorInfoChannel.send({
+    // VALIDATOR
+    const validatorCategory = await ensureCategory(guild, 'Validator');
+    const validatorChannel = await ensureTextChannel(guild, 'json-validator', validatorCategory.id);
+
+    await validatorChannel.send({
       embeds: [
         buildInfoEmbed(
-          '🧪 Validator Hilfe',
+          '🧪 Validator',
           [
-            'Mit dem Validator kannst du JSON-, XML- und DayZ-Dateien prüfen.',
+            'Hier findest du die Hilfe für den JSON / XML / DayZ Validator.',
             '',
             '**So benutzt du ihn:**',
             '1. Nutze `/validate`',
@@ -293,12 +273,6 @@ export default {
       ]
     });
 
-    // Log-Channel automatisch anlegen, wenn keiner gesetzt
-    if (!config.logChannelId) {
-      const logChannel = await ensureTextChannel(guild, 'bot-logs', setupCategory.id);
-      config.logChannelId = logChannel.id;
-    }
-
     // Konfiguration speichern
     setGuildConfig(interaction.guild.id, config);
 
@@ -308,7 +282,7 @@ export default {
         [
           `Der Bot wurde erfolgreich für **${interaction.guild.name}** eingerichtet.`,
           '',
-          'Zusätzlich wurden Hilfs-Channels und Kategorien vorbereitet.',
+          'Die Kategorien und Hilfe-Channels wurden vorbereitet.',
           'Dort steht jeweils direkt, was du als Nächstes machen musst.'
         ].join('\n')
       )
@@ -366,13 +340,6 @@ export default {
           name: '✅ Whitelist Approved Rolle',
           value: config.whitelistApprovedRoleId
             ? `<@&${config.whitelistApprovedRoleId}>`
-            : 'Nicht gesetzt',
-          inline: false
-        },
-        {
-          name: '📝 Log Channel',
-          value: config.logChannelId
-            ? `<#${config.logChannelId}>`
             : 'Nicht gesetzt',
           inline: false
         },

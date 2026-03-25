@@ -64,6 +64,8 @@ export default {
     ),
 
   async execute(interaction) {
+    const old = interaction.client ? null : null;
+
     const config = {
       verifyRoleId: interaction.options.getRole('verify_role')?.id || null,
       unverifiedRoleId: interaction.options.getRole('unverified_role')?.id || null,
@@ -81,12 +83,12 @@ export default {
       .setTitle('⚙️ Step Mod!Z BOT Setup gespeichert')
       .setDescription(
         [
-          `Die Einstellungen für **${interaction.guild.name}** wurden gespeichert.`,
+          'Die Einstellungen wurden gespeichert.',
           '',
           '**Wichtig:**',
-          'Mit `/setup` werden **keine** Kategorien oder Channels automatisch erstellt.',
+          '`/setup` erstellt **keine** Kategorien oder Channels automatisch.',
           '',
-          'Wenn du alles automatisch erstellen lassen willst, nutze im Bot-Channel das Dropdown:',
+          'Wenn du alles automatisch erstellen willst, nutze im Dropdown:',
           '**Step BOT Schnell Einrichtung**'
         ].join('\n')
       )
@@ -129,18 +131,6 @@ export default {
         {
           name: '✅ Whitelist Approved Rolle',
           value: config.whitelistApprovedRoleId ? `<@&${config.whitelistApprovedRoleId}>` : 'Nicht gesetzt',
-          inline: false
-        },
-        {
-          name: '🚀 Nächste Schritte',
-          value: [
-            '`/settings` → aktuelle Konfiguration ansehen',
-            '`/verify-panel` → Verify Panel senden',
-            '`/ticket-panel` → Ticket Panel senden',
-            '`/whitelist-panel` → Whitelist Panel senden',
-            '`/setup-welcome` → Welcome Nachricht senden',
-            'oder im Dropdown **Step BOT Schnell Einrichtung** wählen'
-          ].join('\n'),
           inline: false
         }
       )

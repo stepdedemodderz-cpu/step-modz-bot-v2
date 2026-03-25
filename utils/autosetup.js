@@ -4,6 +4,27 @@ import {
   EmbedBuilder
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from './config.js';
+import { buildTicketPanelRow } from './tickets.js';
+import { buildWhitelistPanelRow } from './whitelist.js';
+import { buildVerifyEmbed, buildVerifyRow } from './verify.js';
+
+const DEFAULT_TICKET_MESSAGE = [
+  'Benötigst du Hilfe von einem Admin oder Moderator?',
+  '',
+  'Klicke auf den Button unten, um ein privates Ticket zu öffnen.'
+].join('\n');
+
+const DEFAULT_WHITELIST_MESSAGE = [
+  'Du möchtest dich für die Whitelist bewerben?',
+  '',
+  'Klicke auf den Button unten und fülle das Formular aus.'
+].join('\n');
+
+const DEFAULT_WELCOME_MESSAGE = [
+  'Willkommen auf dem Server 👋',
+  '',
+  'Wir wünschen dir viel Spaß.'
+].join('\n');
 
 async function ensureCategory(guild, name) {
   let category = guild.channels.cache.find(
@@ -55,7 +76,7 @@ async function ensureTextChannel(guild, name, parentId) {
   return channel;
 }
 
-function infoEmbed(title, description, footer = 'Step Mod!Z BOT • Schnell Einrichtung') {
+function simpleEmbed(title, description, footer) {
   return new EmbedBuilder()
     .setTitle(title)
     .setDescription(description)
@@ -68,125 +89,140 @@ export async function runAutoSetup(guild) {
   const currentConfig = getGuildConfig(guild.id) || {};
 
   const welcomeCategory = await ensureCategory(guild, 'Welcome');
-  const welcomeInfoChannel = await ensureTextChannel(guild, 'welcome-info', welcomeCategory.id);
-
-  await welcomeInfoChannel.send({
-    embeds: [
-      infoEmbed(
-        '👋 Welcome',
-        [
-          'Hier findest du nur das Wichtigste.',
-          '',
-          '**So funktioniert es:**',
-          '• Der Bot kann Begrüßungen in einen Welcome-Channel senden.',
-          '',
-          '**Wichtig für dich:**',
-          '• Du kannst die Welcome-Nachricht später anpassen.',
-          '• Nutze dafür `/setup-welcome`.'
-        ].join('\n'),
-        'Step Mod!Z BOT • Welcome'
-      )
-    ]
-  });
+  const welcomeChannel = await ensureTextChannel(guild, 'welcome-info', welcomeCategory.id);
 
   const rolesCategory = await ensureCategory(guild, 'Roles');
-  const rolesInfoChannel = await ensureTextChannel(guild, 'roles', rolesCategory.id);
-
-  await rolesInfoChannel.send({
-    embeds: [
-      infoEmbed(
-        '🛡️ Roles',
-        [
-          'Hier findest du nur das Wichtigste.',
-          '',
-          '**So funktioniert es:**',
-          '• Verify ist optional.',
-          '• Nutzer können nach Verifizierung eine Rolle bekommen.',
-          '',
-          '**Wichtig für dich:**',
-          '• Wenn du Verify nutzen willst, setze eine Verify Rolle mit `/setup`.',
-          '• Danach nutze `/verify-panel`.'
-        ].join('\n'),
-        'Step Mod!Z BOT • Roles'
-      )
-    ]
-  });
+  const rolesChannel = await ensureTextChannel(guild, 'roles', rolesCategory.id);
 
   const ticketCategory = await ensureCategory(guild, 'Ticket');
-  const ticketInfoChannel = await ensureTextChannel(guild, 'ticket', ticketCategory.id);
-
-  await ticketInfoChannel.send({
-    embeds: [
-      infoEmbed(
-        '🎫 Ticket',
-        [
-          'Hier findest du nur das Wichtigste.',
-          '',
-          '**So funktioniert es:**',
-          '• Nutzer können private Support-Tickets öffnen.',
-          '',
-          '**Wichtig für dich:**',
-          '• Standardmäßig kannst du das Panel mit `/ticket-panel` senden.',
-          '• Du sollst die Ticket-Nachricht später auch selbst ändern können.',
-          '• Geplant ist dafür ein eigener Befehl wie `/ticket-nachricht`.'
-        ].join('\n'),
-        'Step Mod!Z BOT • Ticket'
-      )
-    ]
-  });
+  const ticketChannel = await ensureTextChannel(guild, 'ticket', ticketCategory.id);
 
   const whitelistCategory = await ensureCategory(guild, 'Whitelist');
-  const whitelistInfoChannel = await ensureTextChannel(guild, 'whitelist', whitelistCategory.id);
-
-  await whitelistInfoChannel.send({
-    embeds: [
-      infoEmbed(
-        '📋 Whitelist',
-        [
-          'Hier findest du nur das Wichtigste.',
-          '',
-          '**So funktioniert es:**',
-          '• Nutzer können sich für die Whitelist bewerben.',
-          '',
-          '**Wichtig für dich:**',
-          '• Standardmäßig kannst du das Panel mit `/whitelist-panel` senden.',
-          '• Du sollst die Whitelist-Nachricht später auch selbst ändern können.',
-          '• Das bauen wir danach mit ein.'
-        ].join('\n'),
-        'Step Mod!Z BOT • Whitelist'
-      )
-    ]
-  });
+  const whitelistChannel = await ensureTextChannel(guild, 'whitelist', whitelistCategory.id);
 
   const validatorCategory = await ensureCategory(guild, 'Validator');
   const validatorChannel = await ensureTextChannel(guild, 'json-validator', validatorCategory.id);
 
+  const newConfig = {
+    ...currentConfig,
+    welcomeChannelId: currentConfig.welcomeChannelId || welcomeChannel.id,
+    ticketCategoryId: currentConfig.ticketCategoryId || ticketCategory.id,
+    whitelistCategoryId: currentConfig.whitelistCategoryId || whitelistCategory.id,
+    ticketPanelMessage: currentConfig.ticketPanelMessage || DEFAULT_TICKET_MESSAGE,
+    whitelistPanelMessage: currentConfig.whitelistPanelMessage || DEFAULT_WHITELIST_MESSAGE,
+    welcomeMessage: currentConfig.welcomeMessage || DEFAULT_WELCOME_MESSAGE
+  };
+
+  setGuildConfig(guild.id, newConfig);
+
+  await welcomeChannel.send({
+    embeds: [
+      simpleEmbed(
+        '👋 Welcome',
+        [
+          'Hier steht nur das Wichtigste.',
+          '',
+          'Die aktuelle Welcome-Nachricht kann geändert werden mit:',
+          '`/welcome-nachricht`',
+          '',
+          'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden.'
+        ].join('\n'),
+        'Step Mod!Z BOT • Welcome'
+      ),
+      new EmbedBuilder()
+        .setTitle('Aktuelle Welcome-Nachricht')
+        .setDescription(newConfig.welcomeMessage)
+        .setColor(0x22c55e)
+        .setFooter({ text: 'Step Mod!Z BOT • Welcome Vorschau' })
+        .setTimestamp()
+    ]
+  });
+
+  const roleMessages = [
+    simpleEmbed(
+      '🛡️ Roles',
+      [
+        'Hier steht nur das Wichtigste.',
+        '',
+        'Verify ist optional.',
+        'Wenn du Verify nutzen willst, setze eine Verify Rolle mit `/setup`.',
+        'Danach sende das Panel mit `/verify-panel`.'
+      ].join('\n'),
+      'Step Mod!Z BOT • Roles'
+    )
+  ];
+
+  if (newConfig.verifyRoleId) {
+    roleMessages.push(buildVerifyEmbed());
+  }
+
+  await rolesChannel.send({
+    embeds: roleMessages,
+    components: newConfig.verifyRoleId ? [buildVerifyRow()] : []
+  });
+
+  await ticketChannel.send({
+    embeds: [
+      simpleEmbed(
+        '🎫 Ticket',
+        [
+          'Hier steht nur das Wichtigste.',
+          '',
+          'Die Ticket-Nachricht kann geändert werden mit:',
+          '`/ticket-nachricht`',
+          '',
+          'Danach kannst du mit `/ticket-panel` das Panel erneut senden.'
+        ].join('\n'),
+        'Step Mod!Z BOT • Ticket'
+      ),
+      new EmbedBuilder()
+        .setTitle('🎫 Support Tickets')
+        .setDescription(newConfig.ticketPanelMessage)
+        .setColor(0x22c55e)
+        .setFooter({ text: 'Step Mod!Z BOT • Ticket Panel' })
+        .setTimestamp()
+    ],
+    components: [buildTicketPanelRow()]
+  });
+
+  await whitelistChannel.send({
+    embeds: [
+      simpleEmbed(
+        '📋 Whitelist',
+        [
+          'Hier steht nur das Wichtigste.',
+          '',
+          'Die Whitelist-Nachricht kann geändert werden mit:',
+          '`/whitelist-nachricht`',
+          '',
+          'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.'
+        ].join('\n'),
+        'Step Mod!Z BOT • Whitelist'
+      ),
+      new EmbedBuilder()
+        .setTitle('📋 Whitelist Bewerbung')
+        .setDescription(newConfig.whitelistPanelMessage)
+        .setColor(0x22c55e)
+        .setFooter({ text: 'Step Mod!Z BOT • Whitelist Panel' })
+        .setTimestamp()
+    ],
+    components: [buildWhitelistPanelRow()]
+  });
+
   await validatorChannel.send({
     embeds: [
-      infoEmbed(
+      simpleEmbed(
         '🧪 Validator',
         [
-          'Hier findest du nur das Wichtigste.',
+          'Hier steht nur das Wichtigste.',
           '',
-          '**So funktioniert es:**',
-          '• Mit `/validate` prüfst du JSON-, XML- und DayZ-Dateien.',
-          '• Der Bot erkennt den Typ automatisch.',
-          '',
-          '**Wichtig für dich:**',
-          '• Lade einfach die Datei hoch und der Bot zeigt Fehler oder Hinweise.'
+          'Nutze `/validate` und lade eine JSON- oder XML-Datei hoch.',
+          'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.'
         ].join('\n'),
         'Step Mod!Z BOT • Validator'
       )
     ]
   });
-
-  const newConfig = {
-    ...currentConfig,
-    ticketCategoryId: currentConfig.ticketCategoryId || ticketCategory.id,
-    whitelistCategoryId: currentConfig.whitelistCategoryId || whitelistCategory.id
-  };
-
-  setGuildConfig(guild.id, newConfig);
 
   return {
     welcomeCategory,

@@ -3,58 +3,54 @@ import {
   PermissionFlagsBits,
   EmbedBuilder
 } from 'discord.js';
-import { buildWelcomeEmbed } from '../utils/welcome.js';
 import { getGuildConfig } from '../utils/config.js';
+
+const DEFAULT_WELCOME_MESSAGE = [
+  'Willkommen auf dem Server 👋',
+  '',
+  'Wir wünschen dir viel Spaß.'
+].join('\n');
 
 export default {
   data: new SlashCommandBuilder()
     .setName('setup-welcome')
-    .setDescription('Sendet eine Welcome Nachricht in den gespeicherten Welcome Channel.')
+    .setDescription('Sendet die aktuelle Welcome-Nachricht in den Welcome-Channel.')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
     const config = getGuildConfig(interaction.guild.id);
 
     if (!config?.welcomeChannelId) {
-      const embed = new EmbedBuilder()
-        .setTitle('❌ Welcome Setup fehlt')
-        .setDescription(
-          [
-            'Für diesen Server wurde noch kein Welcome-Channel gesetzt.',
-            '',
-            'Nutze **`/setup`** und wähle einen **Welcome Channel** aus.',
-            '',
-            'Danach kann der Bot dort Begrüßungsnachrichten senden.'
-          ].join('\n')
-        )
-        .setFooter({ text: 'Step Mod!Z BOT • Welcome Hilfe' })
-        .setTimestamp();
-
       await interaction.reply({
-        embeds: [embed],
+        content: '❌ Es wurde noch kein Welcome-Channel gesetzt. Nutze /setup oder Schnell Einrichtung.',
         ephemeral: true
       });
       return;
     }
 
-    const channel = await interaction.guild.channels
-      .fetch(config.welcomeChannelId)
-      .catch(() => null);
+    const channel = await interaction.guild.channels.fetch(config.welcomeChannelId).catch(() => null);
 
     if (!channel || !channel.isTextBased()) {
       await interaction.reply({
-        content: '❌ Der gespeicherte Welcome-Channel ist ungültig oder nicht mehr vorhanden.',
+        content: '❌ Der gespeicherte Welcome-Channel ist ungültig.',
         ephemeral: true
       });
       return;
     }
 
     await channel.send({
-      embeds: [buildWelcomeEmbed(interaction.guild.name)]
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('👋 Welcome')
+          .setDescription(config.welcomeMessage || DEFAULT_WELCOME_MESSAGE)
+          .setColor(0x22c55e)
+          .setFooter({ text: 'Step Mod!Z BOT • Welcome' })
+          .setTimestamp()
+      ]
     });
 
     await interaction.reply({
-      content: `✅ Die Welcome Nachricht wurde erfolgreich in ${channel} gesendet.`,
+      content: `✅ Welcome-Nachricht wurde in ${channel} gesendet.`,
       ephemeral: true
     });
   }

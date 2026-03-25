@@ -3,8 +3,14 @@ import {
   PermissionFlagsBits,
   EmbedBuilder
 } from 'discord.js';
-import { buildTicketPanelEmbed, buildTicketPanelRow } from '../utils/tickets.js';
+import { buildTicketPanelRow } from '../utils/tickets.js';
 import { getGuildConfig } from '../utils/config.js';
+
+const DEFAULT_TICKET_MESSAGE = [
+  'Benötigst du Hilfe von einem Admin oder Moderator?',
+  '',
+  'Klicke auf den Button unten, um ein privates Ticket zu öffnen.'
+].join('\n');
 
 export default {
   data: new SlashCommandBuilder()
@@ -16,36 +22,29 @@ export default {
     const config = getGuildConfig(interaction.guild.id);
 
     if (!config?.ticketCategoryId) {
-      const embed = new EmbedBuilder()
-        .setTitle('❌ Ticket Setup fehlt')
-        .setDescription(
-          [
-            'Für diesen Server wurde noch keine Ticket-Kategorie gesetzt.',
-            '',
-            'Nutze **`/setup`** und wähle:',
-            '• eine **Ticket Kategorie**',
-            '• optional eine **Ticket Support Rolle**',
-            '',
-            'Danach kannst du das Ticket Panel senden.'
-          ].join('\n')
-        )
-        .setFooter({ text: 'Step Mod!Z BOT • Ticket Hilfe' })
-        .setTimestamp();
-
       await interaction.reply({
-        embeds: [embed],
+        content: '❌ Es wurde noch keine Ticket-Kategorie gesetzt. Nutze /setup oder Schnell Einrichtung.',
         ephemeral: true
       });
       return;
     }
 
+    const text = config.ticketPanelMessage || DEFAULT_TICKET_MESSAGE;
+
     await interaction.channel.send({
-      embeds: [buildTicketPanelEmbed()],
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('🎫 Support Tickets')
+          .setDescription(text)
+          .setColor(0x22c55e)
+          .setFooter({ text: 'Step Mod!Z BOT • Ticket Panel' })
+          .setTimestamp()
+      ],
       components: [buildTicketPanelRow()]
     });
 
     await interaction.reply({
-      content: '✅ Das Ticket-Panel wurde erfolgreich in diesem Channel gesendet.',
+      content: '✅ Das Ticket-Panel wurde erfolgreich gesendet.',
       ephemeral: true
     });
   }

@@ -59,8 +59,7 @@ function verificationPublicOverwrites(guild) {
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.ReadMessageHistory
-      ],
-      deny: [PermissionsBitField.Flags.SendMessages]
+      ]
     },
     {
       id: guild.client.user.id,
@@ -180,7 +179,6 @@ export async function runAutoSetup(guild) {
 
   const verifiedOverwrites = verifiedOnlyOverwrites(guild, verifyRole.id);
 
-  // Nur Verifizierte
   const welcomeCategory = await ensureCategory(guild, 'Welcome', verifiedOverwrites);
   const welcomeChannel = await ensureTextChannel(
     guild,
@@ -226,7 +224,6 @@ export async function runAutoSetup(guild) {
     verifiedOverwrites
   );
 
-  // Für alle sichtbar
   const verificationCategory = await ensureCategory(
     guild,
     'Verification',
@@ -240,7 +237,6 @@ export async function runAutoSetup(guild) {
     verificationPublicOverwrites(guild)
   );
 
-  // Nur Owner
   const verificationSetupChannel = await ensureTextChannel(
     guild,
     'verification-setup',
@@ -262,7 +258,6 @@ export async function runAutoSetup(guild) {
 
   setGuildConfig(guild.id, newConfig);
 
-  // Bestehende Member: Unverify setzen, außer Owner/Bots/Verifizierte
   const members = await guild.members.fetch().catch(() => null);
   if (members) {
     for (const [, member] of members) {

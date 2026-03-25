@@ -4,77 +4,89 @@ import {
   ButtonStyle,
   ChannelType,
   EmbedBuilder,
-  PermissionFlagsBits
+  PermissionsBitField
 } from 'discord.js';
 import { getGuildConfig } from './config.js';
-
-function sanitizeName(value) {
-  return value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 20);
-}
-
-export function buildTicketPanelEmbed() {
-  return new EmbedBuilder()
-    .setTitle('🎫 Support Tickets')
-    .setDescription(
-      [
-        'Benötigst du Hilfe von einem Admin oder Moderator?',
-        '',
-        'Klicke auf den Button unten, um ein privates Ticket zu öffnen.'
-      ].join('\n')
-    )
-    .setFooter({ text: 'Step Mod!Z BOT • Ticket System' })
-    .setTimestamp();
-}
 
 export function buildTicketPanelRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('stepmodz_open_ticket')
-      .setLabel('Ticket öffnen')
-      .setEmoji('🎫')
+      .setLabel('🎫 Ticket öffnen')
       .setStyle(ButtonStyle.Primary)
   );
 }
 
-export function buildCloseTicketRow() {
+function buildCloseTicketRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('stepmodz_close_ticket')
-      .setLabel('Ticket schließen')
-      .setEmoji('🔒')
+      .setLabel('🔒 Ticket schließen')
       .setStyle(ButtonStyle.Danger)
   );
 }
 
-export async function createTicketChannel(interaction) {
-  const config = getGuildConfig(interaction.guild.id);
+function sanitizeChannelName(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9äöüß-_]/gi, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+}
 
-  if (!config?.ticketCategoryId) {
-    throw new Error('Für diesen Server wurde keine Ticket-Kategorie gesetzt.');
+export async function createTicketChannel(interaction) {
+  const config = getGuildConfig(interaction.guild.id) || {};
+
+  if (!config.ticketCategoryId) {
+    throw new Error('TICKET_CATEGORY_MISSING');
   }
 
-  const cleanName = sanitizeName(interaction.user.username);
-  const channelName = `ticket-${cleanName}`;
+  const ticketCategory = interaction.guild.channels.cache.get(config.ticketCategoryId);
+  if (!ticketCategory) {
+    throw new Error('TICKET_CATEGORY_INVALID');
+  }
 
   const existing = interaction.guild.channels.cache.find(
-    (channel) => channel.name === channelName
+    (c) =>
+      c.parentId === ticketCategory.id &&
+      c.type === ChannelType.GuildText &&
+      c.topic === `ticket-owner:${interaction.user.id}`
   );
 
   if (existing) {
-    return { exists: true, channel: existing };
+    return { exists: true, channel: existing.toString() };
   }
 
   const permissionOverwrites = [
     {
       id: interaction.guild.roles.everyone.id,
-      deny: [PermissionFlagsBits.ViewChannel]
+      deny: [PermissionsBitField.Flags.ViewChannel]
     },
     {
       id: interaction.user.id,
       allow: [
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.ReadMessageHistory
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ]
+    },
+    {
+      id: interaction.guild.ownerId,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ]
+    },
+    {
+      id: interaction.guild.client.user.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages
       ]
     }
   ];
@@ -83,36 +95,42 @@ export async function createTicketChannel(interaction) {
     permissionOverwrites.push({
       id: config.ticketSupportRoleId,
       allow: [
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.ReadMessageHistory
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory
       ]
     });
   }
 
+  const channelName = sanitizeChannelName(`ticket-${interaction.user.username}`);
+
   const channel = await interaction.guild.channels.create({
     name: channelName,
     type: ChannelType.GuildText,
-    parent: config.ticketCategoryId,
+    parent: ticketCategory.id,
+    topic: `ticket-owner:${interaction.user.id}`,
     permissionOverwrites
   });
 
   const embed = new EmbedBuilder()
-    .setTitle('🎫 Ticket erstellt')
+    .setTitle('🎫 Support Ticket')
     .setDescription(
       [
-        `${interaction.user}, dein Ticket wurde erstellt.`,
+        `Hallo ${interaction.user},`,
         '',
-        'Bitte beschreibe dein Anliegen so genau wie möglich.'
+        'dein Ticket wurde erstellt.',
+        'Beschreibe bitte dein Anliegen so genau wie möglich.'
       ].join('\n')
     )
+    .setColor(0x22c55e)
+    .setFooter({ text: 'Step Mod!Z BOT • Ticket' })
     .setTimestamp();
 
   await channel.send({
-    content: config.ticketSupportRoleId ? `<@&${config.ticketSupportRoleId}>` : undefined,
+    content: config.ticketSupportRoleId ? `<@&${config.ticketSupportRoleId}>` : null,
     embeds: [embed],
     components: [buildCloseTicketRow()]
   });
 
-  return { exists: false, channel };
+  return { exists: false, channel: channel.toString() };
 }

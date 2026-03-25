@@ -11,11 +11,15 @@ import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
-function botBaseOverwrites(guild, verifyRoleId = null) {
-  const overwrites = [
+function botBaseOverwrites(guild) {
+  return [
     {
       id: guild.roles.everyone.id,
-      deny: [PermissionsBitField.Flags.ViewChannel]
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ],
+      deny: [PermissionsBitField.Flags.SendMessages]
     },
     {
       id: guild.ownerId,
@@ -36,19 +40,6 @@ function botBaseOverwrites(guild, verifyRoleId = null) {
       ]
     }
   ];
-
-  if (verifyRoleId) {
-    overwrites.push({
-      id: verifyRoleId,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.ReadMessageHistory
-      ],
-      deny: [PermissionsBitField.Flags.SendMessages]
-    });
-  }
-
-  return overwrites;
 }
 
 export default {
@@ -72,8 +63,12 @@ export default {
         category = await guild.channels.create({
           name: 'Step Mod!Z BOT',
           type: ChannelType.GuildCategory,
-          permissionOverwrites: botBaseOverwrites(guild, config.verifyRoleId)
+          permissionOverwrites: botBaseOverwrites(guild)
         });
+      } else {
+        await category.edit({
+          permissionOverwrites: botBaseOverwrites(guild)
+        }).catch(() => null);
       }
 
       let channel = guild.channels.cache.find(
@@ -88,8 +83,13 @@ export default {
           name: 'step-modz-bot',
           type: ChannelType.GuildText,
           parent: category.id,
-          permissionOverwrites: botBaseOverwrites(guild, config.verifyRoleId)
+          permissionOverwrites: botBaseOverwrites(guild)
         });
+      } else {
+        await channel.edit({
+          parent: category.id,
+          permissionOverwrites: botBaseOverwrites(guild)
+        }).catch(() => null);
       }
 
       const embed = new EmbedBuilder()

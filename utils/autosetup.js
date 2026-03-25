@@ -1,7 +1,6 @@
 import {
   ChannelType,
-  PermissionsBitField,
-  EmbedBuilder
+  PermissionsBitField
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from './config.js';
 import { buildTicketPanelRow } from './tickets.js';
@@ -98,11 +97,15 @@ function validatorPublicOverwrites(guild) {
   ];
 }
 
-function botBaseOverwrites(guild, verifyRoleId) {
+function botBaseOverwrites(guild) {
   return [
     {
       id: guild.roles.everyone.id,
-      deny: [PermissionsBitField.Flags.ViewChannel]
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ],
+      deny: [PermissionsBitField.Flags.SendMessages]
     },
     {
       id: guild.ownerId,
@@ -121,14 +124,6 @@ function botBaseOverwrites(guild, verifyRoleId) {
         PermissionsBitField.Flags.ManageChannels,
         PermissionsBitField.Flags.ManageMessages
       ]
-    },
-    {
-      id: verifyRoleId,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.ReadMessageHistory
-      ],
-      deny: [PermissionsBitField.Flags.SendMessages]
     }
   ];
 }
@@ -167,7 +162,10 @@ async function ensureTextChannel(guild, name, parentId, overwrites) {
       permissionOverwrites: overwrites
     });
   } else {
-    await channel.edit({ parent: parentId, permissionOverwrites: overwrites }).catch(() => null);
+    await channel.edit({
+      parent: parentId,
+      permissionOverwrites: overwrites
+    }).catch(() => null);
   }
 
   return channel;
@@ -253,14 +251,14 @@ export async function runAutoSetup(guild) {
   const botCategory = await ensureCategory(
     guild,
     'Step Mod!Z BOT',
-    botBaseOverwrites(guild, verifyRole.id)
+    botBaseOverwrites(guild)
   );
 
   const botChannel = await ensureTextChannel(
     guild,
     'step-modz-bot',
     botCategory.id,
-    botBaseOverwrites(guild, verifyRole.id)
+    botBaseOverwrites(guild)
   );
 
   const newConfig = {
@@ -277,7 +275,6 @@ export async function runAutoSetup(guild) {
 
   setGuildConfig(guild.id, newConfig);
 
-  // Alle bestehenden normalen Mitglieder bekommen Unverify, außer Owner und bereits Verify
   const members = await guild.members.fetch().catch(() => null);
   if (members) {
     for (const [, member] of members) {

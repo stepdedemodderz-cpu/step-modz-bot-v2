@@ -11,6 +11,33 @@ import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
+function ownerOnlyOverwrites(guild) {
+  return [
+    {
+      id: guild.roles.everyone.id,
+      deny: [PermissionsBitField.Flags.ViewChannel]
+    },
+    {
+      id: guild.ownerId,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ]
+    },
+    {
+      id: guild.client.user.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages
+      ]
+    }
+  ];
+}
+
 export default {
   name: 'guildCreate',
   async execute(guild) {
@@ -32,12 +59,7 @@ export default {
         category = await guild.channels.create({
           name: 'Step Mod!Z BOT',
           type: ChannelType.GuildCategory,
-          permissionOverwrites: [
-            {
-              id: guild.roles.everyone.id,
-              allow: [PermissionsBitField.Flags.ViewChannel]
-            }
-          ]
+          permissionOverwrites: ownerOnlyOverwrites(guild)
         });
       }
 
@@ -53,27 +75,24 @@ export default {
           name: 'step-modz-bot',
           type: ChannelType.GuildText,
           parent: category.id,
-          permissionOverwrites: [
-            {
-              id: guild.roles.everyone.id,
-              allow: [
-                PermissionsBitField.Flags.ViewChannel,
-                PermissionsBitField.Flags.SendMessages,
-                PermissionsBitField.Flags.ReadMessageHistory
-              ]
-            }
-          ]
+          permissionOverwrites: ownerOnlyOverwrites(guild)
         });
       }
 
       const embed = new EmbedBuilder()
         .setTitle('Step Mod!Z BOT')
         .setDescription(
-          'Ich bin **Step Mod!Z BOT**.\n\n' +
-          'Klicke auf **Info**, bekomme eine Übersicht & Einrichtung.\n\n' +
-          'Wähle eine Kategorie aus dem Dropdown-Menü,\n' +
-          'um meine Befehlsliste anzuzeigen.\n' +
-          'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.'
+          [
+            'Ich bin **Step Mod!Z BOT**.',
+            '',
+            'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
+            '',
+            'Wähle eine Kategorie aus dem Dropdown-Menü,',
+            'um meine Befehlsliste anzuzeigen.',
+            'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
+            'Lasse über das Dropdown-Menü, **Step BOT** alles einrichten.',
+            'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
+          ].join('\n')
         )
         .setColor(0x5865f2)
         .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
@@ -98,11 +117,7 @@ export default {
       const menuRow = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId('stepmodz_help_menu')
-          .setPlaceholder(
-            language === 'en'
-              ? 'Choose a help category'
-              : 'Wähle eine Hilfekategorie'
-          )
+          .setPlaceholder(language === 'en' ? 'Dropdown Menu' : 'Dropdown Menü')
           .addOptions(getHelpMenuOptions(language))
       );
 

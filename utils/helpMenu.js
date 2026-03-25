@@ -4,6 +4,11 @@ export function getHelpMenuOptions(language = 'de') {
   if (language === 'en') {
     return [
       {
+        label: 'Dropdown Menu',
+        value: 'dropdown_info',
+        description: 'Choose a category below'
+      },
+      {
         label: 'Step BOT Quick Setup',
         value: 'quicksetup',
         description: 'Automatically create the full base structure'
@@ -42,6 +47,11 @@ export function getHelpMenuOptions(language = 'de') {
   }
 
   return [
+    {
+      label: 'Dropdown Menü',
+      value: 'dropdown_info',
+      description: 'Wähle darunter eine Kategorie aus'
+    },
     {
       label: 'Step BOT Schnell Einrichtung',
       value: 'quicksetup',
@@ -83,88 +93,96 @@ export function getHelpMenuOptions(language = 'de') {
 export function buildHelpEmbed(language = 'de', topic = 'setup') {
   const map = {
     de: {
+      dropdown_info: {
+        title: '📂 Dropdown Menü',
+        description:
+          'Wähle einfach unten eine Kategorie aus.\n\n' +
+          'Dann zeigt dir der Bot die passende Erklärung an.'
+      },
       quicksetup: {
         title: '⚡ Step BOT Schnell Einrichtung',
         description:
           'Mit dieser Option richtet der Bot die komplette Grundstruktur automatisch ein.\n\n' +
           '**Automatisch erstellt werden:**\n' +
           '• Welcome\n' +
-          '• Roles\n' +
+          '• Verification\n' +
           '• Ticket\n' +
           '• Whitelist\n' +
           '• Validator\n\n' +
-          '**Danach musst du fast nichts mehr selbst machen.**'
+          'Diese Funktion darf nur der Server-Besitzer nutzen.'
       },
       setup: {
         title: '🛠️ Setup',
         description:
           '`/setup` speichert nur Einstellungen.\n\n' +
-          '**Es erstellt keine Channels oder Kategorien automatisch.**\n\n' +
-          'Wenn du die komplette Struktur automatisch erstellen willst, nutze **Step BOT Schnell Einrichtung**.'
+          'Es erstellt keine Kategorien oder Channels automatisch.\n\n' +
+          'Die automatische Einrichtung läuft nur über **Step BOT Schnell Einrichtung**.'
       },
       verify: {
         title: '🔐 Verify System',
         description:
-          'Verify ist optional.\n\n' +
-          '**Manuelle Einrichtung:**\n' +
-          '1. Verify Rolle mit `/setup` speichern\n' +
-          '2. Danach `/verify-panel` senden'
+          'Das Verify System arbeitet mit zwei Rollen:\n' +
+          '• Verify\n' +
+          '• Unverify\n\n' +
+          'Beim Join bekommt ein Nutzer automatisch **Unverify**.\n' +
+          'Beim Klick auf den Verify-Button wird **Unverify entfernt** und **Verify hinzugefügt**.'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
           'Erstellt private Support-Tickets.\n\n' +
-          '**Manuelle Einrichtung:**\n' +
-          '1. Ticket Kategorie mit `/setup` speichern oder Schnell Einrichtung nutzen\n' +
-          '2. Danach `/ticket-panel` senden\n' +
-          '3. Eigene Nachricht mit `/ticket-nachricht` speichern'
+          'Die Ticket-Nachricht kann mit `/ticket-nachricht` angepasst werden.\n' +
+          'Danach kannst du mit `/ticket-panel` das Panel erneut senden.'
       },
       whitelist: {
         title: '📋 Whitelist System',
         description:
-          'Erstellt Bewerbungs-Channels für DayZ.\n\n' +
-          '**Manuelle Einrichtung:**\n' +
-          '1. Whitelist Kategorie mit `/setup` speichern oder Schnell Einrichtung nutzen\n' +
-          '2. Danach `/whitelist-panel` senden\n' +
-          '3. Eigene Nachricht mit `/whitelist-nachricht` speichern'
+          'Erstellt Whitelist-Bewerbungen für DayZ.\n\n' +
+          'Die Whitelist-Nachricht kann mit `/whitelist-nachricht` angepasst werden.\n' +
+          'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.'
       },
       validator: {
         title: '🧪 Validator',
         description:
           'Mit `/validate` prüfst du JSON-, XML- und DayZ-Dateien.\n\n' +
-          'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.'
+          'Diesen Bereich dürfen alle User lesen und benutzen.'
       },
       settings: {
         title: '⚙️ Settings',
         description:
-          'Mit `/settings` siehst du alle aktuell gespeicherten Einstellungen deines Servers.'
+          'Mit `/settings` siehst du die aktuell gespeicherten Einstellungen.'
       }
     },
     en: {
+      dropdown_info: {
+        title: '📂 Dropdown Menu',
+        description:
+          'Choose a category below and the bot will show the matching explanation.'
+      },
       quicksetup: {
         title: '⚡ Step BOT Quick Setup',
         description:
-          'This option automatically creates the full base structure for you.'
+          'This option automatically creates the full base structure.'
       },
       setup: {
         title: '🛠️ Setup',
         description:
-          '`/setup` only saves settings. It does not create channels or categories automatically.'
+          '`/setup` only saves settings and does not create channels automatically.'
       },
       verify: {
         title: '🔐 Verify System',
         description:
-          'Verify is optional. Save a verify role and then send `/verify-panel`.'
+          'Users get **Unverify** on join and it switches to **Verify** when they click the button.'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
-          'Creates private support tickets. Use `/ticket-panel` and optionally `/ticket-nachricht`.'
+          'Creates private support tickets.'
       },
       whitelist: {
         title: '📋 Whitelist System',
         description:
-          'Creates DayZ whitelist applications. Use `/whitelist-panel` and optionally `/whitelist-nachricht`.'
+          'Creates DayZ whitelist applications.'
       },
       validator: {
         title: '🧪 Validator',
@@ -174,7 +192,7 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       settings: {
         title: '⚙️ Settings',
         description:
-          'Use `/settings` to show your saved server settings.'
+          'Shows your saved settings.'
       }
     }
   };

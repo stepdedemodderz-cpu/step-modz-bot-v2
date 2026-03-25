@@ -32,7 +32,27 @@ export default {
 
   async execute(interaction, client) {
     try {
+      const isOwner = interaction.guild && interaction.user.id === interaction.guild.ownerId;
+
       if (interaction.isChatInputCommand()) {
+        if (interaction.commandName !== 'validate' && !isOwner) {
+          await interaction.reply({
+            content: '❌ Diesen Befehl darf nur der Server-Besitzer benutzen.',
+            ephemeral: true
+          });
+          return;
+        }
+
+        if (interaction.commandName === 'validate') {
+          if (interaction.channel?.name !== 'json-xml-validator') {
+            await interaction.reply({
+              content: '❌ `/validate` darf nur im Channel `json-xml-validator` benutzt werden.',
+              ephemeral: true
+            });
+            return;
+          }
+        }
+
         const command = client.commands.get(interaction.commandName);
 
         if (!command) {
@@ -52,6 +72,14 @@ export default {
         let language = config.language || 'de';
 
         if (interaction.customId === 'stepmodz_lang_de') {
+          if (!isOwner) {
+            await interaction.reply({
+              content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
+              ephemeral: true
+            });
+            return;
+          }
+
           setGuildConfig(interaction.guild.id, { language: 'de' });
           await interaction.reply({
             content: t('de', 'languageSetGerman'),
@@ -61,6 +89,14 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_lang_en') {
+          if (!isOwner) {
+            await interaction.reply({
+              content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
+              ephemeral: true
+            });
+            return;
+          }
+
           setGuildConfig(interaction.guild.id, { language: 'en' });
           await interaction.reply({
             content: t('en', 'languageSetEnglish'),
@@ -81,17 +117,17 @@ export default {
         language = getGuildConfig(interaction.guild.id).language || language;
 
         if (interaction.customId === 'stepmodz_open_info') {
+          if (!isOwner) {
+            await interaction.reply({
+              content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
+              ephemeral: true
+            });
+            return;
+          }
+
           await interaction.reply({
             embeds: [buildInfoEmbed(language)],
             components: [buildCloseRow()],
-            ephemeral: true
-          });
-          return;
-        }
-
-        if (interaction.customId === 'stepmodz_rules_accept') {
-          await interaction.reply({
-            content: '✅ Du hast die Regeln akzeptiert.',
             ephemeral: true
           });
           return;
@@ -175,6 +211,14 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_whitelist_accept') {
+          if (!isOwner) {
+            await interaction.reply({
+              content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
+              ephemeral: true
+            });
+            return;
+          }
+
           await handleWhitelistDecision(interaction, true);
           await interaction.reply({
             content: '✅ Bewerbung angenommen.',
@@ -184,6 +228,14 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_whitelist_deny') {
+          if (!isOwner) {
+            await interaction.reply({
+              content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
+              ephemeral: true
+            });
+            return;
+          }
+
           await handleWhitelistDecision(interaction, false);
           await interaction.reply({
             content: '❌ Bewerbung abgelehnt.',
@@ -199,8 +251,25 @@ export default {
         const config = getGuildConfig(interaction.guild.id);
         const language = config.language || 'de';
 
+        if (!isOwner) {
+          await interaction.reply({
+            content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
+            ephemeral: true
+          });
+          return;
+        }
+
         if (interaction.customId === 'stepmodz_help_menu') {
           const selected = interaction.values[0];
+
+          if (selected === 'dropdown_info') {
+            await interaction.reply({
+              embeds: [buildHelpEmbed(language, selected)],
+              components: [buildCloseRow()],
+              ephemeral: true
+            });
+            return;
+          }
 
           if (selected === 'quicksetup') {
             await interaction.deferReply({ ephemeral: true });

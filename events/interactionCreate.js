@@ -64,6 +64,14 @@ export default {
           return;
         }
 
+        if (interaction.customId === 'stepmodz_rules_accept') {
+          await interaction.reply({
+            content: '✅ Du hast die Regeln akzeptiert.',
+            ephemeral: true
+          });
+          return;
+        }
+
         if (interaction.customId === 'stepmodz_verify') {
           await interaction.deferReply({ ephemeral: true });
 

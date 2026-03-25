@@ -11,27 +11,27 @@ export function getHelpMenuOptions(language = 'de') {
       {
         label: 'Setup',
         value: 'setup',
-        description: 'Learn how manual setup works'
+        description: 'How manual setup works'
       },
       {
         label: 'Verify System',
         value: 'verify',
-        description: 'How verify works'
+        description: 'Verification and roles'
       },
       {
         label: 'Ticket System',
         value: 'tickets',
-        description: 'How tickets work'
+        description: 'Private support tickets'
       },
       {
         label: 'Whitelist System',
         value: 'whitelist',
-        description: 'How whitelist works'
+        description: 'DayZ whitelist applications'
       },
       {
         label: 'Validator',
         value: 'validator',
-        description: 'How the validator works'
+        description: 'JSON, XML and DayZ file checks'
       },
       {
         label: 'Settings',
@@ -50,32 +50,32 @@ export function getHelpMenuOptions(language = 'de') {
     {
       label: 'Setup',
       value: 'setup',
-      description: 'Erklärt das manuelle Setup'
+      description: 'Wie das manuelle Setup funktioniert'
     },
     {
       label: 'Verify System',
       value: 'verify',
-      description: 'Erklärt das Verify System'
+      description: 'Verifizierung und Rollen'
     },
     {
       label: 'Ticket System',
       value: 'tickets',
-      description: 'Erklärt das Ticket System'
+      description: 'Private Support-Tickets'
     },
     {
       label: 'Whitelist System',
       value: 'whitelist',
-      description: 'Erklärt das Whitelist System'
+      description: 'DayZ Whitelist-Bewerbungen'
     },
     {
       label: 'Validator',
       value: 'validator',
-      description: 'Erklärt den Validator'
+      description: 'JSON, XML und DayZ-Dateien prüfen'
     },
     {
       label: 'Settings',
       value: 'settings',
-      description: 'Zeigt gespeicherte Einstellungen'
+      description: 'Gespeicherte Einstellungen anzeigen'
     }
   ];
 }
@@ -86,63 +86,65 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       quicksetup: {
         title: '⚡ Step BOT Schnell Einrichtung',
         description:
-          'Wenn du diese Option auswählst, richtet der Bot fast alles automatisch für dich ein.\n\n' +
+          'Mit dieser Option richtet der Bot die komplette Grundstruktur automatisch ein.\n\n' +
           '**Automatisch erstellt werden:**\n' +
           '• Welcome\n' +
           '• Roles\n' +
           '• Ticket\n' +
           '• Whitelist\n' +
           '• Validator\n\n' +
-          '**Danach musst du nur noch wenig selbst machen.**'
+          '**Danach musst du fast nichts mehr selbst machen.**'
       },
       setup: {
         title: '🛠️ Setup',
         description:
           '`/setup` speichert nur Einstellungen.\n\n' +
-          '**Wichtig:**\n' +
-          '• `/setup` erstellt keine Kategorien oder Channels automatisch.\n' +
-          '• Für die automatische Einrichtung nutze **Step BOT Schnell Einrichtung**.'
+          '**Es erstellt keine Channels oder Kategorien automatisch.**\n\n' +
+          'Wenn du die komplette Struktur automatisch erstellen willst, nutze **Step BOT Schnell Einrichtung**.'
       },
       verify: {
         title: '🔐 Verify System',
         description:
           'Verify ist optional.\n\n' +
-          '**So nutzt du es:**\n' +
-          '• optional Verify Rolle mit `/setup` setzen\n' +
-          '• danach `/verify-panel` nutzen'
+          '**Manuelle Einrichtung:**\n' +
+          '1. Verify Rolle mit `/setup` speichern\n' +
+          '2. Danach `/verify-panel` senden'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
-          'Das Ticket System erstellt private Support-Tickets.\n\n' +
-          '**So nutzt du es:**\n' +
-          '• Schnell Einrichtung nutzen oder Ticket Kategorie manuell setzen\n' +
-          '• danach `/ticket-panel` nutzen'
+          'Erstellt private Support-Tickets.\n\n' +
+          '**Manuelle Einrichtung:**\n' +
+          '1. Ticket Kategorie mit `/setup` speichern oder Schnell Einrichtung nutzen\n' +
+          '2. Danach `/ticket-panel` senden\n' +
+          '3. Eigene Nachricht mit `/ticket-nachricht` speichern'
       },
       whitelist: {
         title: '📋 Whitelist System',
         description:
-          'Das Whitelist System erstellt Bewerbungs-Channels.\n\n' +
-          '**So nutzt du es:**\n' +
-          '• Schnell Einrichtung nutzen oder Kategorie manuell setzen\n' +
-          '• danach `/whitelist-panel` nutzen'
+          'Erstellt Bewerbungs-Channels für DayZ.\n\n' +
+          '**Manuelle Einrichtung:**\n' +
+          '1. Whitelist Kategorie mit `/setup` speichern oder Schnell Einrichtung nutzen\n' +
+          '2. Danach `/whitelist-panel` senden\n' +
+          '3. Eigene Nachricht mit `/whitelist-nachricht` speichern'
       },
       validator: {
         title: '🧪 Validator',
         description:
-          'Mit `/validate` kannst du JSON-, XML- und DayZ-Dateien prüfen.'
+          'Mit `/validate` prüfst du JSON-, XML- und DayZ-Dateien.\n\n' +
+          'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.'
       },
       settings: {
         title: '⚙️ Settings',
         description:
-          'Mit `/settings` siehst du deine aktuell gespeicherten Einstellungen.'
+          'Mit `/settings` siehst du alle aktuell gespeicherten Einstellungen deines Servers.'
       }
     },
     en: {
       quicksetup: {
         title: '⚡ Step BOT Quick Setup',
         description:
-          'This option lets the bot automatically create almost everything for you.'
+          'This option automatically creates the full base structure for you.'
       },
       setup: {
         title: '🛠️ Setup',
@@ -152,17 +154,17 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       verify: {
         title: '🔐 Verify System',
         description:
-          'Verify is optional. Set a verify role if needed and then use `/verify-panel`.'
+          'Verify is optional. Save a verify role and then send `/verify-panel`.'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
-          'Use quick setup or set a ticket category manually, then use `/ticket-panel`.'
+          'Creates private support tickets. Use `/ticket-panel` and optionally `/ticket-nachricht`.'
       },
       whitelist: {
         title: '📋 Whitelist System',
         description:
-          'Use quick setup or set a whitelist category manually, then use `/whitelist-panel`.'
+          'Creates DayZ whitelist applications. Use `/whitelist-panel` and optionally `/whitelist-nachricht`.'
       },
       validator: {
         title: '🧪 Validator',
@@ -172,7 +174,7 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       settings: {
         title: '⚙️ Settings',
         description:
-          'Use `/settings` to review saved settings.'
+          'Use `/settings` to show your saved server settings.'
       }
     }
   };

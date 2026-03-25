@@ -1,4 +1,10 @@
-import { Events, EmbedBuilder } from 'discord.js';
+import {
+  Events,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { buildInfoEmbed } from '../utils/infoEmbed.js';
@@ -10,6 +16,15 @@ import {
   createWhitelistChannel,
   handleWhitelistDecision
 } from '../utils/whitelist.js';
+
+function buildCloseRow() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('stepmodz_close_help')
+      .setLabel('Schließen')
+      .setStyle(ButtonStyle.Danger)
+  );
+}
 
 export default {
   name: Events.InteractionCreate,
@@ -54,11 +69,21 @@ export default {
           return;
         }
 
+        if (interaction.customId === 'stepmodz_close_help') {
+          await interaction.update({
+            content: '✅ Geschlossen.',
+            embeds: [],
+            components: []
+          });
+          return;
+        }
+
         language = getGuildConfig(interaction.guild.id).language || language;
 
         if (interaction.customId === 'stepmodz_open_info') {
           await interaction.reply({
             embeds: [buildInfoEmbed(language)],
+            components: [buildCloseRow()],
             ephemeral: true
           });
           return;
@@ -77,7 +102,7 @@ export default {
 
           if (!config?.verifyRoleId) {
             await interaction.editReply({
-              content: '❌ Keine Verify Rolle gesetzt. Nutze zuerst `/setup`.'
+              content: '❌ Keine Verify Rolle gesetzt. Nutze zuerst `/setup` oder Schnell Einrichtung.'
             });
             return;
           }
@@ -93,39 +118,14 @@ export default {
           }
 
           try {
-            if (member.roles.cache.has(verifyRole.id)) {
-              await interaction.editReply({
-                content: 'ℹ️ Du bist bereits verifiziert.'
-              });
-              return;
+            if (!member.roles.cache.has(verifyRole.id)) {
+              await member.roles.add(verifyRole);
             }
-
-            await member.roles.add(verifyRole);
 
             if (config.unverifiedRoleId) {
               const unverifyRole = interaction.guild.roles.cache.get(config.unverifiedRoleId);
               if (unverifyRole && member.roles.cache.has(unverifyRole.id)) {
                 await member.roles.remove(unverifyRole).catch(() => null);
-              }
-            }
-
-            if (config.logChannelId) {
-              const logChannel = interaction.guild.channels.cache.get(config.logChannelId);
-              if (logChannel && logChannel.isTextBased()) {
-                const logEmbed = new EmbedBuilder()
-                  .setTitle('✅ Nutzer verifiziert')
-                  .setDescription(
-                    [
-                      `**User:** ${member.user.tag}`,
-                      `**ID:** ${member.id}`,
-                      `**Verify Rolle:** <@&${verifyRole.id}>`
-                    ].join('\n')
-                  )
-                  .setColor(0x22c55e)
-                  .setFooter({ text: 'Step Mod!Z BOT • Verify Log' })
-                  .setTimestamp();
-
-                await logChannel.send({ embeds: [logEmbed] }).catch(() => null);
               }
             }
 
@@ -138,7 +138,7 @@ export default {
 
             await interaction.editReply({
               content:
-                '❌ Fehler beim Verifizieren. Prüfe, ob der Bot die Rolle verwalten darf und ob seine Rolle über der Verify Rolle steht.'
+                '❌ Fehler beim Verifizieren. Prüfe, ob der Bot Rollen verwalten darf und ob seine Rolle über Verify / Unverify steht.'
             });
             return;
           }
@@ -223,7 +223,7 @@ export default {
                   name: language === 'en' ? 'Created categories' : 'Erstellte Kategorien',
                   value: [
                     `• ${result.welcomeCategory.name}`,
-                    `• ${result.rolesCategory.name}`,
+                    `• ${result.verificationCategory.name}`,
                     `• ${result.ticketCategory.name}`,
                     `• ${result.whitelistCategory.name}`,
                     `• ${result.validatorCategory.name}`
@@ -236,13 +236,15 @@ export default {
               .setTimestamp();
 
             await interaction.editReply({
-              embeds: [embed]
+              embeds: [embed],
+              components: [buildCloseRow()]
             });
             return;
           }
 
           await interaction.reply({
             embeds: [buildHelpEmbed(language, selected)],
+            components: [buildCloseRow()],
             ephemeral: true
           });
           return;

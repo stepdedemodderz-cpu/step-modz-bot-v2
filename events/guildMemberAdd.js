@@ -1,11 +1,21 @@
-import { Events } from 'discord.js';
-import { sendWelcomeMessage } from '../utils/welcome.js';
+import { getGuildConfig } from '../utils/config.js';
 
 export default {
-  name: Events.GuildMemberAdd,
-  once: false,
-
+  name: 'guildMemberAdd',
   async execute(member) {
-    await sendWelcomeMessage(member);
+    try {
+      const config = getGuildConfig(member.guild.id);
+
+      if (!config?.unverifiedRoleId) return;
+
+      const unverifyRole = member.guild.roles.cache.get(config.unverifiedRoleId);
+      if (!unverifyRole) return;
+
+      if (!member.roles.cache.has(unverifyRole.id)) {
+        await member.roles.add(unverifyRole).catch(() => null);
+      }
+    } catch (error) {
+      console.error('guildMemberAdd Fehler:', error);
+    }
   }
 };

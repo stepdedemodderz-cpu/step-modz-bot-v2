@@ -76,7 +76,21 @@ async function ensureTextChannel(guild, name, parentId) {
   return channel;
 }
 
-function simpleEmbed(title, description, footer) {
+async function ensureRole(guild, name, color = null) {
+  let role = guild.roles.cache.find((r) => r.name === name);
+
+  if (!role) {
+    role = await guild.roles.create({
+      name,
+      color: color || undefined,
+      reason: 'Step Mod!Z BOT Schnell Einrichtung'
+    });
+  }
+
+  return role;
+}
+
+function infoEmbed(title, description, footer = 'Step Mod!Z BOT • Schnell Einrichtung') {
   return new EmbedBuilder()
     .setTitle(title)
     .setDescription(description)
@@ -88,23 +102,39 @@ function simpleEmbed(title, description, footer) {
 export async function runAutoSetup(guild) {
   const currentConfig = getGuildConfig(guild.id) || {};
 
+  // Rollen automatisch erstellen
+  const verifyRole =
+    (currentConfig.verifyRoleId && guild.roles.cache.get(currentConfig.verifyRoleId)) ||
+    await ensureRole(guild, 'Verify');
+
+  const unverifyRole =
+    (currentConfig.unverifiedRoleId && guild.roles.cache.get(currentConfig.unverifiedRoleId)) ||
+    await ensureRole(guild, 'Unverify');
+
+  // Welcome
   const welcomeCategory = await ensureCategory(guild, 'Welcome');
-  const welcomeChannel = await ensureTextChannel(guild, 'welcome-info', welcomeCategory.id);
+  const welcomeChannel = await ensureTextChannel(guild, 'welcome', welcomeCategory.id);
 
-  const rolesCategory = await ensureCategory(guild, 'Roles');
-  const rolesChannel = await ensureTextChannel(guild, 'roles', rolesCategory.id);
+  // Verification
+  const verificationCategory = await ensureCategory(guild, 'Verification');
+  const verificationChannel = await ensureTextChannel(guild, 'verified', verificationCategory.id);
 
+  // Ticket
   const ticketCategory = await ensureCategory(guild, 'Ticket');
   const ticketChannel = await ensureTextChannel(guild, 'ticket', ticketCategory.id);
 
+  // Whitelist
   const whitelistCategory = await ensureCategory(guild, 'Whitelist');
   const whitelistChannel = await ensureTextChannel(guild, 'whitelist', whitelistCategory.id);
 
+  // Validator
   const validatorCategory = await ensureCategory(guild, 'Validator');
   const validatorChannel = await ensureTextChannel(guild, 'json-validator', validatorCategory.id);
 
   const newConfig = {
     ...currentConfig,
+    verifyRoleId: verifyRole.id,
+    unverifiedRoleId: unverifyRole.id,
     welcomeChannelId: currentConfig.welcomeChannelId || welcomeChannel.id,
     ticketCategoryId: currentConfig.ticketCategoryId || ticketCategory.id,
     whitelistCategoryId: currentConfig.whitelistCategoryId || whitelistCategory.id,
@@ -117,7 +147,7 @@ export async function runAutoSetup(guild) {
 
   await welcomeChannel.send({
     embeds: [
-      simpleEmbed(
+      infoEmbed(
         '👋 Welcome',
         [
           'Hier steht nur das Wichtigste.',
@@ -138,32 +168,44 @@ export async function runAutoSetup(guild) {
     ]
   });
 
-  const roleMessages = [
-    simpleEmbed(
-      '🛡️ Roles',
-      [
-        'Hier steht nur das Wichtigste.',
-        '',
-        'Verify ist optional.',
-        'Wenn du Verify nutzen willst, setze eine Verify Rolle mit `/setup`.',
-        'Danach sende das Panel mit `/verify-panel`.'
-      ].join('\n'),
-      'Step Mod!Z BOT • Roles'
-    )
-  ];
-
-  if (newConfig.verifyRoleId) {
-    roleMessages.push(buildVerifyEmbed());
-  }
-
-  await rolesChannel.send({
-    embeds: roleMessages,
-    components: newConfig.verifyRoleId ? [buildVerifyRow()] : []
+  await verificationChannel.send({
+    embeds: [
+      infoEmbed(
+        '🔐 Verification',
+        [
+          'Wie funktioniert es? Was musst du machen?',
+          '',
+          'Erstelle in deinen Servereinstellungen zuerst zwei neue Rollen:',
+          '• Verify',
+          '• Unverify',
+          '(Farblich auswählen wenn gewünscht)',
+          '',
+          'Danach jede Kategorie und jeden Kanal bearbeiten.',
+          'Rechtsklick auf alle Kategorien und Kanäle links in der Leiste.',
+          '',
+          'Kategorie und / oder Kanal bearbeiten',
+          '• Setze das Häkchen auf private Kategorie / Kanal',
+          '• Füge nun allen Kategorien und Kanälen die Rolle Verify hinzu',
+          '',
+          'WICHTIG:',
+          '• Diesem Kanal die Rolle Unverify hinzufügen',
+          '',
+          'Nach Klick auf Verifizieren werden alle Kategorien und Kanäle angezeigt.',
+          '',
+          'Der Bot macht automatisch:',
+          '• Unverify entfernen',
+          '• Verify hinzufügen'
+        ].join('\n'),
+        'Step Mod!Z BOT • Verification'
+      ),
+      buildVerifyEmbed(guild.id)
+    ],
+    components: [buildVerifyRow()]
   });
 
   await ticketChannel.send({
     embeds: [
-      simpleEmbed(
+      infoEmbed(
         '🎫 Ticket',
         [
           'Hier steht nur das Wichtigste.',
@@ -171,7 +213,9 @@ export async function runAutoSetup(guild) {
           'Die Ticket-Nachricht kann geändert werden mit:',
           '`/ticket-nachricht`',
           '',
-          'Danach kannst du mit `/ticket-panel` das Panel erneut senden.'
+          'Danach kannst du mit `/ticket-panel` das Panel erneut senden.',
+          '',
+          'Das Ticket-System erstellt private Support-Tickets.'
         ].join('\n'),
         'Step Mod!Z BOT • Ticket'
       ),
@@ -187,7 +231,7 @@ export async function runAutoSetup(guild) {
 
   await whitelistChannel.send({
     embeds: [
-      simpleEmbed(
+      infoEmbed(
         '📋 Whitelist',
         [
           'Hier steht nur das Wichtigste.',
@@ -195,7 +239,9 @@ export async function runAutoSetup(guild) {
           'Die Whitelist-Nachricht kann geändert werden mit:',
           '`/whitelist-nachricht`',
           '',
-          'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.'
+          'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.',
+          '',
+          'Das Whitelist-System erstellt Bewerbungs-Channels für DayZ.'
         ].join('\n'),
         'Step Mod!Z BOT • Whitelist'
       ),
@@ -211,7 +257,7 @@ export async function runAutoSetup(guild) {
 
   await validatorChannel.send({
     embeds: [
-      simpleEmbed(
+      infoEmbed(
         '🧪 Validator',
         [
           'Hier steht nur das Wichtigste.',
@@ -226,7 +272,7 @@ export async function runAutoSetup(guild) {
 
   return {
     welcomeCategory,
-    rolesCategory,
+    verificationCategory,
     ticketCategory,
     whitelistCategory,
     validatorCategory

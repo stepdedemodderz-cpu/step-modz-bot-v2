@@ -59,53 +59,27 @@ function verificationPublicOverwrites(guild) {
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.ReadMessageHistory
-      ]
-    },
-    {
-      id: guild.client.user.id,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory,
-        PermissionsBitField.Flags.ManageChannels,
-        PermissionsBitField.Flags.ManageMessages
-      ]
-    }
-  ];
-}
-
-function validatorPublicOverwrites(guild) {
-  return [
-    {
-      id: guild.roles.everyone.id,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory
-      ]
-    },
-    {
-      id: guild.client.user.id,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory,
-        PermissionsBitField.Flags.ManageChannels,
-        PermissionsBitField.Flags.ManageMessages
-      ]
-    }
-  ];
-}
-
-function botBaseOverwrites(guild) {
-  return [
-    {
-      id: guild.roles.everyone.id,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.ReadMessageHistory
       ],
       deny: [PermissionsBitField.Flags.SendMessages]
+    },
+    {
+      id: guild.client.user.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages
+      ]
+    }
+  ];
+}
+
+function verifiedOnlyOverwrites(guild, verifyRoleId) {
+  return [
+    {
+      id: guild.roles.everyone.id,
+      deny: [PermissionsBitField.Flags.ViewChannel]
     },
     {
       id: guild.ownerId,
@@ -124,6 +98,14 @@ function botBaseOverwrites(guild) {
         PermissionsBitField.Flags.ManageChannels,
         PermissionsBitField.Flags.ManageMessages
       ]
+    },
+    {
+      id: verifyRoleId,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ],
+      deny: [PermissionsBitField.Flags.SendMessages]
     }
   ];
 }
@@ -196,14 +178,55 @@ export async function runAutoSetup(guild) {
     (currentConfig.unverifiedRoleId && guild.roles.cache.get(currentConfig.unverifiedRoleId)) ||
     await ensureRole(guild, 'Unverify');
 
-  const welcomeCategory = await ensureCategory(guild, 'Welcome', ownerOnlyOverwrites(guild));
+  const verifiedOverwrites = verifiedOnlyOverwrites(guild, verifyRole.id);
+
+  // Nur Verifizierte
+  const welcomeCategory = await ensureCategory(guild, 'Welcome', verifiedOverwrites);
   const welcomeChannel = await ensureTextChannel(
     guild,
     'welcome',
     welcomeCategory.id,
-    ownerOnlyOverwrites(guild)
+    verifiedOverwrites
   );
 
+  const ticketCategory = await ensureCategory(guild, 'Ticket', verifiedOverwrites);
+  const ticketChannel = await ensureTextChannel(
+    guild,
+    'ticket',
+    ticketCategory.id,
+    verifiedOverwrites
+  );
+
+  const whitelistCategory = await ensureCategory(guild, 'Whitelist', verifiedOverwrites);
+  const whitelistChannel = await ensureTextChannel(
+    guild,
+    'whitelist',
+    whitelistCategory.id,
+    verifiedOverwrites
+  );
+
+  const validatorCategory = await ensureCategory(guild, 'Validator', verifiedOverwrites);
+  const validatorChannel = await ensureTextChannel(
+    guild,
+    'json-xml-validator',
+    validatorCategory.id,
+    verifiedOverwrites
+  );
+
+  const botCategory = await ensureCategory(
+    guild,
+    'Step Mod!Z BOT',
+    verifiedOverwrites
+  );
+
+  const botChannel = await ensureTextChannel(
+    guild,
+    'step-modz-bot',
+    botCategory.id,
+    verifiedOverwrites
+  );
+
+  // Für alle sichtbar
   const verificationCategory = await ensureCategory(
     guild,
     'Verification',
@@ -217,48 +240,12 @@ export async function runAutoSetup(guild) {
     verificationPublicOverwrites(guild)
   );
 
+  // Nur Owner
   const verificationSetupChannel = await ensureTextChannel(
     guild,
     'verification-setup',
     verificationCategory.id,
     ownerOnlyOverwrites(guild)
-  );
-
-  const ticketCategory = await ensureCategory(guild, 'Ticket', ownerOnlyOverwrites(guild));
-  const ticketChannel = await ensureTextChannel(
-    guild,
-    'ticket',
-    ticketCategory.id,
-    ownerOnlyOverwrites(guild)
-  );
-
-  const whitelistCategory = await ensureCategory(guild, 'Whitelist', ownerOnlyOverwrites(guild));
-  const whitelistChannel = await ensureTextChannel(
-    guild,
-    'whitelist',
-    whitelistCategory.id,
-    ownerOnlyOverwrites(guild)
-  );
-
-  const validatorCategory = await ensureCategory(guild, 'Validator', validatorPublicOverwrites(guild));
-  const validatorChannel = await ensureTextChannel(
-    guild,
-    'json-xml-validator',
-    validatorCategory.id,
-    validatorPublicOverwrites(guild)
-  );
-
-  const botCategory = await ensureCategory(
-    guild,
-    'Step Mod!Z BOT',
-    botBaseOverwrites(guild)
-  );
-
-  const botChannel = await ensureTextChannel(
-    guild,
-    'step-modz-bot',
-    botCategory.id,
-    botBaseOverwrites(guild)
   );
 
   const newConfig = {
@@ -275,6 +262,7 @@ export async function runAutoSetup(guild) {
 
   setGuildConfig(guild.id, newConfig);
 
+  // Bestehende Member: Unverify setzen, außer Owner/Bots/Verifizierte
   const members = await guild.members.fetch().catch(() => null);
   if (members) {
     for (const [, member] of members) {
@@ -314,7 +302,6 @@ export async function runAutoSetup(guild) {
       'Erstelle in deinen Servereinstellungen zuerst zwei neue Rollen:',
       '• Verify',
       '• Unverify',
-      '(Farblich auswählen wenn gewünscht)',
       '',
       'Danach jede Kategorie und jeden Kanal bearbeiten.',
       'Rechtsklick auf alle Kategorien und Kanäle links in der Leiste.',
@@ -373,9 +360,7 @@ export async function runAutoSetup(guild) {
       'Hier steht nur das Wichtigste.',
       '',
       'Nutze `/validate` und lade eine JSON- oder XML-Datei hoch.',
-      'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.',
-      '',
-      'Dieser Bereich darf von allen Usern gelesen und genutzt werden.'
+      'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.'
     ].join('\n')
   );
 

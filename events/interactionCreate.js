@@ -18,7 +18,6 @@ export default {
   async execute(interaction, client) {
     try {
       if (interaction.isChatInputCommand()) {
-        console.log(`Befehl erhalten: ${interaction.commandName}`);
         const command = client.commands.get(interaction.commandName);
 
         if (!command) {
@@ -136,8 +135,8 @@ export default {
               )
               .setDescription(
                 language === 'en'
-                  ? 'The bot has automatically created the main categories and info channels for you.'
-                  : 'Der Bot hat die wichtigsten Kategorien und Info-Channels automatisch für dich eingerichtet.'
+                  ? 'The bot has automatically created the main categories for you.'
+                  : 'Der Bot hat die wichtigsten Kategorien automatisch für dich eingerichtet.'
               )
               .addFields(
                 {
@@ -148,17 +147,6 @@ export default {
                     `• ${result.ticketCategory.name}`,
                     `• ${result.whitelistCategory.name}`,
                     `• ${result.validatorCategory.name}`
-                  ].join('\n'),
-                  inline: false
-                },
-                {
-                  name: language === 'en' ? 'Next steps' : 'Nächste Schritte',
-                  value: [
-                    '`/ticket-panel`',
-                    '`/whitelist-panel`',
-                    '`/verify-panel`',
-                    '`/setup-welcome`',
-                    '`/settings`'
                   ].join('\n'),
                   inline: false
                 }

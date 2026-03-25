@@ -68,7 +68,7 @@ export default {
       }
 
       if (interaction.isButton()) {
-        const config = getGuildConfig(interaction.guild.id);
+        const config = getGuildConfig(interaction.guild.id) || {};
         let language = config.language || 'de';
 
         if (interaction.customId === 'stepmodz_lang_de') {
@@ -80,7 +80,7 @@ export default {
             return;
           }
 
-          setGuildConfig(interaction.guild.id, { language: 'de' });
+          setGuildConfig(interaction.guild.id, { ...config, language: 'de' });
           await interaction.reply({
             content: t('de', 'languageSetGerman'),
             ephemeral: true
@@ -97,7 +97,7 @@ export default {
             return;
           }
 
-          setGuildConfig(interaction.guild.id, { language: 'en' });
+          setGuildConfig(interaction.guild.id, { ...config, language: 'en' });
           await interaction.reply({
             content: t('en', 'languageSetEnglish'),
             ephemeral: true
@@ -114,17 +114,9 @@ export default {
           return;
         }
 
-        language = getGuildConfig(interaction.guild.id).language || language;
+        language = (getGuildConfig(interaction.guild.id) || {}).language || language;
 
         if (interaction.customId === 'stepmodz_open_info') {
-          if (!isOwner) {
-            await interaction.reply({
-              content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
-              ephemeral: true
-            });
-            return;
-          }
-
           await interaction.reply({
             embeds: [buildInfoEmbed(language)],
             components: [buildCloseRow()],
@@ -136,19 +128,20 @@ export default {
         if (interaction.customId === 'stepmodz_verify') {
           await interaction.deferReply({ ephemeral: true });
 
-          if (!config?.verifyRoleId) {
+          if (!config.verifyRoleId || !config.unverifiedRoleId) {
             await interaction.editReply({
-              content: '❌ Keine Verify Rolle gesetzt. Nutze zuerst `/setup` oder Schnell Einrichtung.'
+              content: '❌ Verify / Unverify Rollen fehlen. Nutze Schnell Einrichtung oder `/setup`.'
             });
             return;
           }
 
           const member = interaction.member;
           const verifyRole = interaction.guild.roles.cache.get(config.verifyRoleId);
+          const unverifyRole = interaction.guild.roles.cache.get(config.unverifiedRoleId);
 
           if (!verifyRole) {
             await interaction.editReply({
-              content: '❌ Die gespeicherte Verify Rolle existiert nicht mehr.'
+              content: '❌ Die Verify Rolle existiert nicht mehr.'
             });
             return;
           }
@@ -158,11 +151,8 @@ export default {
               await member.roles.add(verifyRole);
             }
 
-            if (config.unverifiedRoleId) {
-              const unverifyRole = interaction.guild.roles.cache.get(config.unverifiedRoleId);
-              if (unverifyRole && member.roles.cache.has(unverifyRole.id)) {
-                await member.roles.remove(unverifyRole).catch(() => null);
-              }
+            if (unverifyRole && member.roles.cache.has(unverifyRole.id)) {
+              await member.roles.remove(unverifyRole);
             }
 
             await interaction.editReply({
@@ -248,7 +238,7 @@ export default {
       }
 
       if (interaction.isStringSelectMenu()) {
-        const config = getGuildConfig(interaction.guild.id);
+        const config = getGuildConfig(interaction.guild.id) || {};
         const language = config.language || 'de';
 
         if (!isOwner) {
@@ -295,7 +285,8 @@ export default {
                     `• ${result.verificationCategory.name}`,
                     `• ${result.ticketCategory.name}`,
                     `• ${result.whitelistCategory.name}`,
-                    `• ${result.validatorCategory.name}`
+                    `• ${result.validatorCategory.name}`,
+                    `• ${result.botCategory.name}`
                   ].join('\n'),
                   inline: false
                 }

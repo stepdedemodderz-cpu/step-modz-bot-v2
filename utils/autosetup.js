@@ -1,6 +1,7 @@
 import {
   ChannelType,
-  PermissionsBitField
+  PermissionsBitField,
+  EmbedBuilder
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from './config.js';
 import { buildTicketPanelRow } from './tickets.js';
@@ -52,7 +53,29 @@ function ownerOnlyOverwrites(guild) {
   ];
 }
 
-function publicOverwrites(guild) {
+function verificationPublicOverwrites(guild) {
+  return [
+    {
+      id: guild.roles.everyone.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ]
+    },
+    {
+      id: guild.client.user.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages
+      ]
+    }
+  ];
+}
+
+function validatorPublicOverwrites(guild) {
   return [
     {
       id: guild.roles.everyone.id,
@@ -75,7 +98,42 @@ function publicOverwrites(guild) {
   ];
 }
 
-async function ensureCategory(guild, name, isPublic = false) {
+function botBaseOverwrites(guild, verifyRoleId) {
+  return [
+    {
+      id: guild.roles.everyone.id,
+      deny: [PermissionsBitField.Flags.ViewChannel]
+    },
+    {
+      id: guild.ownerId,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ]
+    },
+    {
+      id: guild.client.user.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages
+      ]
+    },
+    {
+      id: verifyRoleId,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ],
+      deny: [PermissionsBitField.Flags.SendMessages]
+    }
+  ];
+}
+
+async function ensureCategory(guild, name, overwrites) {
   let category = guild.channels.cache.find(
     (c) => c.type === ChannelType.GuildCategory && c.name === name
   );
@@ -84,14 +142,16 @@ async function ensureCategory(guild, name, isPublic = false) {
     category = await guild.channels.create({
       name,
       type: ChannelType.GuildCategory,
-      permissionOverwrites: isPublic ? publicOverwrites(guild) : ownerOnlyOverwrites(guild)
+      permissionOverwrites: overwrites
     });
+  } else {
+    await category.edit({ permissionOverwrites: overwrites }).catch(() => null);
   }
 
   return category;
 }
 
-async function ensureTextChannel(guild, name, parentId, isPublic = false) {
+async function ensureTextChannel(guild, name, parentId, overwrites) {
   let channel = guild.channels.cache.find(
     (c) =>
       c.type === ChannelType.GuildText &&
@@ -104,8 +164,10 @@ async function ensureTextChannel(guild, name, parentId, isPublic = false) {
       name,
       type: ChannelType.GuildText,
       parent: parentId,
-      permissionOverwrites: isPublic ? publicOverwrites(guild) : ownerOnlyOverwrites(guild)
+      permissionOverwrites: overwrites
     });
+  } else {
+    await channel.edit({ parent: parentId, permissionOverwrites: overwrites }).catch(() => null);
   }
 
   return channel;
@@ -136,20 +198,70 @@ export async function runAutoSetup(guild) {
     (currentConfig.unverifiedRoleId && guild.roles.cache.get(currentConfig.unverifiedRoleId)) ||
     await ensureRole(guild, 'Unverify');
 
-  const welcomeCategory = await ensureCategory(guild, 'Welcome', false);
-  const welcomeChannel = await ensureTextChannel(guild, 'welcome', welcomeCategory.id, false);
+  const welcomeCategory = await ensureCategory(guild, 'Welcome', ownerOnlyOverwrites(guild));
+  const welcomeChannel = await ensureTextChannel(
+    guild,
+    'welcome',
+    welcomeCategory.id,
+    ownerOnlyOverwrites(guild)
+  );
 
-  const verificationCategory = await ensureCategory(guild, 'Verification', false);
-  const verificationChannel = await ensureTextChannel(guild, 'verified', verificationCategory.id, false);
+  const verificationCategory = await ensureCategory(
+    guild,
+    'Verification',
+    verificationPublicOverwrites(guild)
+  );
 
-  const ticketCategory = await ensureCategory(guild, 'Ticket', false);
-  const ticketChannel = await ensureTextChannel(guild, 'ticket', ticketCategory.id, false);
+  const verificationChannel = await ensureTextChannel(
+    guild,
+    'verified',
+    verificationCategory.id,
+    verificationPublicOverwrites(guild)
+  );
 
-  const whitelistCategory = await ensureCategory(guild, 'Whitelist', false);
-  const whitelistChannel = await ensureTextChannel(guild, 'whitelist', whitelistCategory.id, false);
+  const verificationSetupChannel = await ensureTextChannel(
+    guild,
+    'verification-setup',
+    verificationCategory.id,
+    ownerOnlyOverwrites(guild)
+  );
 
-  const validatorCategory = await ensureCategory(guild, 'Validator', true);
-  const validatorChannel = await ensureTextChannel(guild, 'json-xml-validator', validatorCategory.id, true);
+  const ticketCategory = await ensureCategory(guild, 'Ticket', ownerOnlyOverwrites(guild));
+  const ticketChannel = await ensureTextChannel(
+    guild,
+    'ticket',
+    ticketCategory.id,
+    ownerOnlyOverwrites(guild)
+  );
+
+  const whitelistCategory = await ensureCategory(guild, 'Whitelist', ownerOnlyOverwrites(guild));
+  const whitelistChannel = await ensureTextChannel(
+    guild,
+    'whitelist',
+    whitelistCategory.id,
+    ownerOnlyOverwrites(guild)
+  );
+
+  const validatorCategory = await ensureCategory(guild, 'Validator', validatorPublicOverwrites(guild));
+  const validatorChannel = await ensureTextChannel(
+    guild,
+    'json-xml-validator',
+    validatorCategory.id,
+    validatorPublicOverwrites(guild)
+  );
+
+  const botCategory = await ensureCategory(
+    guild,
+    'Step Mod!Z BOT',
+    botBaseOverwrites(guild, verifyRole.id)
+  );
+
+  const botChannel = await ensureTextChannel(
+    guild,
+    'step-modz-bot',
+    botCategory.id,
+    botBaseOverwrites(guild, verifyRole.id)
+  );
 
   const newConfig = {
     ...currentConfig,
@@ -165,6 +277,19 @@ export async function runAutoSetup(guild) {
 
   setGuildConfig(guild.id, newConfig);
 
+  // Alle bestehenden normalen Mitglieder bekommen Unverify, außer Owner und bereits Verify
+  const members = await guild.members.fetch().catch(() => null);
+  if (members) {
+    for (const [, member] of members) {
+      if (member.user.bot) continue;
+      if (member.id === guild.ownerId) continue;
+      if (member.roles.cache.has(verifyRole.id)) continue;
+      if (!member.roles.cache.has(unverifyRole.id)) {
+        await member.roles.add(unverifyRole).catch(() => null);
+      }
+    }
+  }
+
   await welcomeChannel.send(
     [
       '# 👋 Welcome',
@@ -179,8 +304,13 @@ export async function runAutoSetup(guild) {
   );
 
   await verificationChannel.send({
-    content: [
-      '# 🔐 Verification',
+    embeds: [buildVerifyEmbed(guild.id)],
+    components: [buildVerifyRow()]
+  });
+
+  await verificationSetupChannel.send(
+    [
+      '# 🔐 Verification Setup',
       '',
       'Wie funktioniert es? Was musst du machen?',
       '',
@@ -197,17 +327,15 @@ export async function runAutoSetup(guild) {
       '• Füge nun allen Kategorien und Kanälen die Rolle Verify hinzu',
       '',
       'WICHTIG:',
-      '• Diesem Kanal die Rolle Unverify hinzufügen.',
+      '• Dem Kanal `verified` die Rolle Unverify hinzufügen',
       '',
       'Nach Klick auf Verifizieren werden alle Kategorien und Kanäle angezeigt.',
       '',
       'Der Bot macht automatisch:',
       '• Unverify entfernen',
       '• Verify hinzufügen'
-    ].join('\n'),
-    embeds: [buildVerifyEmbed(guild.id)],
-    components: [buildVerifyRow()]
-  });
+    ].join('\n')
+  );
 
   await ticketChannel.send({
     content: [
@@ -259,6 +387,8 @@ export async function runAutoSetup(guild) {
     verificationCategory,
     ticketCategory,
     whitelistCategory,
-    validatorCategory
+    validatorCategory,
+    botCategory,
+    botChannel
   };
 }

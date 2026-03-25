@@ -11,8 +11,8 @@ import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
-function ownerOnlyOverwrites(guild) {
-  return [
+function botBaseOverwrites(guild, verifyRoleId = null) {
+  const overwrites = [
     {
       id: guild.roles.everyone.id,
       deny: [PermissionsBitField.Flags.ViewChannel]
@@ -36,17 +36,30 @@ function ownerOnlyOverwrites(guild) {
       ]
     }
   ];
+
+  if (verifyRoleId) {
+    overwrites.push({
+      id: verifyRoleId,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ],
+      deny: [PermissionsBitField.Flags.SendMessages]
+    });
+  }
+
+  return overwrites;
 }
 
 export default {
   name: 'guildCreate',
   async execute(guild) {
     try {
-      const config = getGuildConfig(guild.id);
+      const config = getGuildConfig(guild.id) || {};
       const language = config.language || 'de';
 
       if (!config.language) {
-        setGuildConfig(guild.id, { language: 'de' });
+        setGuildConfig(guild.id, { ...config, language: 'de' });
       }
 
       let category = guild.channels.cache.find(
@@ -59,7 +72,7 @@ export default {
         category = await guild.channels.create({
           name: 'Step Mod!Z BOT',
           type: ChannelType.GuildCategory,
-          permissionOverwrites: ownerOnlyOverwrites(guild)
+          permissionOverwrites: botBaseOverwrites(guild, config.verifyRoleId)
         });
       }
 
@@ -75,7 +88,7 @@ export default {
           name: 'step-modz-bot',
           type: ChannelType.GuildText,
           parent: category.id,
-          permissionOverwrites: ownerOnlyOverwrites(guild)
+          permissionOverwrites: botBaseOverwrites(guild, config.verifyRoleId)
         });
       }
 
@@ -90,7 +103,7 @@ export default {
             'Wähle eine Kategorie aus dem Dropdown-Menü,',
             'um meine Befehlsliste anzuzeigen.',
             'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
-            'Lasse über das Dropdown-Menü, **Step BOT** alles einrichten.',
+            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.',
             'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
           ].join('\n')
         )

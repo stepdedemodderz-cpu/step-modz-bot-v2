@@ -22,7 +22,7 @@ export default {
           [
             'Für diesen Server wurde noch keine Verify Rolle gesetzt.',
             '',
-            'Nutze **`/setup`** und setze dort mindestens die **Verify Rolle**.',
+            'Nutze zuerst **`/setup`** und setze dort optional die Verify Rolle.',
             '',
             'Danach kannst du das Verify Panel senden.'
           ].join('\n')
@@ -38,12 +38,12 @@ export default {
     }
 
     await interaction.channel.send({
-      embeds: [buildVerifyEmbed()],
+      embeds: [buildVerifyEmbed(interaction.guild.id)],
       components: [buildVerifyRow()]
     });
 
     await interaction.reply({
-      content: '✅ Das Verifizierungs-Panel wurde erfolgreich in diesem Channel gesendet.',
+      content: '✅ Das Verify Panel wurde erfolgreich gesendet.',
       ephemeral: true
     });
   }

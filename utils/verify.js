@@ -1,57 +1,44 @@
 import {
+  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder
+  ButtonStyle
 } from 'discord.js';
 import { getGuildConfig } from './config.js';
 
-export function buildVerifyEmbed() {
+const DEFAULT_VERIFY_MESSAGE = [
+  'Klicke auf den Button unten, um dich zu verifizieren.',
+  '',
+  'Nach erfolgreicher Verifizierung bekommst du Zugriff auf die freigeschalteten Bereiche.'
+].join('\n');
+
+export function buildVerifyEmbed(guildId = null) {
+  let description = DEFAULT_VERIFY_MESSAGE;
+
+  if (guildId) {
+    const config = getGuildConfig(guildId);
+    if (config?.verifyPanelMessage) {
+      description = config.verifyPanelMessage;
+    }
+  }
+
   return new EmbedBuilder()
-    .setTitle('✅ Verifizierung')
-    .setDescription(
-      [
-        'Willkommen auf dem Server.',
-        '',
-        'Klicke auf den Button unten, um dich zu verifizieren und Zugriff auf alle Bereiche zu erhalten.'
-      ].join('\n')
-    )
-    .setFooter({ text: 'Step Mod!Z BOT • Free DayZ Console Discord Bot' })
+    .setTitle('🔐 Verifizierung')
+    .setDescription(description)
+    .setColor(0x22c55e)
+    .setFooter({ text: 'Step Mod!Z BOT • Verify System' })
     .setTimestamp();
 }
 
 export function buildVerifyRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId('stepmodz_verify_button')
+      .setCustomId('stepmodz_verify')
       .setLabel('Verifizieren')
-      .setEmoji('✅')
       .setStyle(ButtonStyle.Success)
   );
 }
 
-export async function verifyMember(member) {
-  const config = getGuildConfig(member.guild.id);
-
-  if (!config?.verifyRoleId) {
-    throw new Error('Für diesen Server wurde keine Verify-Rolle gesetzt.');
-  }
-
-  if (member.roles.cache.has(config.verifyRoleId)) {
-    return { alreadyVerified: true };
-  }
-
-  await member.roles.add(
-    config.verifyRoleId,
-    'User hat sich über den Verify-Button verifiziert'
-  );
-
-  if (config.unverifiedRoleId && member.roles.cache.has(config.unverifiedRoleId)) {
-    await member.roles.remove(
-      config.unverifiedRoleId,
-      'User wurde erfolgreich verifiziert'
-    );
-  }
-
-  return { alreadyVerified: false };
+export function getDefaultVerifyMessage() {
+  return DEFAULT_VERIFY_MESSAGE;
 }

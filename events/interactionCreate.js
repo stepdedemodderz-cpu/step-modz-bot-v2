@@ -64,6 +64,78 @@ export default {
           return;
         }
 
+        if (interaction.customId === 'stepmodz_verify') {
+          await interaction.deferReply({ ephemeral: true });
+
+          if (!config?.verifyRoleId) {
+            await interaction.editReply({
+              content: '❌ Keine Verify Rolle gesetzt. Nutze zuerst `/setup`.'
+            });
+            return;
+          }
+
+          const member = interaction.member;
+          const verifyRole = interaction.guild.roles.cache.get(config.verifyRoleId);
+
+          if (!verifyRole) {
+            await interaction.editReply({
+              content: '❌ Die gespeicherte Verify Rolle existiert nicht mehr.'
+            });
+            return;
+          }
+
+          try {
+            if (member.roles.cache.has(verifyRole.id)) {
+              await interaction.editReply({
+                content: 'ℹ️ Du bist bereits verifiziert.'
+              });
+              return;
+            }
+
+            await member.roles.add(verifyRole);
+
+            if (config.unverifiedRoleId) {
+              const unverifyRole = interaction.guild.roles.cache.get(config.unverifiedRoleId);
+              if (unverifyRole && member.roles.cache.has(unverifyRole.id)) {
+                await member.roles.remove(unverifyRole).catch(() => null);
+              }
+            }
+
+            if (config.logChannelId) {
+              const logChannel = interaction.guild.channels.cache.get(config.logChannelId);
+              if (logChannel && logChannel.isTextBased()) {
+                const logEmbed = new EmbedBuilder()
+                  .setTitle('✅ Nutzer verifiziert')
+                  .setDescription(
+                    [
+                      `**User:** ${member.user.tag}`,
+                      `**ID:** ${member.id}`,
+                      `**Verify Rolle:** <@&${verifyRole.id}>`
+                    ].join('\n')
+                  )
+                  .setColor(0x22c55e)
+                  .setFooter({ text: 'Step Mod!Z BOT • Verify Log' })
+                  .setTimestamp();
+
+                await logChannel.send({ embeds: [logEmbed] }).catch(() => null);
+              }
+            }
+
+            await interaction.editReply({
+              content: '✅ Du wurdest erfolgreich verifiziert!'
+            });
+            return;
+          } catch (error) {
+            console.error('VERIFY ERROR:', error);
+
+            await interaction.editReply({
+              content:
+                '❌ Fehler beim Verifizieren. Prüfe, ob der Bot die Rolle verwalten darf und ob seine Rolle über der Verify Rolle steht.'
+            });
+            return;
+          }
+        }
+
         if (interaction.customId === 'stepmodz_open_ticket') {
           const result = await createTicketChannel(interaction);
 

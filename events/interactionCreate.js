@@ -33,7 +33,10 @@ export default {
   async execute(interaction, client) {
     try {
       const isOwner = interaction.guild && interaction.user.id === interaction.guild.ownerId;
+      const config = interaction.guild ? getGuildConfig(interaction.guild.id) || {} : {};
+      let language = config.language || 'de';
 
+      // Slash Commands
       if (interaction.isChatInputCommand()) {
         if (interaction.commandName !== 'validate' && !isOwner) {
           await interaction.reply({
@@ -67,10 +70,8 @@ export default {
         return;
       }
 
+      // Buttons
       if (interaction.isButton()) {
-        const config = getGuildConfig(interaction.guild.id) || {};
-        let language = config.language || 'de';
-
         if (interaction.customId === 'stepmodz_lang_de') {
           if (!isOwner) {
             await interaction.reply({
@@ -105,6 +106,8 @@ export default {
           return;
         }
 
+        language = (getGuildConfig(interaction.guild.id) || {}).language || language;
+
         if (interaction.customId === 'stepmodz_close_help') {
           await interaction.update({
             content: '✅ Geschlossen.',
@@ -113,8 +116,6 @@ export default {
           });
           return;
         }
-
-        language = (getGuildConfig(interaction.guild.id) || {}).language || language;
 
         if (interaction.customId === 'stepmodz_open_info') {
           await interaction.reply({
@@ -171,14 +172,23 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_open_ticket') {
-          const result = await createTicketChannel(interaction);
+          try {
+            const result = await createTicketChannel(interaction);
 
-          await interaction.reply({
-            content: result.exists
-              ? `ℹ️ Du hast bereits ein Ticket: ${result.channel}`
-              : `✅ Dein Ticket wurde erstellt: ${result.channel}`,
-            ephemeral: true
-          });
+            await interaction.reply({
+              content: result.exists
+                ? `ℹ️ Du hast bereits ein Ticket: ${result.channel}`
+                : `✅ Dein Ticket wurde erstellt: ${result.channel}`,
+              ephemeral: true
+            });
+          } catch (error) {
+            console.error('TICKET BUTTON ERROR:', error);
+
+            await interaction.reply({
+              content: '❌ Ticket konnte nicht erstellt werden. Prüfe Ticket-Kategorie und Bot-Rechte.',
+              ephemeral: true
+            });
+          }
           return;
         }
 
@@ -196,7 +206,16 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_open_whitelist') {
-          await interaction.showModal(buildWhitelistModal());
+          try {
+            await interaction.showModal(buildWhitelistModal());
+          } catch (error) {
+            console.error('WHITELIST BUTTON ERROR:', error);
+
+            await interaction.reply({
+              content: '❌ Whitelist-Formular konnte nicht geöffnet werden.',
+              ephemeral: true
+            });
+          }
           return;
         }
 
@@ -237,10 +256,8 @@ export default {
         return;
       }
 
+      // Dropdown
       if (interaction.isStringSelectMenu()) {
-        const config = getGuildConfig(interaction.guild.id) || {};
-        const language = config.language || 'de';
-
         if (!isOwner) {
           await interaction.reply({
             content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
@@ -248,6 +265,8 @@ export default {
           });
           return;
         }
+
+        language = (getGuildConfig(interaction.guild.id) || {}).language || language;
 
         if (interaction.customId === 'stepmodz_help_menu') {
           const selected = interaction.values[0];
@@ -281,12 +300,12 @@ export default {
                 {
                   name: language === 'en' ? 'Created categories' : 'Erstellte Kategorien',
                   value: [
-                    `• ${result.welcomeCategory.name}`,
+                    `• ${result.stepBotCategory.name}`,
                     `• ${result.verificationCategory.name}`,
+                    `• ${result.welcomeCategory.name}`,
                     `• ${result.ticketCategory.name}`,
                     `• ${result.whitelistCategory.name}`,
-                    `• ${result.validatorCategory.name}`,
-                    `• ${result.botCategory.name}`
+                    `• ${result.validatorCategory.name}`
                   ].join('\n'),
                   inline: false
                 }
@@ -313,6 +332,7 @@ export default {
         return;
       }
 
+      // Modal
       if (interaction.isModalSubmit()) {
         if (interaction.customId !== 'stepmodz_whitelist_modal') return;
 

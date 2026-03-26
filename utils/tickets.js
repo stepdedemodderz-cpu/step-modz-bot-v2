@@ -29,7 +29,7 @@ function buildCloseTicketRow() {
 function sanitizeChannelName(text) {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9äöüß-_]/gi, '-')
+    .replace(/[^a-z0-9äöüß_-]/gi, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 80);

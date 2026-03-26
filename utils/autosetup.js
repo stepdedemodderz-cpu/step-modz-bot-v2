@@ -110,6 +110,37 @@ function verifiedOnlyOverwrites(guild, verifyRoleId) {
   ];
 }
 
+function botBaseOverwrites(guild) {
+  return [
+    {
+      id: guild.roles.everyone.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ],
+      deny: [PermissionsBitField.Flags.SendMessages]
+    },
+    {
+      id: guild.ownerId,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory
+      ]
+    },
+    {
+      id: guild.client.user.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages
+      ]
+    }
+  ];
+}
+
 async function ensureCategory(guild, name, overwrites) {
   let category = guild.channels.cache.find(
     (c) => c.type === ChannelType.GuildCategory && c.name === name
@@ -190,7 +221,6 @@ export async function runAutoSetup(guild) {
 
   const verifiedPerms = verifiedOnlyOverwrites(guild, verifyRole.id);
 
-  // Kategorien + Channels
   const verificationCategory = await ensureCategory(
     guild,
     'Verification',
@@ -209,12 +239,13 @@ export async function runAutoSetup(guild) {
     ownerOnlyOverwrites(guild)
   );
 
-  const stepBotCategory = await ensureCategory(guild, 'Step Mod!Z BOT', verifiedPerms);
+  // HIER FIX: Step Mod!Z BOT bleibt sichtbar
+  const stepBotCategory = await ensureCategory(guild, 'Step Mod!Z BOT', botBaseOverwrites(guild));
   const stepBotChannel = await ensureTextChannel(
     guild,
     'step-modz-bot',
     stepBotCategory.id,
-    verifiedPerms
+    botBaseOverwrites(guild)
   );
 
   const welcomeCategory = await ensureCategory(guild, 'Welcome', verifiedPerms);
@@ -287,7 +318,6 @@ export async function runAutoSetup(guild) {
 
   setGuildConfig(guild.id, newConfig);
 
-  // Bestehende Mitglieder anpassen
   const members = await guild.members.fetch().catch(() => null);
   if (members) {
     for (const [, member] of members) {
@@ -300,7 +330,6 @@ export async function runAutoSetup(guild) {
     }
   }
 
-  // Alte Bot-Nachrichten entfernen
   for (const c of [
     verifiedChannel,
     verificationSetupChannel,
@@ -316,7 +345,6 @@ export async function runAutoSetup(guild) {
     await clearBotMessages(c, guild.client.user.id);
   }
 
-  // Öffentliche Funktions-Channels
   await verifiedChannel.send({
     embeds: [buildVerifyEmbed(guild.id)],
     components: [buildVerifyRow()]
@@ -374,7 +402,6 @@ export async function runAutoSetup(guild) {
     ]
   });
 
-  // Private Info-Channels nur für Owner
   await verificationSetupChannel.send(
     [
       '# 🔐 Verification Setup',

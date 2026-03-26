@@ -416,6 +416,8 @@ export async function runAutoSetup(guild) {
       '',
       'Wie funktioniert es? Was musst du machen?',
       '',
+      '• ⚠️ Diesen Kanal so lassen wie er ist, NICHT BEARBEITEN !',
+      '',
       '⚠️ Erstelle in deinen Servereinstellungen zuerst zwei neue Rollen: ⚠️',
       '• ⚠️ Erledigt - Verify wurde von Step erstellt ✅',
       '• ⚠️ Erledigt - Unverify wurde von Step erstellt ✅',

@@ -420,20 +420,23 @@ export async function runAutoSetup(guild) {
       '• ⚠️ Erledigt - Verify wurde von Step erstellt ✅',
       '• ⚠️ Erledigt - Unverify wurde von Step erstellt ✅',
       '',
-      '⚠️ WICHTIG: ⚠️',
-      '⚠️ Rechtsklick auf alle Kategorien und Kanäle links in der Leiste. ⚠️',
-      '',
       '⚠️ Kategorie und Kanäle bearbeiten ⚠️',
       '• ⚠️ WICHTIG: Ändere die Kategorie und den Kanal von Step Mod!Z BOT, in Privat + Rolle Verify Hinzu',
+      '⚠️ WIE? --> Rechtsklick einzeln auf jede Kategorien und jeden Kanale links in der Leiste. ⚠️',
       '• ⚠️ Setze das Häkchen auf Private Kategorie/Kanal',
       '• ⚠️ Füge nun allen Kategorien und Kanälen die Rolle Verify hinzu',
-      '• ⚠️ Das muss mit ALLEN Kategorien und Kanälen gemacht werden die NICHT vom Step Bot erstellt wurd',
+      '• ⚠️ Das muss mit ALLEN Kategorien und Kanälen gemacht werden die NICHT vom Step Bot erstellt wurden',
+      '• ⚠️ Auch die Step Mod!Z BOT Kategorie und der Kanal muss auf Privat + Rolle Verify bearbeitet werden',
       '',
       '⚠️ Nach Klick auf Verifizieren werden alle Kategorien und Kanäle angezeigt. ⚠️',
       '',
       '⚠️ Der Bot macht automatisch: ⚠️',
       '• Unverify entfernen ✅',
-      '• Verify hinzufügen ✅'
+      '• Verify hinzufügen ✅',
+      '',
+      '⚠️ DANACH ⚠️',
+      '• Wer drauf Joint sieht NUR Kategorie - Verification + Kanal - Verify ✅',
+      '• User muss Aktzeptieren Klicken um ALLE Kanäle zu sehen. ✅'
     ].join('\n')
   );
 
@@ -444,7 +447,7 @@ export async function runAutoSetup(guild) {
       'Die Welcome-Nachricht kann geändert werden mit:',
       '`/welcome-nachricht`',
       '',
-      'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden.'
+      'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden. (Nicht hier im Kanal sondern Oben drüber im Kanal)'
     ].join('\n')
   );
 
@@ -455,7 +458,7 @@ export async function runAutoSetup(guild) {
       'Die Ticket-Nachricht kann geändert werden mit:',
       '`/ticket-nachricht`',
       '',
-      'Danach kannst du mit `/ticket-panel` das Panel erneut senden.',
+      'Danach kannst du mit `/ticket-panel` das Panel erneut senden. (Nicht hier im Kanal sondern Oben drüber im Kanal)',
       '',
       'Das Ticket-System erstellt private Support-Tickets.'
     ].join('\n')
@@ -468,7 +471,7 @@ export async function runAutoSetup(guild) {
       'Die Whitelist-Nachricht kann geändert werden mit:',
       '`/whitelist-nachricht`',
       '',
-      'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.',
+      'Danach kannst du mit `/whitelist-panel` das Panel erneut senden. (Nicht hier im Kanal sondern Oben drüber im Kanal)',
       '',
       'Das Whitelist-System erstellt Bewerbungs-Channels für DayZ.'
     ].join('\n')

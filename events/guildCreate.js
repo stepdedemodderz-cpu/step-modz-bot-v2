@@ -11,10 +11,10 @@ import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
-function botBaseOverwrites(guild) {
+function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
     {
-      id: guild.roles.everyone.id,
+      id: everyoneId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.ReadMessageHistory
@@ -22,7 +22,7 @@ function botBaseOverwrites(guild) {
       deny: [PermissionsBitField.Flags.SendMessages]
     },
     {
-      id: guild.ownerId,
+      id: ownerId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -30,7 +30,7 @@ function botBaseOverwrites(guild) {
       ]
     },
     {
-      id: guild.client.user.id,
+      id: botId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -53,21 +53,25 @@ export default {
         setGuildConfig(guild.id, { ...config, language: 'de' });
       }
 
+      const owner = await guild.fetchOwner();
+      const ownerId = owner.id;
+      const botId = guild.members.me?.id || guild.client.user.id;
+      const everyoneId = guild.roles.everyone.id;
+      const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
+
       let category = guild.channels.cache.find(
-        (c) =>
-          c.type === ChannelType.GuildCategory &&
-          c.name === 'Step Mod!Z BOT'
+        (c) => c.type === ChannelType.GuildCategory && c.name === 'Step Mod!Z BOT'
       );
 
       if (!category) {
         category = await guild.channels.create({
           name: 'Step Mod!Z BOT',
           type: ChannelType.GuildCategory,
-          permissionOverwrites: botBaseOverwrites(guild)
+          permissionOverwrites: overwrites
         });
       } else {
         await category.edit({
-          permissionOverwrites: botBaseOverwrites(guild)
+          permissionOverwrites: overwrites
         }).catch(() => null);
       }
 
@@ -83,12 +87,12 @@ export default {
           name: 'step-modz-bot',
           type: ChannelType.GuildText,
           parent: category.id,
-          permissionOverwrites: botBaseOverwrites(guild)
+          permissionOverwrites: overwrites
         });
       } else {
         await channel.edit({
           parent: category.id,
-          permissionOverwrites: botBaseOverwrites(guild)
+          permissionOverwrites: overwrites
         }).catch(() => null);
       }
 

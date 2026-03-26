@@ -26,14 +26,14 @@ const DEFAULT_WELCOME_MESSAGE = [
   'Wir wünschen dir viel Spaß.'
 ].join('\n');
 
-function ownerOnlyOverwrites(guild) {
+function ownerOnlyOverwrites(ownerId, botId, everyoneId) {
   return [
     {
-      id: guild.roles.everyone.id,
+      id: everyoneId,
       deny: [PermissionsBitField.Flags.ViewChannel]
     },
     {
-      id: guild.ownerId,
+      id: ownerId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -41,7 +41,7 @@ function ownerOnlyOverwrites(guild) {
       ]
     },
     {
-      id: guild.client.user.id,
+      id: botId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -53,10 +53,10 @@ function ownerOnlyOverwrites(guild) {
   ];
 }
 
-function publicVerificationOverwrites(guild) {
+function publicVerificationOverwrites(botId, everyoneId) {
   return [
     {
-      id: guild.roles.everyone.id,
+      id: everyoneId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.ReadMessageHistory
@@ -64,7 +64,7 @@ function publicVerificationOverwrites(guild) {
       deny: [PermissionsBitField.Flags.SendMessages]
     },
     {
-      id: guild.client.user.id,
+      id: botId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -76,14 +76,14 @@ function publicVerificationOverwrites(guild) {
   ];
 }
 
-function verifiedOnlyOverwrites(guild, verifyRoleId) {
+function verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRoleId) {
   return [
     {
-      id: guild.roles.everyone.id,
+      id: everyoneId,
       deny: [PermissionsBitField.Flags.ViewChannel]
     },
     {
-      id: guild.ownerId,
+      id: ownerId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -91,7 +91,7 @@ function verifiedOnlyOverwrites(guild, verifyRoleId) {
       ]
     },
     {
-      id: guild.client.user.id,
+      id: botId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -110,10 +110,10 @@ function verifiedOnlyOverwrites(guild, verifyRoleId) {
   ];
 }
 
-function botBaseOverwrites(guild) {
+function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
     {
-      id: guild.roles.everyone.id,
+      id: everyoneId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.ReadMessageHistory
@@ -121,7 +121,7 @@ function botBaseOverwrites(guild) {
       deny: [PermissionsBitField.Flags.SendMessages]
     },
     {
-      id: guild.ownerId,
+      id: ownerId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -129,7 +129,7 @@ function botBaseOverwrites(guild) {
       ]
     },
     {
-      id: guild.client.user.id,
+      id: botId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
@@ -211,6 +211,11 @@ async function clearBotMessages(channel, botUserId) {
 export async function runAutoSetup(guild) {
   const currentConfig = getGuildConfig(guild.id) || {};
 
+  const owner = await guild.fetchOwner();
+  const ownerId = owner.id;
+  const botId = guild.members.me?.id || guild.client.user.id;
+  const everyoneId = guild.roles.everyone.id;
+
   const verifyRole =
     (currentConfig.verifyRoleId && guild.roles.cache.get(currentConfig.verifyRoleId)) ||
     await ensureRole(guild, 'Verify');
@@ -219,33 +224,36 @@ export async function runAutoSetup(guild) {
     (currentConfig.unverifiedRoleId && guild.roles.cache.get(currentConfig.unverifiedRoleId)) ||
     await ensureRole(guild, 'Unverify');
 
-  const verifiedPerms = verifiedOnlyOverwrites(guild, verifyRole.id);
+  const verifiedPerms = verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRole.id);
 
   const verificationCategory = await ensureCategory(
     guild,
     'Verification',
-    publicVerificationOverwrites(guild)
+    publicVerificationOverwrites(botId, everyoneId)
   );
   const verifiedChannel = await ensureTextChannel(
     guild,
     'verified',
     verificationCategory.id,
-    publicVerificationOverwrites(guild)
+    publicVerificationOverwrites(botId, everyoneId)
   );
   const verificationSetupChannel = await ensureTextChannel(
     guild,
     'verification-setup',
     verificationCategory.id,
-    ownerOnlyOverwrites(guild)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId)
   );
 
-  // HIER FIX: Step Mod!Z BOT bleibt sichtbar
-  const stepBotCategory = await ensureCategory(guild, 'Step Mod!Z BOT', botBaseOverwrites(guild));
+  const stepBotCategory = await ensureCategory(
+    guild,
+    'Step Mod!Z BOT',
+    botBaseOverwrites(ownerId, botId, everyoneId)
+  );
   const stepBotChannel = await ensureTextChannel(
     guild,
     'step-modz-bot',
     stepBotCategory.id,
-    botBaseOverwrites(guild)
+    botBaseOverwrites(ownerId, botId, everyoneId)
   );
 
   const welcomeCategory = await ensureCategory(guild, 'Welcome', verifiedPerms);
@@ -259,7 +267,7 @@ export async function runAutoSetup(guild) {
     guild,
     'welcome-info',
     welcomeCategory.id,
-    ownerOnlyOverwrites(guild)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId)
   );
 
   const ticketCategory = await ensureCategory(guild, 'Ticket', verifiedPerms);
@@ -273,7 +281,7 @@ export async function runAutoSetup(guild) {
     guild,
     'ticket-info',
     ticketCategory.id,
-    ownerOnlyOverwrites(guild)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId)
   );
 
   const whitelistCategory = await ensureCategory(guild, 'Whitelist', verifiedPerms);
@@ -287,7 +295,7 @@ export async function runAutoSetup(guild) {
     guild,
     'whitelist-info',
     whitelistCategory.id,
-    ownerOnlyOverwrites(guild)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId)
   );
 
   const validatorCategory = await ensureCategory(guild, 'Validator', verifiedPerms);
@@ -301,7 +309,7 @@ export async function runAutoSetup(guild) {
     guild,
     'validator-info',
     validatorCategory.id,
-    ownerOnlyOverwrites(guild)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId)
   );
 
   const newConfig = {
@@ -322,7 +330,7 @@ export async function runAutoSetup(guild) {
   if (members) {
     for (const [, member] of members) {
       if (member.user.bot) continue;
-      if (member.id === guild.ownerId) continue;
+      if (member.id === ownerId) continue;
       if (member.roles.cache.has(verifyRole.id)) continue;
       if (!member.roles.cache.has(unverifyRole.id)) {
         await member.roles.add(unverifyRole).catch(() => null);
@@ -342,7 +350,7 @@ export async function runAutoSetup(guild) {
     validatorChannel,
     validatorInfoChannel
   ]) {
-    await clearBotMessages(c, guild.client.user.id);
+    await clearBotMessages(c, botId);
   }
 
   await verifiedChannel.send({

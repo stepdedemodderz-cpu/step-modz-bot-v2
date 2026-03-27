@@ -3,7 +3,7 @@ import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 export default {
   data: new SlashCommandBuilder()
     .setName('about')
-    .setDescription('Zeigt Informationen über den Step Mod!Z BOT'),
+    .setDescription('Zeigt eine Übersicht über den Step Mod!Z BOT'),
 
   async execute(interaction) {
     const embed = new EmbedBuilder()
@@ -12,26 +12,56 @@ export default {
         [
           '**Dein All-in-One Discord Bot für DayZ & Communities**',
           '',
+          'Mit **Step Mod!Z BOT** bekommst du ein modernes System für Verifizierung, Support, Whitelist, Serverstruktur und Tools direkt in Discord.',
+          '',
           '━━━━━━━━━━━━━━━━━━━━━━━',
           '',
           '⚡ **Einrichtung**',
-          '→ 🔥 Automatisch (1 Klick)',
-          '→ ⚙️ Manuell (volle Kontrolle)',
+          '→ **Automatische Einrichtung**',
+          'Der Bot erstellt wichtige Kategorien, Channels und Systeme fast vollständig automatisch.',
+          '',
+          '→ **Manuelle Einrichtung**',
+          'Du kannst alles auch selbst anpassen und gezielt nach deinen Wünschen konfigurieren.',
           '',
           '━━━━━━━━━━━━━━━━━━━━━━━',
           '',
           '🔐 **Verify System**',
-          '🎫 **Ticket System (Premium)**',
+          '• Regeln lesen und bestätigen',
+          '• Rollen automatisch vergeben',
+          '• Zugriff erst nach Verifizierung',
+          '',
+          '📜 **Regel-System**',
+          '• Regeln in Deutsch und Englisch',
+          '• Bestätigung per Button',
+          '• Direkte Verbindung mit dem Verify-System',
+          '',
+          '🎫 **Ticket System**',
+          '• Ticket per Button öffnen',
+          '• Privater Support-Channel',
+          '• Ticket übernehmen & schließen',
+          '',
           '📋 **Whitelist System**',
-          '🧪 **JSON/XML Validator**',
+          '• Bewerbung direkt im Discord',
+          '• Automatische Bewerbungs-Channels',
+          '• Annahme / Ablehnung per Button',
+          '',
+          '🧪 **Json / XML Validator**',
+          '• Dateien direkt im Discord prüfen',
+          '• Ideal für DayZ XML / JSON Arbeiten',
+          '',
+          '👋 **Welcome System**',
+          '• Begrüßungsnachrichten',
+          '• individuell anpassbar',
           '',
           '━━━━━━━━━━━━━━━━━━━━━━━',
           '',
-          '⚡ **Step Bot Schnell Einrichtung nutzen!**',
+          '💎 **Was dich erwartet**',
+          '• modernes Design',
+          '• einfache Bedienung',
+          '• automatisierte Abläufe',
+          '• klare Struktur für deinen Server',
           '',
-          '💎 Modern • Schnell • Automatisch',
-          '',
-          '🚀 Weitere Tools & Features folgen'
+          '🚀 **Weitere Tools & Features folgen**'
         ].join('\n')
       )
       .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')

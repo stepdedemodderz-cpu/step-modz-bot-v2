@@ -277,18 +277,6 @@ export async function runAutoSetup(guild) {
     ['verification-setup']
   );
 
-  const stepBotCategory = await ensureCategory(
-    guild,
-    NAMES.stepBotCategory,
-    botBaseOverwrites(ownerId, botId, everyoneId)
-  );
-  const stepBotChannel = await ensureTextChannel(
-    guild,
-    NAMES.stepBotChannel,
-    stepBotCategory.id,
-    botBaseOverwrites(ownerId, botId, everyoneId),
-    ['step-modz-bot', '🤖 StepModZBOT', '🤖 𝕊𝕥𝕖𝕡𝕄𝕠𝕕ℤ𝔹𝕆𝕋']
-  );
 
   const welcomeCategory = await ensureCategory(guild, NAMES.welcomeCategory, verifiedPerms);
   const welcomeChannel = await ensureTextChannel(
@@ -521,7 +509,6 @@ export async function runAutoSetup(guild) {
   );
 
   return {
-    stepBotCategory,
     verificationCategory,
     welcomeCategory,
     ticketCategory,

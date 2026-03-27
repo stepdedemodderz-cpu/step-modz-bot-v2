@@ -7,9 +7,9 @@ import {
 import { getGuildConfig } from './config.js';
 
 const DEFAULT_VERIFY_MESSAGE = [
-  'Klicke auf den Button unten, um dich zu verifizieren.',
+  'Bitte bestätige zuerst die Regeln.',
   '',
-  'Nach erfolgreicher Verifizierung bekommst du Zugriff auf die freigeschalteten Bereiche.'
+  'Danach kannst du auf den Button unten klicken, um dich zu verifizieren und alle freigeschalteten Kanäle zu sehen.'
 ].join('\n');
 
 export function buildVerifyEmbed(guildId = null) {
@@ -37,8 +37,4 @@ export function buildVerifyRow() {
       .setLabel('Verifizieren')
       .setStyle(ButtonStyle.Success)
   );
-}
-
-export function getDefaultVerifyMessage() {
-  return DEFAULT_VERIFY_MESSAGE;
 }

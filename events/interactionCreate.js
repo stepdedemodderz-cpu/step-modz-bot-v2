@@ -7,6 +7,7 @@ import {
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
+import { buildRulesEmbed } from '../utils/rules.js';
 import { buildInfoEmbed } from '../utils/infoEmbed.js';
 import { buildHelpEmbed } from '../utils/helpMenu.js';
 import { runAutoSetup } from '../utils/autosetup.js';
@@ -36,7 +37,6 @@ export default {
       const config = interaction.guild ? getGuildConfig(interaction.guild.id) || {} : {};
       let language = config.language || 'de';
 
-      // Slash Commands
       if (interaction.isChatInputCommand()) {
         if (interaction.commandName !== 'validate' && !isOwner) {
           await interaction.reply({
@@ -70,7 +70,6 @@ export default {
         return;
       }
 
-      // Buttons
       if (interaction.isButton()) {
         if (interaction.customId === 'stepmodz_lang_de') {
           if (!isOwner) {
@@ -126,12 +125,58 @@ export default {
           return;
         }
 
+        if (interaction.customId === 'stepmodz_rules_de') {
+          await interaction.reply({
+            embeds: [buildRulesEmbed('de')],
+            ephemeral: true
+          });
+          return;
+        }
+
+        if (interaction.customId === 'stepmodz_rules_en') {
+          await interaction.reply({
+            embeds: [buildRulesEmbed('en')],
+            ephemeral: true
+          });
+          return;
+        }
+
+        if (interaction.customId === 'stepmodz_rules_accept') {
+          await interaction.deferReply({ ephemeral: true });
+
+          if (!config.rulesAcceptedRoleId) {
+            await interaction.editReply({
+              content: '❌ RulesAccepted Rolle fehlt. Nutze Schnell Einrichtung erneut.'
+            });
+            return;
+          }
+
+          const member = interaction.member;
+          const rulesRole = interaction.guild.roles.cache.get(config.rulesAcceptedRoleId);
+
+          if (!rulesRole) {
+            await interaction.editReply({
+              content: '❌ RulesAccepted Rolle existiert nicht.'
+            });
+            return;
+          }
+
+          if (!member.roles.cache.has(rulesRole.id)) {
+            await member.roles.add(rulesRole).catch(() => null);
+          }
+
+          await interaction.editReply({
+            content: '✅ Regeln bestätigt. Klicke jetzt unten auf **Verifizieren**.'
+          });
+          return;
+        }
+
         if (interaction.customId === 'stepmodz_verify') {
           await interaction.deferReply({ ephemeral: true });
 
-          if (!config.verifyRoleId || !config.unverifiedRoleId) {
+          if (!config.verifyRoleId || !config.unverifiedRoleId || !config.rulesAcceptedRoleId) {
             await interaction.editReply({
-              content: '❌ Verify / Unverify Rollen fehlen. Nutze Schnell Einrichtung oder `/setup`.'
+              content: '❌ Verify / Unverify / RulesAccepted Rollen fehlen. Nutze Schnell Einrichtung oder `/setup`.'
             });
             return;
           }
@@ -139,10 +184,18 @@ export default {
           const member = interaction.member;
           const verifyRole = interaction.guild.roles.cache.get(config.verifyRoleId);
           const unverifyRole = interaction.guild.roles.cache.get(config.unverifiedRoleId);
+          const rulesAcceptedRole = interaction.guild.roles.cache.get(config.rulesAcceptedRoleId);
 
           if (!verifyRole) {
             await interaction.editReply({
               content: '❌ Die Verify Rolle existiert nicht mehr.'
+            });
+            return;
+          }
+
+          if (!rulesAcceptedRole || !member.roles.cache.has(rulesAcceptedRole.id)) {
+            await interaction.editReply({
+              content: '❌ Du musst zuerst die Regeln bestätigen.'
             });
             return;
           }
@@ -154,6 +207,10 @@ export default {
 
             if (unverifyRole && member.roles.cache.has(unverifyRole.id)) {
               await member.roles.remove(unverifyRole);
+            }
+
+            if (rulesAcceptedRole && member.roles.cache.has(rulesAcceptedRole.id)) {
+              await member.roles.remove(rulesAcceptedRole).catch(() => null);
             }
 
             await interaction.editReply({
@@ -256,7 +313,6 @@ export default {
         return;
       }
 
-      // Dropdown
       if (interaction.isStringSelectMenu()) {
         if (!isOwner) {
           await interaction.reply({
@@ -298,7 +354,7 @@ export default {
               )
               .addFields(
                 {
-                  name: language === 'en' ? 'Created categories' : 'Erstellte Kategorien',
+                  name: language === 'en' ? 'Erstellte Kategorien' : 'Erstellte Kategorien',
                   value: [
                     `• ${result.stepBotCategory.name}`,
                     `• ${result.verificationCategory.name}`,
@@ -332,7 +388,6 @@ export default {
         return;
       }
 
-      // Modal
       if (interaction.isModalSubmit()) {
         if (interaction.customId !== 'stepmodz_whitelist_modal') return;
 

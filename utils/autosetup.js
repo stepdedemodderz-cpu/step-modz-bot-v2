@@ -7,6 +7,7 @@ import { getGuildConfig, setGuildConfig } from './config.js';
 import { buildTicketPanelRow } from './tickets.js';
 import { buildWhitelistPanelRow } from './whitelist.js';
 import { buildVerifyEmbed, buildVerifyRow } from './verify.js';
+import { buildRulesIntroEmbed, buildRulesButtons } from './rules.js';
 
 const DEFAULT_TICKET_MESSAGE = [
   'Benötigst du Hilfe von einem Admin oder Moderator?',
@@ -216,6 +217,10 @@ export async function runAutoSetup(guild) {
   const botId = guild.members.me?.id || guild.client.user.id;
   const everyoneId = guild.roles.everyone.id;
 
+  const rulesAcceptedRole =
+    (currentConfig.rulesAcceptedRoleId && guild.roles.cache.get(currentConfig.rulesAcceptedRoleId)) ||
+    await ensureRole(guild, 'RulesAccepted');
+
   const verifyRole =
     (currentConfig.verifyRoleId && guild.roles.cache.get(currentConfig.verifyRoleId)) ||
     await ensureRole(guild, 'Verify');
@@ -314,6 +319,7 @@ export async function runAutoSetup(guild) {
 
   const newConfig = {
     ...currentConfig,
+    rulesAcceptedRoleId: rulesAcceptedRole.id,
     verifyRoleId: verifyRole.id,
     unverifiedRoleId: unverifyRole.id,
     welcomeChannelId: currentConfig.welcomeChannelId || welcomeChannel.id,
@@ -352,6 +358,11 @@ export async function runAutoSetup(guild) {
   ]) {
     await clearBotMessages(c, botId);
   }
+
+  await verifiedChannel.send({
+    embeds: [buildRulesIntroEmbed()],
+    components: buildRulesButtons()
+  });
 
   await verifiedChannel.send({
     embeds: [buildVerifyEmbed(guild.id)],
@@ -421,6 +432,7 @@ export async function runAutoSetup(guild) {
       '⚠️ Erstelle in deinen Servereinstellungen zuerst zwei neue Rollen: ⚠️',
       '• ⚠️ Erledigt - Verify wurde von Step erstellt ✅',
       '• ⚠️ Erledigt - Unverify wurde von Step erstellt ✅',
+      '• ⚠️ Erledigt - RulesAccepted wurde von Step erstellt ✅',
       '',
       '⚠️ Kategorie und Kanäle bearbeiten ⚠️',
       '• ⚠️ WICHTIG: Ändere die Kategorie und den Kanal von Step Mod!Z BOT, in Privat + Rolle Verify Hinzu',
@@ -433,12 +445,14 @@ export async function runAutoSetup(guild) {
       '⚠️ Nach Klick auf Verifizieren werden alle Kategorien und Kanäle angezeigt. ⚠️',
       '',
       '⚠️ Der Bot macht automatisch: ⚠️',
+      '• RulesAccepted hinzufügen nach Regelbestätigung ✅',
       '• Unverify entfernen ✅',
       '• Verify hinzufügen ✅',
+      '• RulesAccepted wieder entfernen ✅',
       '',
       '⚠️ DANACH ⚠️',
-      '• Wer drauf Joint sieht NUR Kategorie - Verification + Kanal - Verify ✅',
-      '• User muss Aktzeptieren Klicken um ALLE Kanäle zu sehen. ✅'
+      '• Wer drauf joint sieht NUR Kategorie - Verification + Kanal - verified ✅',
+      '• User muss erst Regeln bestätigen und danach Verifizieren klicken ✅'
     ].join('\n')
   );
 
@@ -449,7 +463,7 @@ export async function runAutoSetup(guild) {
       'Die Welcome-Nachricht kann geändert werden mit:',
       '`/welcome-nachricht`',
       '',
-      'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden. (Nicht hier im Kanal sondern Oben drüber im Kanal)'
+      'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden. (Nicht hier im Kanal sondern oben drüber im Kanal)'
     ].join('\n')
   );
 
@@ -460,7 +474,7 @@ export async function runAutoSetup(guild) {
       'Die Ticket-Nachricht kann geändert werden mit:',
       '`/ticket-nachricht`',
       '',
-      'Danach kannst du mit `/ticket-panel` das Panel erneut senden. (Nicht hier im Kanal sondern Oben drüber im Kanal)',
+      'Danach kannst du mit `/ticket-panel` das Panel erneut senden. (Nicht hier im Kanal sondern oben drüber im Kanal)',
       '',
       'Das Ticket-System erstellt private Support-Tickets.'
     ].join('\n')
@@ -473,7 +487,7 @@ export async function runAutoSetup(guild) {
       'Die Whitelist-Nachricht kann geändert werden mit:',
       '`/whitelist-nachricht`',
       '',
-      'Danach kannst du mit `/whitelist-panel` das Panel erneut senden. (Nicht hier im Kanal sondern Oben drüber im Kanal)',
+      'Danach kannst du mit `/whitelist-panel` das Panel erneut senden. (Nicht hier im Kanal sondern oben drüber im Kanal)',
       '',
       'Das Whitelist-System erstellt Bewerbungs-Channels für DayZ.'
     ].join('\n')

@@ -17,8 +17,13 @@ export function buildTicketPanelRow() {
   );
 }
 
-function buildCloseTicketRow() {
+function buildTicketControlRow() {
   return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('stepmodz_claim_ticket')
+      .setLabel('🙋 Ticket übernehmen')
+      .setStyle(ButtonStyle.Secondary),
+
     new ButtonBuilder()
       .setCustomId('stepmodz_close_ticket')
       .setLabel('🔒 Ticket schließen')
@@ -84,28 +89,14 @@ export async function createTicketChannel(interaction) {
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory,
         PermissionsBitField.Flags.ManageChannels,
         PermissionsBitField.Flags.ManageMessages
       ]
     }
   ];
 
-  if (config.ticketSupportRoleId) {
-    permissionOverwrites.push({
-      id: config.ticketSupportRoleId,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory
-      ]
-    });
-  }
-
-  const channelName = sanitizeChannelName(`ticket-${interaction.user.username}`);
-
   const channel = await interaction.guild.channels.create({
-    name: channelName,
+    name: sanitizeChannelName(`ticket-${interaction.user.username}`),
     type: ChannelType.GuildText,
     parent: ticketCategory.id,
     topic: `ticket-owner:${interaction.user.id}`,
@@ -116,20 +107,20 @@ export async function createTicketChannel(interaction) {
     .setTitle('🎫 Support Ticket')
     .setDescription(
       [
-        `Hallo ${interaction.user},`,
+        `👤 **Erstellt von:** ${interaction.user}`,
         '',
-        'dein Ticket wurde erstellt.',
-        'Beschreibe bitte dein Anliegen so genau wie möglich.'
+        'Beschreibe bitte dein Anliegen so genau wie möglich.',
+        '',
+        'Ein Teammitglied wird sich gleich darum kümmern.'
       ].join('\n')
     )
     .setColor(0x22c55e)
-    .setFooter({ text: 'Step Mod!Z BOT • Ticket' })
+    .setFooter({ text: 'Step Mod!Z BOT • Ticket System' })
     .setTimestamp();
 
   await channel.send({
-    content: config.ticketSupportRoleId ? `<@&${config.ticketSupportRoleId}>` : null,
     embeds: [embed],
-    components: [buildCloseTicketRow()]
+    components: [buildTicketControlRow()]
   });
 
   return { exists: false, channel: channel.toString() };

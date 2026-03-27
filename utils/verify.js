@@ -9,7 +9,12 @@ import { getGuildConfig } from './config.js';
 const DEFAULT_VERIFY_MESSAGE = [
   'Bitte bestätige zuerst die Regeln.',
   '',
-  'Danach kannst du auf den Button unten klicken, um dich zu verifizieren und alle freigeschalteten Kanäle zu sehen.'
+  'Sobald du die Regeln bestätigt hast, kannst du dich hier verifizieren.',
+  '',
+  '**Nach erfolgreicher Verifizierung:**',
+  '• wird die Rolle **Unverify** entfernt',
+  '• wird die Rolle **Verify** hinzugefügt',
+  '• werden alle freigeschalteten Kanäle sichtbar'
 ].join('\n');
 
 export function buildVerifyEmbed(guildId = null) {
@@ -23,7 +28,7 @@ export function buildVerifyEmbed(guildId = null) {
   }
 
   return new EmbedBuilder()
-    .setTitle('🔐 Verifizierung')
+    .setTitle('🔐 Server Verifizierung')
     .setDescription(description)
     .setColor(0x22c55e)
     .setFooter({ text: 'Step Mod!Z BOT • Verify System' })
@@ -34,7 +39,7 @@ export function buildVerifyRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('stepmodz_verify')
-      .setLabel('Verifizieren')
+      .setLabel('✅ Verifizieren')
       .setStyle(ButtonStyle.Success)
   );
 }

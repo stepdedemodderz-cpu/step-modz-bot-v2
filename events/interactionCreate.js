@@ -249,15 +249,23 @@ export default {
           return;
         }
 
+        if (interaction.customId === 'stepmodz_claim_ticket') {
+            await interaction.reply({
+              content: `🙋 Ticket wurde übernommen von ${interaction.user}`,
+              ephemeral: false
+            });
+            return;
+          }
+
         if (interaction.customId === 'stepmodz_close_ticket') {
           await interaction.reply({
-            content: '🔒 Ticket wird geschlossen...',
-            ephemeral: true
+            content: `🔒 Ticket wird geschlossen von ${interaction.user}...`,
+            ephemeral: false
           });
 
           setTimeout(async () => {
             await interaction.channel.delete().catch(() => null);
-          }, 3000);
+          }, 4000);
 
           return;
         }

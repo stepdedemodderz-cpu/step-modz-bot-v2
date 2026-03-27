@@ -47,9 +47,10 @@ export default {
         }
 
         if (interaction.commandName === 'validate') {
-          if (interaction.channel?.name !== 'json-xml-validator') {
+          const validatorChannelId = config.validatorChannelId;
+          if (validatorChannelId && interaction.channelId !== validatorChannelId) {
             await interaction.reply({
-              content: '❌ `/validate` darf nur im Channel `json-xml-validator` benutzt werden.',
+              content: '❌ `/validate` darf nur im Validator-Channel benutzt werden.',
               ephemeral: true
             });
             return;
@@ -249,23 +250,15 @@ export default {
           return;
         }
 
-        if (interaction.customId === 'stepmodz_claim_ticket') {
-            await interaction.reply({
-              content: `🙋 Ticket wurde übernommen von ${interaction.user}`,
-              ephemeral: false
-            });
-            return;
-          }
-
         if (interaction.customId === 'stepmodz_close_ticket') {
           await interaction.reply({
-            content: `🔒 Ticket wird geschlossen von ${interaction.user}...`,
-            ephemeral: false
+            content: '🔒 Ticket wird geschlossen...',
+            ephemeral: true
           });
 
           setTimeout(async () => {
             await interaction.channel.delete().catch(() => null);
-          }, 4000);
+          }, 3000);
 
           return;
         }
@@ -362,7 +355,7 @@ export default {
               )
               .addFields(
                 {
-                  name: language === 'en' ? 'Erstellte Kategorien' : 'Erstellte Kategorien',
+                  name: 'Erstellte Kategorien',
                   value: [
                     `• ${result.stepBotCategory.name}`,
                     `• ${result.verificationCategory.name}`,

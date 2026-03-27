@@ -9,6 +9,31 @@ import { buildWhitelistPanelRow } from './whitelist.js';
 import { buildVerifyEmbed, buildVerifyRow } from './verify.js';
 import { buildRulesIntroEmbed, buildRulesButtons } from './rules.js';
 
+const NAMES = {
+  stepBotCategory: '🤖 𝕊𝕥𝕖𝕡 𝕄𝕠𝕕ℤ 𝔹𝕆𝕋',
+  stepBotChannel: '🤖 𝕊𝕥𝕖𝕡𝕄𝕠𝕕ℤ𝔹𝕆𝕋',
+
+  verificationCategory: '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕔𝕒𝕥𝕚𝕠𝕟',
+  verifiedChannel: '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕖𝕕',
+  verificationSetupChannel: 'verification-setup',
+
+  welcomeCategory: '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖',
+  welcomeChannel: '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖',
+  welcomeInfoChannel: 'welcome-info',
+
+  ticketCategory: '🎫 𝕋𝕚𝕔𝕜𝕖𝕥',
+  ticketChannel: '🎫 𝕋𝕚𝕔𝕜𝕖𝕥',
+  ticketInfoChannel: 'ticket-info',
+
+  whitelistCategory: '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥',
+  whitelistChannel: '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥',
+  whitelistInfoChannel: 'whitelist-info',
+
+  validatorCategory: '🧬 𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣',
+  validatorChannel: '🧬 𝕁𝕤𝕠𝕟-𝕏𝕞𝕝-𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣',
+  validatorInfoChannel: 'validator-info'
+};
+
 const DEFAULT_TICKET_MESSAGE = [
   'Benötigst du Hilfe von einem Admin oder Moderator?',
   '',
@@ -154,17 +179,17 @@ async function ensureCategory(guild, name, overwrites) {
       permissionOverwrites: overwrites
     });
   } else {
-    await category.edit({ permissionOverwrites: overwrites }).catch(() => null);
+    await category.edit({ name, permissionOverwrites: overwrites }).catch(() => null);
   }
 
   return category;
 }
 
-async function ensureTextChannel(guild, name, parentId, overwrites) {
+async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []) {
   let channel = guild.channels.cache.find(
     (c) =>
       c.type === ChannelType.GuildText &&
-      c.name === name &&
+      (c.name === name || aliases.includes(c.name)) &&
       c.parentId === parentId
   );
 
@@ -177,6 +202,7 @@ async function ensureTextChannel(guild, name, parentId, overwrites) {
     });
   } else {
     await channel.edit({
+      name,
       parent: parentId,
       permissionOverwrites: overwrites
     }).catch(() => null);
@@ -233,88 +259,99 @@ export async function runAutoSetup(guild) {
 
   const verificationCategory = await ensureCategory(
     guild,
-    'Verification',
+    NAMES.verificationCategory,
     publicVerificationOverwrites(botId, everyoneId)
   );
   const verifiedChannel = await ensureTextChannel(
     guild,
-    'verified',
+    NAMES.verifiedChannel,
     verificationCategory.id,
-    publicVerificationOverwrites(botId, everyoneId)
+    publicVerificationOverwrites(botId, everyoneId),
+    ['verified', '✅ Verified', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕖𝕕']
   );
   const verificationSetupChannel = await ensureTextChannel(
     guild,
-    'verification-setup',
+    NAMES.verificationSetupChannel,
     verificationCategory.id,
-    ownerOnlyOverwrites(ownerId, botId, everyoneId)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId),
+    ['verification-setup']
   );
 
   const stepBotCategory = await ensureCategory(
     guild,
-    'Step Mod!Z BOT',
+    NAMES.stepBotCategory,
     botBaseOverwrites(ownerId, botId, everyoneId)
   );
   const stepBotChannel = await ensureTextChannel(
     guild,
-    'step-modz-bot',
+    NAMES.stepBotChannel,
     stepBotCategory.id,
-    botBaseOverwrites(ownerId, botId, everyoneId)
+    botBaseOverwrites(ownerId, botId, everyoneId),
+    ['step-modz-bot', '🤖 StepModZBOT', '🤖 𝕊𝕥𝕖𝕡𝕄𝕠𝕕ℤ𝔹𝕆𝕋']
   );
 
-  const welcomeCategory = await ensureCategory(guild, 'Welcome', verifiedPerms);
+  const welcomeCategory = await ensureCategory(guild, NAMES.welcomeCategory, verifiedPerms);
   const welcomeChannel = await ensureTextChannel(
     guild,
-    'welcome',
+    NAMES.welcomeChannel,
     welcomeCategory.id,
-    verifiedPerms
+    verifiedPerms,
+    ['welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖']
   );
   const welcomeInfoChannel = await ensureTextChannel(
     guild,
-    'welcome-info',
+    NAMES.welcomeInfoChannel,
     welcomeCategory.id,
-    ownerOnlyOverwrites(ownerId, botId, everyoneId)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId),
+    ['welcome-info']
   );
 
-  const ticketCategory = await ensureCategory(guild, 'Ticket', verifiedPerms);
+  const ticketCategory = await ensureCategory(guild, NAMES.ticketCategory, verifiedPerms);
   const ticketChannel = await ensureTextChannel(
     guild,
-    'ticket',
+    NAMES.ticketChannel,
     ticketCategory.id,
-    verifiedPerms
+    verifiedPerms,
+    ['ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥']
   );
   const ticketInfoChannel = await ensureTextChannel(
     guild,
-    'ticket-info',
+    NAMES.ticketInfoChannel,
     ticketCategory.id,
-    ownerOnlyOverwrites(ownerId, botId, everyoneId)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId),
+    ['ticket-info']
   );
 
-  const whitelistCategory = await ensureCategory(guild, 'Whitelist', verifiedPerms);
+  const whitelistCategory = await ensureCategory(guild, NAMES.whitelistCategory, verifiedPerms);
   const whitelistChannel = await ensureTextChannel(
     guild,
-    'whitelist',
+    NAMES.whitelistChannel,
     whitelistCategory.id,
-    verifiedPerms
+    verifiedPerms,
+    ['whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥']
   );
   const whitelistInfoChannel = await ensureTextChannel(
     guild,
-    'whitelist-info',
+    NAMES.whitelistInfoChannel,
     whitelistCategory.id,
-    ownerOnlyOverwrites(ownerId, botId, everyoneId)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId),
+    ['whitelist-info']
   );
 
-  const validatorCategory = await ensureCategory(guild, 'Validator', verifiedPerms);
+  const validatorCategory = await ensureCategory(guild, NAMES.validatorCategory, verifiedPerms);
   const validatorChannel = await ensureTextChannel(
     guild,
-    'json-xml-validator',
+    NAMES.validatorChannel,
     validatorCategory.id,
-    verifiedPerms
+    verifiedPerms,
+    ['json-xml-validator', '🧬 Json-Xml-Validator', '🧬 𝕁𝕤𝕠𝕟-𝕏𝕞𝕝-𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣']
   );
   const validatorInfoChannel = await ensureTextChannel(
     guild,
-    'validator-info',
+    NAMES.validatorInfoChannel,
     validatorCategory.id,
-    ownerOnlyOverwrites(ownerId, botId, everyoneId)
+    ownerOnlyOverwrites(ownerId, botId, everyoneId),
+    ['validator-info']
   );
 
   const newConfig = {
@@ -327,7 +364,8 @@ export async function runAutoSetup(guild) {
     whitelistCategoryId: currentConfig.whitelistCategoryId || whitelistCategory.id,
     ticketPanelMessage: currentConfig.ticketPanelMessage || DEFAULT_TICKET_MESSAGE,
     whitelistPanelMessage: currentConfig.whitelistPanelMessage || DEFAULT_WHITELIST_MESSAGE,
-    welcomeMessage: currentConfig.welcomeMessage || DEFAULT_WELCOME_MESSAGE
+    welcomeMessage: currentConfig.welcomeMessage || DEFAULT_WELCOME_MESSAGE,
+    validatorChannelId: validatorChannel.id
   };
 
   setGuildConfig(guild.id, newConfig);
@@ -425,34 +463,17 @@ export async function runAutoSetup(guild) {
     [
       '# 🔐 Verification Setup',
       '',
-      'Wie funktioniert es? Was musst du machen?',
+      '• ⚠️ Diesen Kanal so lassen wie er ist, NICHT BEARBEITEN!',
       '',
-      '• ⚠️ Diesen Kanal so lassen wie er ist, NICHT BEARBEITEN !',
+      '• Verify, Unverify und RulesAccepted wurden automatisch erstellt.',
+      '• Eigene Server-Kategorien und Kanäle bitte privat setzen und die Rolle Verify hinzufügen.',
+      '• Auch die Step Mod!Z BOT Kategorie und der Kanal sollten privat + Verify gesetzt werden, wenn du sie nur Verifizierten zeigen willst.',
       '',
-      '⚠️ Erstelle in deinen Servereinstellungen zuerst zwei neue Rollen: ⚠️',
-      '• ⚠️ Erledigt - Verify wurde von Step erstellt ✅',
-      '• ⚠️ Erledigt - Unverify wurde von Step erstellt ✅',
-      '• ⚠️ Erledigt - RulesAccepted wurde von Step erstellt ✅',
-      '',
-      '⚠️ Kategorie und Kanäle bearbeiten ⚠️',
-      '• ⚠️ WICHTIG: Ändere die Kategorie und den Kanal von Step Mod!Z BOT, in Privat + Rolle Verify Hinzu',
-      '⚠️ WIE? --> Rechtsklick einzeln auf jede Kategorien und jeden Kanale links in der Leiste. ⚠️',
-      '• ⚠️ Setze das Häkchen auf Private Kategorie/Kanal',
-      '• ⚠️ Füge nun allen Kategorien und Kanälen die Rolle Verify hinzu',
-      '• ⚠️ Das muss mit ALLEN Kategorien und Kanälen gemacht werden die NICHT vom Step Bot erstellt wurden',
-      '• ⚠️ Auch die Step Mod!Z BOT Kategorie und der Kanal muss auf Privat + Rolle Verify bearbeitet werden',
-      '',
-      '⚠️ Nach Klick auf Verifizieren werden alle Kategorien und Kanäle angezeigt. ⚠️',
-      '',
-      '⚠️ Der Bot macht automatisch: ⚠️',
+      'Der Bot macht automatisch:',
       '• RulesAccepted hinzufügen nach Regelbestätigung ✅',
       '• Unverify entfernen ✅',
       '• Verify hinzufügen ✅',
-      '• RulesAccepted wieder entfernen ✅',
-      '',
-      '⚠️ DANACH ⚠️',
-      '• Wer drauf joint sieht NUR Kategorie - Verification + Kanal - verified ✅',
-      '• User muss erst Regeln bestätigen und danach Verifizieren klicken ✅'
+      '• RulesAccepted wieder entfernen ✅'
     ].join('\n')
   );
 
@@ -463,7 +484,7 @@ export async function runAutoSetup(guild) {
       'Die Welcome-Nachricht kann geändert werden mit:',
       '`/welcome-nachricht`',
       '',
-      'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden. (Nicht hier im Kanal sondern oben drüber im Kanal)'
+      'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden.'
     ].join('\n')
   );
 
@@ -474,9 +495,7 @@ export async function runAutoSetup(guild) {
       'Die Ticket-Nachricht kann geändert werden mit:',
       '`/ticket-nachricht`',
       '',
-      'Danach kannst du mit `/ticket-panel` das Panel erneut senden. (Nicht hier im Kanal sondern oben drüber im Kanal)',
-      '',
-      'Das Ticket-System erstellt private Support-Tickets.'
+      'Danach kannst du mit `/ticket-panel` das Panel erneut senden.'
     ].join('\n')
   );
 
@@ -487,9 +506,7 @@ export async function runAutoSetup(guild) {
       'Die Whitelist-Nachricht kann geändert werden mit:',
       '`/whitelist-nachricht`',
       '',
-      'Danach kannst du mit `/whitelist-panel` das Panel erneut senden. (Nicht hier im Kanal sondern oben drüber im Kanal)',
-      '',
-      'Das Whitelist-System erstellt Bewerbungs-Channels für DayZ.'
+      'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.'
     ].join('\n')
   );
 
@@ -499,7 +516,7 @@ export async function runAutoSetup(guild) {
       '',
       'Mit `/validate` kannst du JSON-, XML- und DayZ-Dateien prüfen.',
       '',
-      'Der öffentliche Channel `json-xml-validator` ist direkt einsatzbereit.'
+      'Der öffentliche Channel ist direkt einsatzbereit.'
     ].join('\n')
   );
 

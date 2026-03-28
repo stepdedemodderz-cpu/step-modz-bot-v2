@@ -44,7 +44,7 @@ export function buildRulesIntroEmbed() {
       [
         'Willkommen auf dem Server.',
         '',
-        '**Bevor du Zugriff auf alle Bereiche bekommst:**',
+        '**So funktioniert es:**',
         '1. Wähle deine Sprache',
         '2. Lies die Regeln',
         '3. Bestätige die Regeln',
@@ -69,7 +69,7 @@ export function buildRulesEmbed(language = 'de') {
     .setTimestamp();
 }
 
-export function buildRulesButtons() {
+export function buildLanguageButtons() {
   return [
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -82,4 +82,15 @@ export function buildRulesButtons() {
         .setStyle(ButtonStyle.Secondary)
     )
   ];
+}
+
+export function buildRulesAcceptRow(language = 'de') {
+  const isEn = language === 'en';
+
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('stepmodz_rules_accept')
+      .setLabel(isEn ? '✅ Confirm Rules' : '✅ Regeln bestätigen')
+      .setStyle(ButtonStyle.Success)
+  );
 }

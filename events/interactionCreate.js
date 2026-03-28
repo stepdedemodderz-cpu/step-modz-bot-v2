@@ -7,7 +7,10 @@ import {
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
-import { buildRulesEmbed } from '../utils/rules.js';
+import {
+  buildRulesEmbed,
+  buildRulesAcceptRow
+} from '../utils/rules.js';
 import { buildInfoEmbed } from '../utils/infoEmbed.js';
 import { buildHelpEmbed } from '../utils/helpMenu.js';
 import { runAutoSetup } from '../utils/autosetup.js';
@@ -38,7 +41,7 @@ export default {
       let language = config.language || 'de';
 
       if (interaction.isChatInputCommand()) {
-        if (interaction.commandName !== 'validate' && !isOwner) {
+        if (interaction.commandName !== 'validate' && interaction.commandName !== 'update-server' && !isOwner) {
           await interaction.reply({
             content: '❌ Diesen Befehl darf nur der Server-Besitzer benutzen.',
             ephemeral: true
@@ -127,36 +130,22 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_rules_de') {
-  await interaction.reply({
-    embeds: [buildRulesEmbed('de')],
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('stepmodz_rules_accept')
-          .setLabel('✅ Regeln bestätigen')
-          .setStyle(ButtonStyle.Success)
-      )
-    ],
-    ephemeral: true
-  });
-  return;
-}
+          await interaction.reply({
+            embeds: [buildRulesEmbed('de')],
+            components: [buildRulesAcceptRow('de')],
+            ephemeral: true
+          });
+          return;
+        }
 
-if (interaction.customId === 'stepmodz_rules_en') {
-  await interaction.reply({
-    embeds: [buildRulesEmbed('en')],
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('stepmodz_rules_accept')
-          .setLabel('✅ Confirm Rules')
-          .setStyle(ButtonStyle.Success)
-      )
-    ],
-    ephemeral: true
-  });
-  return;
-}
+        if (interaction.customId === 'stepmodz_rules_en') {
+          await interaction.reply({
+            embeds: [buildRulesEmbed('en')],
+            components: [buildRulesAcceptRow('en')],
+            ephemeral: true
+          });
+          return;
+        }
 
         if (interaction.customId === 'stepmodz_rules_accept') {
           await interaction.deferReply({ ephemeral: true });
@@ -356,7 +345,7 @@ if (interaction.customId === 'stepmodz_rules_en') {
           if (selected === 'quicksetup') {
             await interaction.deferReply({ ephemeral: true });
 
-            const result = await runAutoSetup(interaction.guild);
+            const result = await runAutoSetup(interaction.guild, { mode: 'full' });
 
             const embed = new EmbedBuilder()
               .setTitle(
@@ -373,7 +362,6 @@ if (interaction.customId === 'stepmodz_rules_en') {
                 {
                   name: 'Erstellte Kategorien',
                   value: [
-                    `• ${result.stepBotCategory.name}`,
                     `• ${result.verificationCategory.name}`,
                     `• ${result.welcomeCategory.name}`,
                     `• ${result.ticketCategory.name}`,

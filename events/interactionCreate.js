@@ -127,20 +127,36 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_rules_de') {
-          await interaction.reply({
-            embeds: [buildRulesEmbed('de')],
-            ephemeral: true
-          });
-          return;
-        }
+  await interaction.reply({
+    embeds: [buildRulesEmbed('de')],
+    components: [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('stepmodz_rules_accept')
+          .setLabel('✅ Regeln bestätigen')
+          .setStyle(ButtonStyle.Success)
+      )
+    ],
+    ephemeral: true
+  });
+  return;
+}
 
-        if (interaction.customId === 'stepmodz_rules_en') {
-          await interaction.reply({
-            embeds: [buildRulesEmbed('en')],
-            ephemeral: true
-          });
-          return;
-        }
+if (interaction.customId === 'stepmodz_rules_en') {
+  await interaction.reply({
+    embeds: [buildRulesEmbed('en')],
+    components: [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('stepmodz_rules_accept')
+          .setLabel('✅ Confirm Rules')
+          .setStyle(ButtonStyle.Success)
+      )
+    ],
+    ephemeral: true
+  });
+  return;
+}
 
         if (interaction.customId === 'stepmodz_rules_accept') {
           await interaction.deferReply({ ephemeral: true });

@@ -74,18 +74,12 @@ export function buildRulesButtons() {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('stepmodz_rules_de')
-        .setLabel('Deutsch')
+        .setLabel('🇩🇪 Deutsch')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId('stepmodz_rules_en')
-        .setLabel('English')
+        .setLabel('🇬🇧 English')
         .setStyle(ButtonStyle.Secondary)
-    ),
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('stepmodz_rules_accept')
-        .setLabel('✅ Regeln bestätigen')
-        .setStyle(ButtonStyle.Success)
     )
   ];
 }

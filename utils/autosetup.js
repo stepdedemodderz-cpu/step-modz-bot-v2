@@ -133,24 +133,26 @@ function verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRoleId) {
   ];
 }
 
-async function ensureCategory(guild, name, overwrites, aliases = []) {
-  let category = guild.channels.cache.find(
+async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []) {
+  let channel = guild.channels.cache.find(
     (c) =>
-      c.type === ChannelType.GuildCategory &&
-      (c.name === name || aliases.includes(c.name))
+      c.type === ChannelType.GuildText &&
+      (c.name === name || aliases.includes(c.name)) &&
+      c.parentId === parentId
   );
 
-  if (!category) {
-    category = await guild.channels.create({
+  if (!channel) {
+    channel = await guild.channels.create({
       name,
-      type: ChannelType.GuildCategory,
+      type: ChannelType.GuildText,
+      parent: parentId,
       permissionOverwrites: overwrites
     });
-    return { channel: category, created: true };
+    return { channel, created: true };
   }
 
-  await category.edit({ name, permissionOverwrites: overwrites }).catch(() => null);
-  return { channel: category, created: false };
+  // Bestehenden Channel NICHT anfassen
+  return { channel, created: false };
 }
 
 async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []) {

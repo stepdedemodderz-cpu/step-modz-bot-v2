@@ -1,13 +1,13 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags, PermissionFlagsBits } from 'discord.js';
 import { runAutoSetup } from '../utils/autosetup.js';
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
   .setName('update-server')
-  .setDescription('Aktualisiert den Server (fügt nur fehlende Tools/Kanäle hinzu)');
+  .setDescription('Aktualisiert den Server und ergänzt nur fehlende Elemente.')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-export async function execute(interaction) {
-  // Nur Admins
-  if (!interaction.member.permissions.has('Administrator')) {
+async function execute(interaction) {
+  if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
     return interaction.reply({
       content: '❌ Du brauchst Administrator-Rechte.',
       flags: MessageFlags.Ephemeral
@@ -20,20 +20,11 @@ export async function execute(interaction) {
   });
 
   try {
-    const result = await runAutoSetup(interaction.guild, {
-      mode: 'update'
-    });
+    await runAutoSetup(interaction.guild, { mode: 'update' });
 
     await interaction.editReply({
-      content: [
-        '✅ **Update abgeschlossen!**',
-        '',
-        'Es wurden nur fehlende Elemente ergänzt.',
-        '',
-        '👉 Bestehende Kanäle wurden NICHT verändert.'
-      ].join('\n')
+      content: '✅ Update abgeschlossen. Es wurden nur fehlende Elemente ergänzt.'
     });
-
   } catch (error) {
     console.error('Update-Server Fehler:', error);
 
@@ -42,3 +33,8 @@ export async function execute(interaction) {
     });
   }
 }
+
+export default {
+  data,
+  execute
+};

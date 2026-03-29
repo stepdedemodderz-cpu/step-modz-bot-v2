@@ -133,26 +133,23 @@ function verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRoleId) {
   ];
 }
 
-async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []) {
-  let channel = guild.channels.cache.find(
+async function ensureCategory(guild, name, overwrites, aliases = []) {
+  let category = guild.channels.cache.find(
     (c) =>
-      c.type === ChannelType.GuildText &&
-      (c.name === name || aliases.includes(c.name)) &&
-      c.parentId === parentId
+      c.type === ChannelType.GuildCategory &&
+      (c.name === name || aliases.includes(c.name))
   );
 
-  if (!channel) {
-    channel = await guild.channels.create({
+  if (!category) {
+    category = await guild.channels.create({
       name,
-      type: ChannelType.GuildText,
-      parent: parentId,
+      type: ChannelType.GuildCategory,
       permissionOverwrites: overwrites
     });
-    return { channel, created: true };
+    return { channel: category, created: true };
   }
 
-  // Bestehenden Channel NICHT anfassen
-  return { channel, created: false };
+  return { channel: category, created: false };
 }
 
 async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []) {
@@ -173,17 +170,6 @@ async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []
     return { channel, created: true };
   }
 
-  if (!channel) {
-  channel = await guild.channels.create({
-    name,
-    type: ChannelType.GuildText,
-    parent: parentId,
-    permissionOverwrites: overwrites
-  });
-  return { channel, created: true };
-}
-
-// 🔥 WICHTIG: NICHTS MEHR ÄNDERN BEI BESTEHENDEN CHANNELS
   return { channel, created: false };
 }
 

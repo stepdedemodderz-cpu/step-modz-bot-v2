@@ -133,11 +133,19 @@ function verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRoleId) {
   ];
 }
 
-async function ensureCategory(guild, name, overwrites, aliases = []) {
+function channelNameMatches(channel, name, aliases = []) {
+  return channel.name === name || aliases.includes(channel.name);
+}
+
+async function ensureCategory(guild, name, overwrites, aliases = [], options = {}) {
+  const {
+    updatePermissionsIfFound = false
+  } = options;
+
   let category = guild.channels.cache.find(
     (c) =>
       c.type === ChannelType.GuildCategory &&
-      (c.name === name || aliases.includes(c.name))
+      channelNameMatches(c, name, aliases)
   );
 
   if (!category) {
@@ -146,18 +154,28 @@ async function ensureCategory(guild, name, overwrites, aliases = []) {
       type: ChannelType.GuildCategory,
       permissionOverwrites: overwrites
     });
+
     return { channel: category, created: true };
+  }
+
+  if (updatePermissionsIfFound) {
+    await category.permissionOverwrites.set(overwrites).catch(() => null);
   }
 
   return { channel: category, created: false };
 }
 
-async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []) {
+async function ensureTextChannel(guild, name, parentId, overwrites, aliases = [], options = {}) {
+  const {
+    mode = 'full',
+    moveToParentIfFound = false,
+    updatePermissionsIfFound = false
+  } = options;
+
   let channel = guild.channels.cache.find(
     (c) =>
       c.type === ChannelType.GuildText &&
-      (c.name === name || aliases.includes(c.name)) &&
-      c.parentId === parentId
+      channelNameMatches(c, name, aliases)
   );
 
   if (!channel) {
@@ -167,10 +185,22 @@ async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []
       parent: parentId,
       permissionOverwrites: overwrites
     });
-    return { channel, created: true };
+
+    return { channel, created: true, moved: false };
   }
 
-  return { channel, created: false };
+  let moved = false;
+
+  if (mode === 'full' && moveToParentIfFound && channel.parentId !== parentId) {
+    await channel.setParent(parentId).catch(() => null);
+    moved = true;
+  }
+
+  if (mode === 'full' && updatePermissionsIfFound) {
+    await channel.permissionOverwrites.set(overwrites).catch(() => null);
+  }
+
+  return { channel, created: false, moved };
 }
 
 async function ensureRole(guild, name, color = null) {
@@ -213,8 +243,68 @@ async function postVerificationPanels(verifiedChannel, guildId, mode, botId) {
   });
 }
 
+async function postWelcomePanel(channel, message) {
+  await channel.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle('👋 Welcome')
+        .setDescription(message)
+        .setColor(0x22c55e)
+        .setFooter({ text: 'Step Mod!Z BOT • Welcome' })
+        .setTimestamp()
+    ]
+  });
+}
+
+async function postTicketPanel(channel, message) {
+  await channel.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle('🎫 Support Tickets')
+        .setDescription(message)
+        .setColor(0x22c55e)
+        .setFooter({ text: 'Step Mod!Z BOT • Ticket Panel' })
+        .setTimestamp()
+    ],
+    components: [buildTicketPanelRow()]
+  });
+}
+
+async function postWhitelistPanel(channel, message) {
+  await channel.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle('📋 Whitelist Bewerbung')
+        .setDescription(message)
+        .setColor(0x22c55e)
+        .setFooter({ text: 'Step Mod!Z BOT • Whitelist Panel' })
+        .setTimestamp()
+    ],
+    components: [buildWhitelistPanelRow()]
+  });
+}
+
+async function postValidatorPanel(channel) {
+  await channel.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle('🧪 Json/XML Validator')
+        .setDescription(
+          [
+            'Nutze `/validate` und lade eine JSON- oder XML-Datei hoch.',
+            '',
+            'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.'
+          ].join('\n')
+        )
+        .setColor(0x22c55e)
+        .setFooter({ text: 'Step Mod!Z BOT • Validator' })
+        .setTimestamp()
+    ]
+  });
+}
+
 export async function runAutoSetup(guild, options = {}) {
-  const mode = options.mode || 'full';
+  const mode = options.mode === 'update' ? 'update' : 'full';
   const currentConfig = getGuildConfig(guild.id) || {};
 
   const owner = await guild.fetchOwner();
@@ -236,11 +326,22 @@ export async function runAutoSetup(guild, options = {}) {
 
   const verifiedPerms = verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRole.id);
 
+  const categoryOptions = {
+    updatePermissionsIfFound: mode === 'full'
+  };
+
+  const channelOptions = {
+    mode,
+    moveToParentIfFound: mode === 'full',
+    updatePermissionsIfFound: mode === 'full'
+  };
+
   const verificationCategoryResult = await ensureCategory(
     guild,
     NAMES.verificationCategory,
     publicVerificationOverwrites(botId, everyoneId),
-    ['Verification', '✅ Verification', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕔𝕒𝕥𝕚𝕠𝕟']
+    ['Verification', '✅ Verification', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕔𝕒𝕥𝕚𝕠𝕟'],
+    categoryOptions
   );
   const verificationCategory = verificationCategoryResult.channel;
 
@@ -249,7 +350,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.verifiedChannel,
     verificationCategory.id,
     publicVerificationOverwrites(botId, everyoneId),
-    ['verified', '✅ Verified', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕖𝕕']
+    ['verified', '✅ Verified', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕖𝕕'],
+    channelOptions
   );
   const verifiedChannel = verifiedResult.channel;
 
@@ -258,7 +360,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.verificationSetupChannel,
     verificationCategory.id,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
-    ['verification-setup']
+    ['verification-setup'],
+    channelOptions
   );
   const verificationSetupChannel = verificationSetupResult.channel;
 
@@ -266,7 +369,8 @@ export async function runAutoSetup(guild, options = {}) {
     guild,
     NAMES.welcomeCategory,
     verifiedPerms,
-    ['Welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖']
+    ['Welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖'],
+    categoryOptions
   );
   const welcomeCategory = welcomeCategoryResult.channel;
 
@@ -275,7 +379,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.welcomeChannel,
     welcomeCategory.id,
     verifiedPerms,
-    ['welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖']
+    ['welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖'],
+    channelOptions
   );
   const welcomeChannel = welcomeResult.channel;
 
@@ -284,7 +389,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.welcomeInfoChannel,
     welcomeCategory.id,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
-    ['welcome-info']
+    ['welcome-info'],
+    channelOptions
   );
   const welcomeInfoChannel = welcomeInfoResult.channel;
 
@@ -292,7 +398,8 @@ export async function runAutoSetup(guild, options = {}) {
     guild,
     NAMES.ticketCategory,
     verifiedPerms,
-    ['Ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥']
+    ['Ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥'],
+    categoryOptions
   );
   const ticketCategory = ticketCategoryResult.channel;
 
@@ -301,7 +408,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.ticketChannel,
     ticketCategory.id,
     verifiedPerms,
-    ['ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥']
+    ['ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥'],
+    channelOptions
   );
   const ticketChannel = ticketResult.channel;
 
@@ -310,7 +418,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.ticketInfoChannel,
     ticketCategory.id,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
-    ['ticket-info']
+    ['ticket-info'],
+    channelOptions
   );
   const ticketInfoChannel = ticketInfoResult.channel;
 
@@ -318,7 +427,8 @@ export async function runAutoSetup(guild, options = {}) {
     guild,
     NAMES.whitelistCategory,
     verifiedPerms,
-    ['Whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥']
+    ['Whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥'],
+    categoryOptions
   );
   const whitelistCategory = whitelistCategoryResult.channel;
 
@@ -327,7 +437,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.whitelistChannel,
     whitelistCategory.id,
     verifiedPerms,
-    ['whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥']
+    ['whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥'],
+    channelOptions
   );
   const whitelistChannel = whitelistResult.channel;
 
@@ -336,7 +447,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.whitelistInfoChannel,
     whitelistCategory.id,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
-    ['whitelist-info']
+    ['whitelist-info'],
+    channelOptions
   );
   const whitelistInfoChannel = whitelistInfoResult.channel;
 
@@ -344,7 +456,8 @@ export async function runAutoSetup(guild, options = {}) {
     guild,
     NAMES.validatorCategory,
     verifiedPerms,
-    ['Validator', '🧬 Validator', '🧬 𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣']
+    ['Validator', '🧬 Validator', '🧬 𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣'],
+    categoryOptions
   );
   const validatorCategory = validatorCategoryResult.channel;
 
@@ -353,7 +466,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.validatorChannel,
     validatorCategory.id,
     verifiedPerms,
-    ['json-xml-validator', '🧬 Json-Xml-Validator', '🧬 𝕁𝕤𝕠𝕟-𝕏𝕞𝕝-𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣']
+    ['json-xml-validator', '🧬 Json-Xml-Validator', '🧬 𝕁𝕤𝕠𝕟-𝕏𝕞𝕝-𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣'],
+    channelOptions
   );
   const validatorChannel = validatorResult.channel;
 
@@ -362,7 +476,8 @@ export async function runAutoSetup(guild, options = {}) {
     NAMES.validatorInfoChannel,
     validatorCategory.id,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
-    ['validator-info']
+    ['validator-info'],
+    channelOptions
   );
   const validatorInfoChannel = validatorInfoResult.channel;
 
@@ -377,7 +492,7 @@ export async function runAutoSetup(guild, options = {}) {
     ticketPanelMessage: currentConfig.ticketPanelMessage || DEFAULT_TICKET_MESSAGE,
     whitelistPanelMessage: currentConfig.whitelistPanelMessage || DEFAULT_WHITELIST_MESSAGE,
     welcomeMessage: currentConfig.welcomeMessage || DEFAULT_WELCOME_MESSAGE,
-    validatorChannelId: validatorChannel.id
+    validatorChannelId: currentConfig.validatorChannelId || validatorChannel.id
   };
 
   setGuildConfig(guild.id, newConfig);
@@ -398,60 +513,16 @@ export async function runAutoSetup(guild, options = {}) {
     await postVerificationPanels(verifiedChannel, guild.id, 'full', botId);
 
     await clearBotMessages(welcomeChannel, botId);
-    await welcomeChannel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('👋 Welcome')
-          .setDescription(newConfig.welcomeMessage)
-          .setColor(0x22c55e)
-          .setFooter({ text: 'Step Mod!Z BOT • Welcome' })
-          .setTimestamp()
-      ]
-    });
+    await postWelcomePanel(welcomeChannel, newConfig.welcomeMessage);
 
     await clearBotMessages(ticketChannel, botId);
-    await ticketChannel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('🎫 Support Tickets')
-          .setDescription(newConfig.ticketPanelMessage)
-          .setColor(0x22c55e)
-          .setFooter({ text: 'Step Mod!Z BOT • Ticket Panel' })
-          .setTimestamp()
-      ],
-      components: [buildTicketPanelRow()]
-    });
+    await postTicketPanel(ticketChannel, newConfig.ticketPanelMessage);
 
     await clearBotMessages(whitelistChannel, botId);
-    await whitelistChannel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('📋 Whitelist Bewerbung')
-          .setDescription(newConfig.whitelistPanelMessage)
-          .setColor(0x22c55e)
-          .setFooter({ text: 'Step Mod!Z BOT • Whitelist Panel' })
-          .setTimestamp()
-      ],
-      components: [buildWhitelistPanelRow()]
-    });
+    await postWhitelistPanel(whitelistChannel, newConfig.whitelistPanelMessage);
 
     await clearBotMessages(validatorChannel, botId);
-    await validatorChannel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('🧪 Json/XML Validator')
-          .setDescription(
-            [
-              'Nutze `/validate` und lade eine JSON- oder XML-Datei hoch.',
-              '',
-              'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.'
-            ].join('\n')
-          )
-          .setColor(0x22c55e)
-          .setFooter({ text: 'Step Mod!Z BOT • Validator' })
-          .setTimestamp()
-      ]
-    });
+    await postValidatorPanel(validatorChannel);
 
     await clearBotMessages(verificationSetupChannel, botId);
     await verificationSetupChannel.send(
@@ -523,63 +594,19 @@ export async function runAutoSetup(guild, options = {}) {
     }
 
     if (welcomeResult.created) {
-      await welcomeChannel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle('👋 Welcome')
-            .setDescription(newConfig.welcomeMessage)
-            .setColor(0x22c55e)
-            .setFooter({ text: 'Step Mod!Z BOT • Welcome' })
-            .setTimestamp()
-        ]
-      });
+      await postWelcomePanel(welcomeChannel, newConfig.welcomeMessage);
     }
 
     if (ticketResult.created) {
-      await ticketChannel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle('🎫 Support Tickets')
-            .setDescription(newConfig.ticketPanelMessage)
-            .setColor(0x22c55e)
-            .setFooter({ text: 'Step Mod!Z BOT • Ticket Panel' })
-            .setTimestamp()
-        ],
-        components: [buildTicketPanelRow()]
-      });
+      await postTicketPanel(ticketChannel, newConfig.ticketPanelMessage);
     }
 
     if (whitelistResult.created) {
-      await whitelistChannel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle('📋 Whitelist Bewerbung')
-            .setDescription(newConfig.whitelistPanelMessage)
-            .setColor(0x22c55e)
-            .setFooter({ text: 'Step Mod!Z BOT • Whitelist Panel' })
-            .setTimestamp()
-        ],
-        components: [buildWhitelistPanelRow()]
-      });
+      await postWhitelistPanel(whitelistChannel, newConfig.whitelistPanelMessage);
     }
 
     if (validatorResult.created) {
-      await validatorChannel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle('🧪 Json/XML Validator')
-            .setDescription(
-              [
-                'Nutze `/validate` und lade eine JSON- oder XML-Datei hoch.',
-                '',
-                'Der Bot erkennt den Typ automatisch und zeigt Fehler oder Hinweise an.'
-              ].join('\n')
-            )
-            .setColor(0x22c55e)
-            .setFooter({ text: 'Step Mod!Z BOT • Validator' })
-            .setTimestamp()
-        ]
-      });
+      await postValidatorPanel(validatorChannel);
     }
 
     if (verificationSetupResult.created) {

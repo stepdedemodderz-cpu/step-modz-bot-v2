@@ -1,26 +1,44 @@
-import { SlashCommandBuilder } from 'discord.js';
-import { runAutoSetup } from '../utils/autosetup.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { runAutoSetup } from '../autosetup.js';
 
-export default {
-  data: new SlashCommandBuilder()
-    .setName('update-server')
-    .setDescription('Installiert nur neue Tools und fehlende Bot-Bereiche nach.'),
+export const data = new SlashCommandBuilder()
+  .setName('update-server')
+  .setDescription('Aktualisiert den Server (fügt nur fehlende Tools/Kanäle hinzu)');
 
-  async execute(interaction) {
-    if (interaction.user.id !== interaction.guild.ownerId) {
-      await interaction.reply({
-        content: '❌ Nur der Server-Besitzer darf das.',
-        ephemeral: true
-      });
-      return;
-    }
-
-    await interaction.deferReply({ ephemeral: true });
-
-    await runAutoSetup(interaction.guild, { mode: 'update' });
-
-    await interaction.editReply({
-      content: '✅ Server wurde aktualisiert. Nur fehlende neue Tools wurden ergänzt.'
+export async function execute(interaction) {
+  // Nur Admins
+  if (!interaction.member.permissions.has('Administrator')) {
+    return interaction.reply({
+      content: '❌ Du brauchst Administrator-Rechte.',
+      flags: MessageFlags.Ephemeral
     });
   }
-};
+
+  await interaction.reply({
+    content: '🔄 Server wird überprüft und aktualisiert...',
+    flags: MessageFlags.Ephemeral
+  });
+
+  try {
+    const result = await runAutoSetup(interaction.guild, {
+      mode: 'update'
+    });
+
+    await interaction.editReply({
+      content: [
+        '✅ **Update abgeschlossen!**',
+        '',
+        'Es wurden nur fehlende Elemente ergänzt.',
+        '',
+        '👉 Bestehende Kanäle wurden NICHT verändert.'
+      ].join('\n')
+    });
+
+  } catch (error) {
+    console.error('Update-Server Fehler:', error);
+
+    await interaction.editReply({
+      content: '❌ Fehler beim Update. Schau in die Konsole.'
+    });
+  }
+}

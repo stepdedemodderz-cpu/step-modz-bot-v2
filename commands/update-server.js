@@ -5,6 +5,8 @@ import {
 } from 'discord.js';
 import { runAutoSetup } from '../utils/autosetup.js';
 
+const UPDATE_SERVER_VERSION = 'v1.2';
+
 export default {
   data: new SlashCommandBuilder()
     .setName('update-server')
@@ -20,7 +22,7 @@ export default {
     }
 
     await interaction.reply({
-      content: '🔄 Server wird überprüft und aktualisiert...',
+      content: `🔄 Server wird überprüft und aktualisiert... (${UPDATE_SERVER_VERSION})`,
       flags: MessageFlags.Ephemeral
     });
 
@@ -29,7 +31,7 @@ export default {
 
       await interaction.editReply({
         content: [
-          '✅ **Update abgeschlossen!**',
+          `✅ **Update abgeschlossen!** (${UPDATE_SERVER_VERSION})`,
           '',
           'Es wurden nur fehlende Elemente ergänzt.',
           '👉 Bestehende Kanäle wurden nicht verändert.'
@@ -39,7 +41,7 @@ export default {
       console.error('Update-Server Fehler:', error);
 
       await interaction.editReply({
-        content: '❌ Fehler beim Update. Schau in die Konsole.'
+        content: `❌ Fehler beim Update. Schau in die Konsole. (${UPDATE_SERVER_VERSION})`
       });
     }
   }

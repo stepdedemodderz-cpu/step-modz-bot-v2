@@ -11,6 +11,9 @@ import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
+const BOT_CATEGORY_NAME = 'Step Mod!Z BOT';
+const BOT_CHANNEL_NAME = 'step-modz-bot';
+
 function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
     {
@@ -56,6 +59,39 @@ async function findExistingIntroMessage(channel, botUserId) {
   );
 }
 
+async function ensureSingleBotCategory(guild, overwrites) {
+  const categories = guild.channels.cache
+    .filter((c) => c.type === ChannelType.GuildCategory && c.name === BOT_CATEGORY_NAME)
+    .sort((a, b) => a.position - b.position);
+
+  let category = categories.first() || null;
+
+  if (!category) {
+    category = await guild.channels.create({
+      name: BOT_CATEGORY_NAME,
+      type: ChannelType.GuildCategory,
+      permissionOverwrites: overwrites
+    });
+    return category;
+  }
+
+  await category.permissionOverwrites.set(overwrites).catch(() => null);
+
+  const duplicates = categories.filter((c) => c.id !== category.id);
+
+  for (const [, duplicate] of duplicates) {
+    const children = guild.channels.cache.filter((c) => c.parentId === duplicate.id);
+
+    for (const [, child] of children) {
+      await child.setParent(category.id).catch(() => null);
+    }
+
+    await duplicate.delete().catch(() => null);
+  }
+
+  return category;
+}
+
 export default {
   name: 'guildCreate',
   async execute(guild) {
@@ -75,27 +111,17 @@ export default {
       const everyoneId = guild.roles.everyone.id;
       const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
-      let category = guild.channels.cache.find(
-        (c) => c.type === ChannelType.GuildCategory && c.name === 'Step Mod!Z BOT'
-      );
-
-      if (!category) {
-        category = await guild.channels.create({
-          name: 'Step Mod!Z BOT',
-          type: ChannelType.GuildCategory,
-          permissionOverwrites: overwrites
-        });
-      }
+      const category = await ensureSingleBotCategory(guild, overwrites);
 
       let channel = guild.channels.cache.find(
         (c) =>
           c.type === ChannelType.GuildText &&
-          c.name === 'step-modz-bot'
+          c.name === BOT_CHANNEL_NAME
       );
 
       if (!channel) {
         channel = await guild.channels.create({
-          name: 'step-modz-bot',
+          name: BOT_CHANNEL_NAME,
           type: ChannelType.GuildText,
           parent: category.id,
           permissionOverwrites: overwrites

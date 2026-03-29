@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { runAutoSetup } from '../autosetup.js';
+import { runAutoSetup } from '../utils/autosetup.js';
 
 export const data = new SlashCommandBuilder()
   .setName('update-server')

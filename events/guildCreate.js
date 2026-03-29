@@ -42,14 +42,18 @@ function botBaseOverwrites(ownerId, botId, everyoneId) {
   ];
 }
 
-async function clearBotMessages(channel, botUserId) {
-  const messages = await channel.messages.fetch({ limit: 25 }).catch(() => null);
-  if (!messages) return;
+async function findExistingIntroMessage(channel, botUserId) {
+  const messages = await channel.messages.fetch({ limit: 50 }).catch(() => null);
+  if (!messages) return null;
 
-  const botMessages = messages.filter((m) => m.author.id === botUserId);
-  for (const [, msg] of botMessages) {
-    await msg.delete().catch(() => null);
-  }
+  return (
+    messages.find(
+      (m) =>
+        m.author.id === botUserId &&
+        m.embeds.length > 0 &&
+        m.embeds[0]?.title === 'Step Mod!Z BOT'
+    ) || null
+  );
 }
 
 export default {
@@ -71,7 +75,6 @@ export default {
       const everyoneId = guild.roles.everyone.id;
       const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
-      // 🔹 Kategorie NUR EINMAL erstellen
       let category = guild.channels.cache.find(
         (c) => c.type === ChannelType.GuildCategory && c.name === 'Step Mod!Z BOT'
       );
@@ -84,7 +87,6 @@ export default {
         });
       }
 
-      // 🔹 Channel GLOBAL suchen (kein parent check → verhindert Duplikate)
       let channel = guild.channels.cache.find(
         (c) =>
           c.type === ChannelType.GuildText &&
@@ -99,7 +101,6 @@ export default {
           permissionOverwrites: overwrites
         });
       } else {
-        // Falls falsche Kategorie → verschieben
         if (channel.parentId !== category.id) {
           await channel.setParent(category.id).catch(() => null);
         }
@@ -118,10 +119,12 @@ export default {
             'Wähle eine Kategorie aus dem Dropdown-Menü,',
             'um meine Befehlsliste anzuzeigen.',
             'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
-            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.'
+            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.',
+            'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
           ].join('\n')
         )
         .setColor(0x5865f2)
+        .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
         .setFooter({ text: t(language, 'checkedBy') })
         .setTimestamp();
 
@@ -147,14 +150,19 @@ export default {
           .addOptions(getHelpMenuOptions(language))
       );
 
-      // 🔹 verhindert doppelte Nachrichten
-      await clearBotMessages(channel, botId);
+      const existingIntro = await findExistingIntroMessage(channel, botId);
 
-      await channel.send({
-        embeds: [embed],
-        components: [buttonRow, menuRow]
-      });
-
+      if (existingIntro) {
+        await existingIntro.edit({
+          embeds: [embed],
+          components: [buttonRow, menuRow]
+        }).catch(() => null);
+      } else {
+        await channel.send({
+          embeds: [embed],
+          components: [buttonRow, menuRow]
+        });
+      }
     } catch (err) {
       console.error('guildCreate Fehler:', err);
     }

@@ -59,44 +59,13 @@ async function findExistingIntroMessage(channel, botUserId) {
   );
 }
 
-async function ensureSingleBotCategory(guild, overwrites) {
-  const categories = guild.channels.cache
-    .filter((c) => c.type === ChannelType.GuildCategory && c.name === BOT_CATEGORY_NAME)
-    .sort((a, b) => a.position - b.position);
-
-  let category = categories.first() || null;
-
-  if (!category) {
-    category = await guild.channels.create({
-      name: BOT_CATEGORY_NAME,
-      type: ChannelType.GuildCategory,
-      permissionOverwrites: overwrites
-    });
-    return category;
-  }
-
-  await category.permissionOverwrites.set(overwrites).catch(() => null);
-
-  const duplicates = categories.filter((c) => c.id !== category.id);
-
-  for (const [, duplicate] of duplicates) {
-    const children = guild.channels.cache.filter((c) => c.parentId === duplicate.id);
-
-    for (const [, child] of children) {
-      await child.setParent(category.id).catch(() => null);
-    }
-
-    await duplicate.delete().catch(() => null);
-  }
-
-  return category;
-}
-
 export default {
   name: 'guildCreate',
   async execute(guild) {
     try {
       console.log(`Bot wurde zu Server hinzugefügt: ${guild.name}`);
+
+      await guild.channels.fetch().catch(() => null);
 
       const config = getGuildConfig(guild.id) || {};
       const language = config.language || 'de';
@@ -111,13 +80,63 @@ export default {
       const everyoneId = guild.roles.everyone.id;
       const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
-      const category = await ensureSingleBotCategory(guild, overwrites);
+      let category = null;
 
-      let channel = guild.channels.cache.find(
-        (c) =>
-          c.type === ChannelType.GuildText &&
-          c.name === BOT_CHANNEL_NAME
-      );
+      if (config.botIntroCategoryId) {
+        category = guild.channels.cache.get(config.botIntroCategoryId) || null;
+      }
+
+      if (!category) {
+        const categories = guild.channels.cache.filter(
+          (c) => c.type === ChannelType.GuildCategory && c.name === BOT_CATEGORY_NAME
+        );
+
+        category = categories.first() || null;
+
+        const duplicates = categories.filter((c) => c.id !== category?.id);
+        for (const [, duplicate] of duplicates) {
+          const children = guild.channels.cache.filter((c) => c.parentId === duplicate.id);
+
+          for (const [, child] of children) {
+            if (category) {
+              await child.setParent(category.id).catch(() => null);
+            }
+          }
+
+          await duplicate.delete().catch(() => null);
+        }
+      }
+
+      if (!category) {
+        category = await guild.channels.create({
+          name: BOT_CATEGORY_NAME,
+          type: ChannelType.GuildCategory,
+          permissionOverwrites: overwrites
+        });
+      } else {
+        await category.permissionOverwrites.set(overwrites).catch(() => null);
+      }
+
+      let channel = null;
+
+      if (config.botIntroChannelId) {
+        channel = guild.channels.cache.get(config.botIntroChannelId) || null;
+      }
+
+      if (!channel) {
+        const channels = guild.channels.cache.filter(
+          (c) =>
+            c.type === ChannelType.GuildText &&
+            c.name === BOT_CHANNEL_NAME
+        );
+
+        channel = channels.first() || null;
+
+        const duplicates = channels.filter((c) => c.id !== channel?.id);
+        for (const [, duplicate] of duplicates) {
+          await duplicate.delete().catch(() => null);
+        }
+      }
 
       if (!channel) {
         channel = await guild.channels.create({
@@ -133,6 +152,13 @@ export default {
 
         await channel.permissionOverwrites.set(overwrites).catch(() => null);
       }
+
+      setGuildConfig(guild.id, {
+        ...getGuildConfig(guild.id),
+        language,
+        botIntroCategoryId: category.id,
+        botIntroChannelId: channel.id
+      });
 
       const embed = new EmbedBuilder()
         .setTitle('Step Mod!Z BOT')

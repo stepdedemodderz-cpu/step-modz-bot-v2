@@ -1,13 +1,17 @@
 import {
   ChannelType,
   PermissionsBitField,
-  EmbedBuilder
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  StringSelectMenuBuilder
 } from 'discord.js';
+import { getGuildConfig, setGuildConfig } from '../utils/config.js';
+import { t } from '../utils/i18n.js';
+import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
-const CATEGORY_NAME = 'Step Mod!Z BOT';
-const CHANNEL_NAME = 'step-modz-bot';
-
-function overwrites(ownerId, botId, everyoneId) {
+function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
     {
       id: everyoneId,
@@ -21,7 +25,8 @@ function overwrites(ownerId, botId, everyoneId) {
       id: ownerId,
       allow: [
         PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory
       ]
     },
     {
@@ -29,6 +34,7 @@ function overwrites(ownerId, botId, everyoneId) {
       allow: [
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
         PermissionsBitField.Flags.ManageChannels,
         PermissionsBitField.Flags.ManageMessages
       ]
@@ -40,73 +46,102 @@ export default {
   name: 'guildCreate',
   async execute(guild) {
     try {
-      console.log(`Bot wurde zu Server hinzugefügt: ${guild.name}`);
+      const config = getGuildConfig(guild.id) || {};
+      const language = config.language || 'de';
 
-      // 🔥 WICHTIG: alles frisch laden (verhindert doppelte Erstellung)
-      await guild.channels.fetch().catch(() => null);
+      if (!config.language) {
+        setGuildConfig(guild.id, { ...config, language: 'de' });
+      }
 
       const owner = await guild.fetchOwner();
       const ownerId = owner.id;
       const botId = guild.members.me?.id || guild.client.user.id;
       const everyoneId = guild.roles.everyone.id;
+      const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
-      const perms = overwrites(ownerId, botId, everyoneId);
-
-      // 🔹 Kategorie IMMER global suchen (nicht nur cache!)
       let category = guild.channels.cache.find(
-        (c) =>
-          c.type === ChannelType.GuildCategory &&
-          c.name === CATEGORY_NAME
+        (c) => c.type === ChannelType.GuildCategory && c.name === 'Step Mod!Z BOT'
       );
 
       if (!category) {
         category = await guild.channels.create({
-          name: CATEGORY_NAME,
+          name: 'Step Mod!Z BOT',
           type: ChannelType.GuildCategory,
-          permissionOverwrites: perms
+          permissionOverwrites: overwrites
         });
+      } else {
+        await category.edit({
+          permissionOverwrites: overwrites
+        }).catch(() => null);
       }
 
-      // 🔹 Channel GLOBAL suchen (kein parent check!)
       let channel = guild.channels.cache.find(
         (c) =>
           c.type === ChannelType.GuildText &&
-          c.name === CHANNEL_NAME
+          c.name === 'step-modz-bot' &&
+          c.parentId === category.id
       );
 
       if (!channel) {
         channel = await guild.channels.create({
-          name: CHANNEL_NAME,
+          name: 'step-modz-bot',
           type: ChannelType.GuildText,
           parent: category.id,
-          permissionOverwrites: perms
+          permissionOverwrites: overwrites
         });
       } else {
-        // falls falsche Kategorie → verschieben
-        if (channel.parentId !== category.id) {
-          await channel.setParent(category.id).catch(() => null);
-        }
+        await channel.edit({
+          parent: category.id,
+          permissionOverwrites: overwrites
+        }).catch(() => null);
       }
 
-      // 🔹 Nur 1 Nachricht (keine Duplikate)
-      const messages = await channel.messages.fetch({ limit: 10 }).catch(() => null);
+      const embed = new EmbedBuilder()
+        .setTitle('Step Mod!Z BOT')
+        .setDescription(
+          [
+            'Ich bin **Step Mod!Z BOT**.',
+            '',
+            'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
+            '',
+            'Wähle eine Kategorie aus dem Dropdown-Menü,',
+            'um meine Befehlsliste anzuzeigen.',
+            'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
+            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.',
+            'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
+          ].join('\n')
+        )
+        .setColor(0x5865f2)
+        .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
+        .setFooter({ text: t(language, 'checkedBy') })
+        .setTimestamp();
 
-      const alreadyExists = messages?.some(
-        (m) =>
-          m.author.id === botId &&
-          m.embeds.length > 0 &&
-          m.embeds[0]?.title === 'Step Mod!Z BOT'
+      const buttonRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('stepmodz_open_info')
+          .setLabel(t(language, 'buttonInfo'))
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('stepmodz_lang_de')
+          .setLabel('Deutsch')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('stepmodz_lang_en')
+          .setLabel('English')
+          .setStyle(ButtonStyle.Secondary)
       );
 
-      if (!alreadyExists) {
-        const embed = new EmbedBuilder()
-          .setTitle('Step Mod!Z BOT')
-          .setDescription('Setup erfolgreich.')
-          .setColor(0x5865f2);
+      const menuRow = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('stepmodz_help_menu')
+          .setPlaceholder(language === 'en' ? 'Dropdown Menu' : 'Dropdown Menü')
+          .addOptions(getHelpMenuOptions(language))
+      );
 
-        await channel.send({ embeds: [embed] });
-      }
-
+      await channel.send({
+        embeds: [embed],
+        components: [buttonRow, menuRow]
+      });
     } catch (err) {
       console.error('guildCreate Fehler:', err);
     }

@@ -19,6 +19,7 @@
     "whitelistCategoryId": null,
     "whitelistReviewRoleId": null,
     "whitelistApprovedRoleId": null,
-    "logChannelId": null
+    "logChannelId": null,
+    "language": "de"
   }
 }

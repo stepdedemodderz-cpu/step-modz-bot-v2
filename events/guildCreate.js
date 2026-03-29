@@ -42,10 +42,22 @@ function botBaseOverwrites(ownerId, botId, everyoneId) {
   ];
 }
 
+async function clearBotMessages(channel, botUserId) {
+  const messages = await channel.messages.fetch({ limit: 25 }).catch(() => null);
+  if (!messages) return;
+
+  const botMessages = messages.filter((m) => m.author.id === botUserId);
+  for (const [, msg] of botMessages) {
+    await msg.delete().catch(() => null);
+  }
+}
+
 export default {
   name: 'guildCreate',
   async execute(guild) {
     try {
+      console.log(`Bot wurde zu Server hinzugefügt: ${guild.name}`);
+
       const config = getGuildConfig(guild.id) || {};
       const language = config.language || 'de';
 
@@ -59,6 +71,7 @@ export default {
       const everyoneId = guild.roles.everyone.id;
       const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
+      // 🔹 Kategorie NUR EINMAL erstellen
       let category = guild.channels.cache.find(
         (c) => c.type === ChannelType.GuildCategory && c.name === 'Step Mod!Z BOT'
       );
@@ -69,17 +82,13 @@ export default {
           type: ChannelType.GuildCategory,
           permissionOverwrites: overwrites
         });
-      } else {
-        await category.edit({
-          permissionOverwrites: overwrites
-        }).catch(() => null);
       }
 
+      // 🔹 Channel GLOBAL suchen (kein parent check → verhindert Duplikate)
       let channel = guild.channels.cache.find(
         (c) =>
           c.type === ChannelType.GuildText &&
-          c.name === 'step-modz-bot' &&
-          c.parentId === category.id
+          c.name === 'step-modz-bot'
       );
 
       if (!channel) {
@@ -90,10 +99,12 @@ export default {
           permissionOverwrites: overwrites
         });
       } else {
-        await channel.edit({
-          parent: category.id,
-          permissionOverwrites: overwrites
-        }).catch(() => null);
+        // Falls falsche Kategorie → verschieben
+        if (channel.parentId !== category.id) {
+          await channel.setParent(category.id).catch(() => null);
+        }
+
+        await channel.permissionOverwrites.set(overwrites).catch(() => null);
       }
 
       const embed = new EmbedBuilder()
@@ -107,12 +118,10 @@ export default {
             'Wähle eine Kategorie aus dem Dropdown-Menü,',
             'um meine Befehlsliste anzuzeigen.',
             'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
-            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.',
-            'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
+            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.'
           ].join('\n')
         )
         .setColor(0x5865f2)
-        .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
         .setFooter({ text: t(language, 'checkedBy') })
         .setTimestamp();
 
@@ -138,10 +147,14 @@ export default {
           .addOptions(getHelpMenuOptions(language))
       );
 
+      // 🔹 verhindert doppelte Nachrichten
+      await clearBotMessages(channel, botId);
+
       await channel.send({
         embeds: [embed],
         components: [buttonRow, menuRow]
       });
+
     } catch (err) {
       console.error('guildCreate Fehler:', err);
     }

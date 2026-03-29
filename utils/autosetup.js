@@ -31,6 +31,30 @@ const NAMES = {
   validatorInfoChannel: 'validator-info'
 };
 
+const SETUP_KEYS = {
+  verificationCategory: 'verification.category',
+  verifiedChannel: 'verification.verified_channel',
+  verificationSetupChannel: 'verification.setup_channel',
+
+  welcomeCategory: 'welcome.category',
+  welcomeChannel: 'welcome.channel',
+  welcomeInfoChannel: 'welcome.info_channel',
+
+  ticketCategory: 'ticket.category',
+  ticketChannel: 'ticket.channel',
+  ticketInfoChannel: 'ticket.info_channel',
+
+  whitelistCategory: 'whitelist.category',
+  whitelistChannel: 'whitelist.channel',
+  whitelistInfoChannel: 'whitelist.info_channel',
+
+  validatorCategory: 'validator.category',
+  validatorChannel: 'validator.channel',
+  validatorInfoChannel: 'validator.info_channel'
+};
+
+const BASELINE_SETUP_KEYS = Object.values(SETUP_KEYS);
+
 const DEFAULT_TICKET_MESSAGE = [
   'Benötigst du Hilfe von einem Admin oder Moderator?',
   '',
@@ -137,70 +161,125 @@ function channelNameMatches(channel, name, aliases = []) {
   return channel.name === name || aliases.includes(channel.name);
 }
 
-async function ensureCategory(guild, name, overwrites, aliases = [], options = {}) {
-  const {
-    updatePermissionsIfFound = false
-  } = options;
+function getCreatedSetupKeys(config = {}) {
+  return new Set(Array.isArray(config.createdSetupKeys) ? config.createdSetupKeys : []);
+}
 
-  let category = guild.channels.cache.find(
+function seedBaselineIfNeeded(config, mode) {
+  if (mode !== 'update') {
+    return Array.isArray(config.createdSetupKeys) ? config.createdSetupKeys : [];
+  }
+
+  if (Array.isArray(config.createdSetupKeys)) {
+    return config.createdSetupKeys;
+  }
+
+  return [...BASELINE_SETUP_KEYS];
+}
+
+function findCategory(guild, name, aliases = []) {
+  return guild.channels.cache.find(
     (c) =>
       c.type === ChannelType.GuildCategory &&
       channelNameMatches(c, name, aliases)
-  );
-
-  if (!category) {
-    category = await guild.channels.create({
-      name,
-      type: ChannelType.GuildCategory,
-      permissionOverwrites: overwrites
-    });
-
-    return { channel: category, created: true };
-  }
-
-  if (updatePermissionsIfFound) {
-    await category.permissionOverwrites.set(overwrites).catch(() => null);
-  }
-
-  return { channel: category, created: false };
+  ) || null;
 }
 
-async function ensureTextChannel(guild, name, parentId, overwrites, aliases = [], options = {}) {
+function findTextChannel(guild, name, aliases = [], parentId = null) {
+  let channel = guild.channels.cache.find(
+    (c) =>
+      c.type === ChannelType.GuildText &&
+      channelNameMatches(c, name, aliases) &&
+      (parentId ? c.parentId === parentId : true)
+  );
+
+  if (!channel) {
+    channel = guild.channels.cache.find(
+      (c) =>
+        c.type === ChannelType.GuildText &&
+        channelNameMatches(c, name, aliases)
+    );
+  }
+
+  return channel || null;
+}
+
+async function ensureCategory(guild, config, setupKey, name, overwrites, aliases = [], options = {}) {
+  const { mode = 'full', updatePermissionsIfFound = false } = options;
+  const createdKeys = getCreatedSetupKeys(config);
+
+  const existing = findCategory(guild, name, aliases);
+
+  if (mode === 'update' && createdKeys.has(setupKey)) {
+    return { channel: existing, created: false };
+  }
+
+  if (existing) {
+    createdKeys.add(setupKey);
+    config.createdSetupKeys = Array.from(createdKeys);
+
+    if (mode === 'full' && updatePermissionsIfFound) {
+      await existing.permissionOverwrites.set(overwrites).catch(() => null);
+    }
+
+    return { channel: existing, created: false };
+  }
+
+  const category = await guild.channels.create({
+    name,
+    type: ChannelType.GuildCategory,
+    permissionOverwrites: overwrites
+  });
+
+  createdKeys.add(setupKey);
+  config.createdSetupKeys = Array.from(createdKeys);
+
+  return { channel: category, created: true };
+}
+
+async function ensureTextChannel(guild, config, setupKey, name, parentId, overwrites, aliases = [], options = {}) {
   const {
     mode = 'full',
     moveToParentIfFound = false,
     updatePermissionsIfFound = false
   } = options;
 
-  let channel = guild.channels.cache.find(
-    (c) =>
-      c.type === ChannelType.GuildText &&
-      channelNameMatches(c, name, aliases)
-  );
+  const createdKeys = getCreatedSetupKeys(config);
+  const existing = findTextChannel(guild, name, aliases, parentId);
 
-  if (!channel) {
-    channel = await guild.channels.create({
-      name,
-      type: ChannelType.GuildText,
-      parent: parentId,
-      permissionOverwrites: overwrites
-    });
-
-    return { channel, created: true, moved: false };
+  if (mode === 'update' && createdKeys.has(setupKey)) {
+    return { channel: existing, created: false, moved: false };
   }
 
-  let moved = false;
+  if (existing) {
+    createdKeys.add(setupKey);
+    config.createdSetupKeys = Array.from(createdKeys);
 
-  if (mode === 'full' && moveToParentIfFound && channel.parentId !== parentId) {
-    await channel.setParent(parentId).catch(() => null);
-    moved = true;
+    let moved = false;
+
+    if (mode === 'full' && moveToParentIfFound && existing.parentId !== parentId) {
+      await existing.setParent(parentId).catch(() => null);
+      moved = true;
+    }
+
+    if (mode === 'full' && updatePermissionsIfFound) {
+      await existing.permissionOverwrites.set(overwrites).catch(() => null);
+    }
+
+    return { channel: existing, created: false, moved };
   }
 
-  if (mode === 'full' && updatePermissionsIfFound) {
-    await channel.permissionOverwrites.set(overwrites).catch(() => null);
-  }
+  const channel = await guild.channels.create({
+    name,
+    type: ChannelType.GuildText,
+    parent: parentId,
+    permissionOverwrites: overwrites
+  });
 
-  return { channel, created: false, moved };
+  createdKeys.add(setupKey);
+  config.createdSetupKeys = Array.from(createdKeys);
+
+  return { channel, created: true, moved: false };
 }
 
 async function ensureRole(guild, name, color = null) {
@@ -306,6 +385,10 @@ async function postValidatorPanel(channel) {
 export async function runAutoSetup(guild, options = {}) {
   const mode = options.mode === 'update' ? 'update' : 'full';
   const currentConfig = getGuildConfig(guild.id) || {};
+  const workingConfig = {
+    ...currentConfig,
+    createdSetupKeys: seedBaselineIfNeeded(currentConfig, mode)
+  };
 
   const owner = await guild.fetchOwner();
   const ownerId = owner.id;
@@ -313,20 +396,21 @@ export async function runAutoSetup(guild, options = {}) {
   const everyoneId = guild.roles.everyone.id;
 
   const rulesAcceptedRole =
-    (currentConfig.rulesAcceptedRoleId && guild.roles.cache.get(currentConfig.rulesAcceptedRoleId)) ||
+    (workingConfig.rulesAcceptedRoleId && guild.roles.cache.get(workingConfig.rulesAcceptedRoleId)) ||
     await ensureRole(guild, 'RulesAccepted');
 
   const verifyRole =
-    (currentConfig.verifyRoleId && guild.roles.cache.get(currentConfig.verifyRoleId)) ||
+    (workingConfig.verifyRoleId && guild.roles.cache.get(workingConfig.verifyRoleId)) ||
     await ensureRole(guild, 'Verify');
 
   const unverifyRole =
-    (currentConfig.unverifiedRoleId && guild.roles.cache.get(currentConfig.unverifiedRoleId)) ||
+    (workingConfig.unverifiedRoleId && guild.roles.cache.get(workingConfig.unverifiedRoleId)) ||
     await ensureRole(guild, 'Unverify');
 
   const verifiedPerms = verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRole.id);
 
   const categoryOptions = {
+    mode,
     updatePermissionsIfFound: mode === 'full'
   };
 
@@ -338,6 +422,8 @@ export async function runAutoSetup(guild, options = {}) {
 
   const verificationCategoryResult = await ensureCategory(
     guild,
+    workingConfig,
+    SETUP_KEYS.verificationCategory,
     NAMES.verificationCategory,
     publicVerificationOverwrites(botId, everyoneId),
     ['Verification', '✅ Verification', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕔𝕒𝕥𝕚𝕠𝕟'],
@@ -347,8 +433,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const verifiedResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.verifiedChannel,
     NAMES.verifiedChannel,
-    verificationCategory.id,
+    verificationCategory?.id || null,
     publicVerificationOverwrites(botId, everyoneId),
     ['verified', '✅ Verified', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕖𝕕'],
     channelOptions
@@ -357,8 +445,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const verificationSetupResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.verificationSetupChannel,
     NAMES.verificationSetupChannel,
-    verificationCategory.id,
+    verificationCategory?.id || null,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
     ['verification-setup'],
     channelOptions
@@ -367,6 +457,8 @@ export async function runAutoSetup(guild, options = {}) {
 
   const welcomeCategoryResult = await ensureCategory(
     guild,
+    workingConfig,
+    SETUP_KEYS.welcomeCategory,
     NAMES.welcomeCategory,
     verifiedPerms,
     ['Welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖'],
@@ -376,8 +468,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const welcomeResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.welcomeChannel,
     NAMES.welcomeChannel,
-    welcomeCategory.id,
+    welcomeCategory?.id || null,
     verifiedPerms,
     ['welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖'],
     channelOptions
@@ -386,8 +480,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const welcomeInfoResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.welcomeInfoChannel,
     NAMES.welcomeInfoChannel,
-    welcomeCategory.id,
+    welcomeCategory?.id || null,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
     ['welcome-info'],
     channelOptions
@@ -396,6 +492,8 @@ export async function runAutoSetup(guild, options = {}) {
 
   const ticketCategoryResult = await ensureCategory(
     guild,
+    workingConfig,
+    SETUP_KEYS.ticketCategory,
     NAMES.ticketCategory,
     verifiedPerms,
     ['Ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥'],
@@ -405,8 +503,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const ticketResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.ticketChannel,
     NAMES.ticketChannel,
-    ticketCategory.id,
+    ticketCategory?.id || null,
     verifiedPerms,
     ['ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥'],
     channelOptions
@@ -415,8 +515,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const ticketInfoResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.ticketInfoChannel,
     NAMES.ticketInfoChannel,
-    ticketCategory.id,
+    ticketCategory?.id || null,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
     ['ticket-info'],
     channelOptions
@@ -425,6 +527,8 @@ export async function runAutoSetup(guild, options = {}) {
 
   const whitelistCategoryResult = await ensureCategory(
     guild,
+    workingConfig,
+    SETUP_KEYS.whitelistCategory,
     NAMES.whitelistCategory,
     verifiedPerms,
     ['Whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥'],
@@ -434,8 +538,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const whitelistResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.whitelistChannel,
     NAMES.whitelistChannel,
-    whitelistCategory.id,
+    whitelistCategory?.id || null,
     verifiedPerms,
     ['whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥'],
     channelOptions
@@ -444,8 +550,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const whitelistInfoResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.whitelistInfoChannel,
     NAMES.whitelistInfoChannel,
-    whitelistCategory.id,
+    whitelistCategory?.id || null,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
     ['whitelist-info'],
     channelOptions
@@ -454,6 +562,8 @@ export async function runAutoSetup(guild, options = {}) {
 
   const validatorCategoryResult = await ensureCategory(
     guild,
+    workingConfig,
+    SETUP_KEYS.validatorCategory,
     NAMES.validatorCategory,
     verifiedPerms,
     ['Validator', '🧬 Validator', '🧬 𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣'],
@@ -463,8 +573,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const validatorResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.validatorChannel,
     NAMES.validatorChannel,
-    validatorCategory.id,
+    validatorCategory?.id || null,
     verifiedPerms,
     ['json-xml-validator', '🧬 Json-Xml-Validator', '🧬 𝕁𝕤𝕠𝕟-𝕏𝕞𝕝-𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣'],
     channelOptions
@@ -473,8 +585,10 @@ export async function runAutoSetup(guild, options = {}) {
 
   const validatorInfoResult = await ensureTextChannel(
     guild,
+    workingConfig,
+    SETUP_KEYS.validatorInfoChannel,
     NAMES.validatorInfoChannel,
-    validatorCategory.id,
+    validatorCategory?.id || null,
     ownerOnlyOverwrites(ownerId, botId, everyoneId),
     ['validator-info'],
     channelOptions
@@ -482,17 +596,18 @@ export async function runAutoSetup(guild, options = {}) {
   const validatorInfoChannel = validatorInfoResult.channel;
 
   const newConfig = {
-    ...currentConfig,
+    ...workingConfig,
     rulesAcceptedRoleId: rulesAcceptedRole.id,
     verifyRoleId: verifyRole.id,
     unverifiedRoleId: unverifyRole.id,
-    welcomeChannelId: currentConfig.welcomeChannelId || welcomeChannel.id,
-    ticketCategoryId: currentConfig.ticketCategoryId || ticketCategory.id,
-    whitelistCategoryId: currentConfig.whitelistCategoryId || whitelistCategory.id,
-    ticketPanelMessage: currentConfig.ticketPanelMessage || DEFAULT_TICKET_MESSAGE,
-    whitelistPanelMessage: currentConfig.whitelistPanelMessage || DEFAULT_WHITELIST_MESSAGE,
-    welcomeMessage: currentConfig.welcomeMessage || DEFAULT_WELCOME_MESSAGE,
-    validatorChannelId: currentConfig.validatorChannelId || validatorChannel.id
+    welcomeChannelId: workingConfig.welcomeChannelId || welcomeChannel?.id || null,
+    ticketCategoryId: workingConfig.ticketCategoryId || ticketCategory?.id || null,
+    whitelistCategoryId: workingConfig.whitelistCategoryId || whitelistCategory?.id || null,
+    ticketPanelMessage: workingConfig.ticketPanelMessage || DEFAULT_TICKET_MESSAGE,
+    whitelistPanelMessage: workingConfig.whitelistPanelMessage || DEFAULT_WHITELIST_MESSAGE,
+    welcomeMessage: workingConfig.welcomeMessage || DEFAULT_WELCOME_MESSAGE,
+    validatorChannelId: workingConfig.validatorChannelId || validatorChannel?.id || null,
+    createdSetupKeys: workingConfig.createdSetupKeys || [...BASELINE_SETUP_KEYS]
   };
 
   setGuildConfig(guild.id, newConfig);
@@ -510,106 +625,126 @@ export async function runAutoSetup(guild, options = {}) {
   }
 
   if (mode === 'full') {
-    await postVerificationPanels(verifiedChannel, guild.id, 'full', botId);
-
-    await clearBotMessages(welcomeChannel, botId);
-    await postWelcomePanel(welcomeChannel, newConfig.welcomeMessage);
-
-    await clearBotMessages(ticketChannel, botId);
-    await postTicketPanel(ticketChannel, newConfig.ticketPanelMessage);
-
-    await clearBotMessages(whitelistChannel, botId);
-    await postWhitelistPanel(whitelistChannel, newConfig.whitelistPanelMessage);
-
-    await clearBotMessages(validatorChannel, botId);
-    await postValidatorPanel(validatorChannel);
-
-    await clearBotMessages(verificationSetupChannel, botId);
-    await verificationSetupChannel.send(
-      [
-        '# 🔐 Verification Setup',
-        '',
-        '• Verify, Unverify und RulesAccepted wurden automatisch erstellt.',
-        '• Eigene Server-Kategorien und Kanäle bitte privat setzen und die Rolle Verify hinzufügen.',
-        '',
-        'Der Bot macht automatisch:',
-        '• RulesAccepted hinzufügen nach Regelbestätigung ✅',
-        '• Unverify entfernen ✅',
-        '• Verify hinzufügen ✅',
-        '• RulesAccepted wieder entfernen ✅'
-      ].join('\n')
-    );
-
-    await clearBotMessages(welcomeInfoChannel, botId);
-    await welcomeInfoChannel.send(
-      [
-        '# 👋 Welcome Info',
-        '',
-        'Die Welcome-Nachricht kann geändert werden mit:',
-        '`/welcome-nachricht`',
-        '',
-        'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden.'
-      ].join('\n')
-    );
-
-    await clearBotMessages(ticketInfoChannel, botId);
-    await ticketInfoChannel.send(
-      [
-        '# 🎫 Ticket Info',
-        '',
-        'Die Ticket-Nachricht kann geändert werden mit:',
-        '`/ticket-nachricht`',
-        '',
-        'Danach kannst du mit `/ticket-panel` das Panel erneut senden.'
-      ].join('\n')
-    );
-
-    await clearBotMessages(whitelistInfoChannel, botId);
-    await whitelistInfoChannel.send(
-      [
-        '# 📋 Whitelist Info',
-        '',
-        'Die Whitelist-Nachricht kann geändert werden mit:',
-        '`/whitelist-nachricht`',
-        '',
-        'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.'
-      ].join('\n')
-    );
-
-    await clearBotMessages(validatorInfoChannel, botId);
-    await validatorInfoChannel.send(
-      [
-        '# 🧪 Validator Info',
-        '',
-        'Mit `/validate` kannst du JSON-, XML- und DayZ-Dateien prüfen.',
-        '',
-        'Der öffentliche Channel ist direkt einsatzbereit.'
-      ].join('\n')
-    );
-  }
-
-  if (mode === 'update') {
-    if (verifiedResult.created) {
-      await postVerificationPanels(verifiedChannel, guild.id, 'update', botId);
+    if (verifiedChannel) {
+      await postVerificationPanels(verifiedChannel, guild.id, 'full', botId);
     }
 
-    if (welcomeResult.created) {
+    if (welcomeChannel) {
+      await clearBotMessages(welcomeChannel, botId);
       await postWelcomePanel(welcomeChannel, newConfig.welcomeMessage);
     }
 
-    if (ticketResult.created) {
+    if (ticketChannel) {
+      await clearBotMessages(ticketChannel, botId);
       await postTicketPanel(ticketChannel, newConfig.ticketPanelMessage);
     }
 
-    if (whitelistResult.created) {
+    if (whitelistChannel) {
+      await clearBotMessages(whitelistChannel, botId);
       await postWhitelistPanel(whitelistChannel, newConfig.whitelistPanelMessage);
     }
 
-    if (validatorResult.created) {
+    if (validatorChannel) {
+      await clearBotMessages(validatorChannel, botId);
       await postValidatorPanel(validatorChannel);
     }
 
-    if (verificationSetupResult.created) {
+    if (verificationSetupChannel) {
+      await clearBotMessages(verificationSetupChannel, botId);
+      await verificationSetupChannel.send(
+        [
+          '# 🔐 Verification Setup',
+          '',
+          '• Verify, Unverify und RulesAccepted wurden automatisch erstellt.',
+          '• Eigene Server-Kategorien und Kanäle bitte privat setzen und die Rolle Verify hinzufügen.',
+          '',
+          'Der Bot macht automatisch:',
+          '• RulesAccepted hinzufügen nach Regelbestätigung ✅',
+          '• Unverify entfernen ✅',
+          '• Verify hinzufügen ✅',
+          '• RulesAccepted wieder entfernen ✅'
+        ].join('\n')
+      );
+    }
+
+    if (welcomeInfoChannel) {
+      await clearBotMessages(welcomeInfoChannel, botId);
+      await welcomeInfoChannel.send(
+        [
+          '# 👋 Welcome Info',
+          '',
+          'Die Welcome-Nachricht kann geändert werden mit:',
+          '`/welcome-nachricht`',
+          '',
+          'Danach kannst du mit `/setup-welcome` die aktuelle Welcome-Nachricht erneut senden.'
+        ].join('\n')
+      );
+    }
+
+    if (ticketInfoChannel) {
+      await clearBotMessages(ticketInfoChannel, botId);
+      await ticketInfoChannel.send(
+        [
+          '# 🎫 Ticket Info',
+          '',
+          'Die Ticket-Nachricht kann geändert werden mit:',
+          '`/ticket-nachricht`',
+          '',
+          'Danach kannst du mit `/ticket-panel` das Panel erneut senden.'
+        ].join('\n')
+      );
+    }
+
+    if (whitelistInfoChannel) {
+      await clearBotMessages(whitelistInfoChannel, botId);
+      await whitelistInfoChannel.send(
+        [
+          '# 📋 Whitelist Info',
+          '',
+          'Die Whitelist-Nachricht kann geändert werden mit:',
+          '`/whitelist-nachricht`',
+          '',
+          'Danach kannst du mit `/whitelist-panel` das Panel erneut senden.'
+        ].join('\n')
+      );
+    }
+
+    if (validatorInfoChannel) {
+      await clearBotMessages(validatorInfoChannel, botId);
+      await validatorInfoChannel.send(
+        [
+          '# 🧪 Validator Info',
+          '',
+          'Mit `/validate` kannst du JSON-, XML- und DayZ-Dateien prüfen.',
+          '',
+          'Der öffentliche Channel ist direkt einsatzbereit.'
+        ].join('\n')
+      );
+    }
+  }
+
+  if (mode === 'update') {
+    if (verifiedResult.created && verifiedChannel) {
+      await postVerificationPanels(verifiedChannel, guild.id, 'update', botId);
+    }
+
+    if (welcomeResult.created && welcomeChannel) {
+      await postWelcomePanel(welcomeChannel, newConfig.welcomeMessage);
+    }
+
+    if (ticketResult.created && ticketChannel) {
+      await postTicketPanel(ticketChannel, newConfig.ticketPanelMessage);
+    }
+
+    if (whitelistResult.created && whitelistChannel) {
+      await postWhitelistPanel(whitelistChannel, newConfig.whitelistPanelMessage);
+    }
+
+    if (validatorResult.created && validatorChannel) {
+      await postValidatorPanel(validatorChannel);
+    }
+
+    if (verificationSetupResult.created && verificationSetupChannel) {
       await verificationSetupChannel.send(
         [
           '# 🔐 Verification Setup',
@@ -620,7 +755,7 @@ export async function runAutoSetup(guild, options = {}) {
       );
     }
 
-    if (welcomeInfoResult.created) {
+    if (welcomeInfoResult.created && welcomeInfoChannel) {
       await welcomeInfoChannel.send(
         [
           '# 👋 Welcome Info',
@@ -631,7 +766,7 @@ export async function runAutoSetup(guild, options = {}) {
       );
     }
 
-    if (ticketInfoResult.created) {
+    if (ticketInfoResult.created && ticketInfoChannel) {
       await ticketInfoChannel.send(
         [
           '# 🎫 Ticket Info',
@@ -642,7 +777,7 @@ export async function runAutoSetup(guild, options = {}) {
       );
     }
 
-    if (whitelistInfoResult.created) {
+    if (whitelistInfoResult.created && whitelistInfoChannel) {
       await whitelistInfoChannel.send(
         [
           '# 📋 Whitelist Info',
@@ -653,7 +788,7 @@ export async function runAutoSetup(guild, options = {}) {
       );
     }
 
-    if (validatorInfoResult.created) {
+    if (validatorInfoResult.created && validatorInfoChannel) {
       await validatorInfoChannel.send(
         [
           '# 🧪 Validator Info',

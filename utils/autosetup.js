@@ -171,12 +171,17 @@ async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []
     return { channel, created: true };
   }
 
-  await channel.edit({
+  if (!channel) {
+  channel = await guild.channels.create({
     name,
+    type: ChannelType.GuildText,
     parent: parentId,
     permissionOverwrites: overwrites
-  }).catch(() => null);
+  });
+  return { channel, created: true };
+}
 
+// 🔥 WICHTIG: NICHTS MEHR ÄNDERN BEI BESTEHENDEN CHANNELS
   return { channel, created: false };
 }
 

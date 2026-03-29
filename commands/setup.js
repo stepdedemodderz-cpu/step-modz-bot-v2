@@ -2,7 +2,8 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ChannelType,
-  EmbedBuilder
+  EmbedBuilder,
+  MessageFlags
 } from 'discord.js';
 import { setGuildConfig } from '../utils/config.js';
 
@@ -64,8 +65,6 @@ export default {
     ),
 
   async execute(interaction) {
-    const old = interaction.client ? null : null;
-
     const config = {
       verifyRoleId: interaction.options.getRole('verify_role')?.id || null,
       unverifiedRoleId: interaction.options.getRole('unverified_role')?.id || null,
@@ -88,50 +87,42 @@ export default {
           '**Wichtig:**',
           '`/setup` erstellt **keine** Kategorien oder Channels automatisch.',
           '',
-          'Wenn du alles automatisch erstellen willst, nutze im Dropdown:',
+          'Wenn du alles automatisch erstellen willst, nutze:',
           '**Step BOT Schnell Einrichtung**'
         ].join('\n')
       )
       .addFields(
         {
           name: '🔐 Verify Rolle',
-          value: config.verifyRoleId ? `<@&${config.verifyRoleId}>` : 'Nicht gesetzt (optional)',
-          inline: false
+          value: config.verifyRoleId ? `<@&${config.verifyRoleId}>` : 'Nicht gesetzt (optional)'
         },
         {
           name: '🚫 Unverified Rolle',
-          value: config.unverifiedRoleId ? `<@&${config.unverifiedRoleId}>` : 'Nicht gesetzt',
-          inline: false
+          value: config.unverifiedRoleId ? `<@&${config.unverifiedRoleId}>` : 'Nicht gesetzt'
         },
         {
           name: '👋 Welcome Channel',
-          value: config.welcomeChannelId ? `<#${config.welcomeChannelId}>` : 'Nicht gesetzt',
-          inline: false
+          value: config.welcomeChannelId ? `<#${config.welcomeChannelId}>` : 'Nicht gesetzt'
         },
         {
           name: '🎫 Ticket Kategorie',
-          value: config.ticketCategoryId ? `<#${config.ticketCategoryId}>` : 'Nicht gesetzt',
-          inline: false
+          value: config.ticketCategoryId ? `<#${config.ticketCategoryId}>` : 'Nicht gesetzt'
         },
         {
           name: '🛡️ Ticket Support Rolle',
-          value: config.ticketSupportRoleId ? `<@&${config.ticketSupportRoleId}>` : 'Nicht gesetzt',
-          inline: false
+          value: config.ticketSupportRoleId ? `<@&${config.ticketSupportRoleId}>` : 'Nicht gesetzt'
         },
         {
           name: '📋 Whitelist Kategorie',
-          value: config.whitelistCategoryId ? `<#${config.whitelistCategoryId}>` : 'Nicht gesetzt',
-          inline: false
+          value: config.whitelistCategoryId ? `<#${config.whitelistCategoryId}>` : 'Nicht gesetzt'
         },
         {
           name: '👀 Whitelist Review Rolle',
-          value: config.whitelistReviewRoleId ? `<@&${config.whitelistReviewRoleId}>` : 'Nicht gesetzt',
-          inline: false
+          value: config.whitelistReviewRoleId ? `<@&${config.whitelistReviewRoleId}>` : 'Nicht gesetzt'
         },
         {
           name: '✅ Whitelist Approved Rolle',
-          value: config.whitelistApprovedRoleId ? `<@&${config.whitelistApprovedRoleId}>` : 'Nicht gesetzt',
-          inline: false
+          value: config.whitelistApprovedRoleId ? `<@&${config.whitelistApprovedRoleId}>` : 'Nicht gesetzt'
         }
       )
       .setFooter({ text: 'Step Mod!Z BOT • Manuelles Setup' })
@@ -139,7 +130,7 @@ export default {
 
     await interaction.reply({
       embeds: [embed],
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 };

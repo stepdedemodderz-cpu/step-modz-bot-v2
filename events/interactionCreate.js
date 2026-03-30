@@ -391,19 +391,19 @@ if (selected === 'update_tools') {
     .setTitle('🆕 Neue Tools übernehmen')
     .setDescription(
       !result.createdAnything
-        ? '✅ Bot hat bereits das neueste Update. Es wurden keine neuen Tools gefunden.'
-        : '✅ Der Bot hat neue fehlende Tools und Bereiche ergänzt.'
+        ? '✅ Du hast das neueste Update.'
+        : '✅ Der Bot hat neue fehlende Tools ergänzt.'
     )
     .addFields(
       {
         name: 'Bedeutung',
         value:
-          'Diese Funktion ergänzt nur neue fehlende Bot-Bereiche, die nach späteren Updates hinzugekommen sind.\n' +
-          'Bereits vorhandene Kanäle und Kategorien werden nicht neu eingerichtet.',
+          'Diese Funktion installiert nur echte neue Tools aus späteren Bot-Updates.\n' +
+          'Bereits vorhandene Kanäle und Kategorien bleiben unverändert.',
         inline: false
       },
       {
-        name: 'Neu ergänzt',
+        name: 'Ergebnis',
         value: !result.createdAnything
           ? '• Keine neuen Tools gefunden'
           : result.createdList.map((x) => `• ${x}`).join('\n'),

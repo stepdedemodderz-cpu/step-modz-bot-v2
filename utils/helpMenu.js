@@ -11,12 +11,12 @@ export function getHelpMenuOptions(language = 'de') {
       {
         label: 'Step BOT Quick Setup',
         value: 'quicksetup',
-        description: 'Automatically create the full base structure'
+        description: 'Create the full base structure automatically'
       },
       {
         label: 'Install New Tools',
         value: 'update_tools',
-        description: 'Only add new missing tools and areas'
+        description: 'Only install real new tools from later updates'
       },
       {
         label: 'Setup',
@@ -26,7 +26,7 @@ export function getHelpMenuOptions(language = 'de') {
       {
         label: 'Verify System',
         value: 'verify',
-        description: 'Verification and roles'
+        description: 'Verification and role system'
       },
       {
         label: 'Ticket System',
@@ -36,17 +36,17 @@ export function getHelpMenuOptions(language = 'de') {
       {
         label: 'Whitelist System',
         value: 'whitelist',
-        description: 'DayZ whitelist applications'
+        description: 'Applications directly in Discord'
       },
       {
         label: 'Validator',
         value: 'validator',
-        description: 'JSON, XML and DayZ file checks'
+        description: 'Check JSON, XML and DayZ files'
       },
       {
         label: 'Settings',
         value: 'settings',
-        description: 'Show saved settings'
+        description: 'Show saved bot settings'
       }
     ];
   }
@@ -60,12 +60,12 @@ export function getHelpMenuOptions(language = 'de') {
     {
       label: 'Step BOT Schnell Einrichtung',
       value: 'quicksetup',
-      description: 'Erstellt automatisch die komplette Grundstruktur'
+      description: 'Erstellt die komplette Grundstruktur automatisch'
     },
     {
       label: 'Neue Tools übernehmen',
       value: 'update_tools',
-      description: 'Installiert nur neue fehlende Tools und Bereiche'
+      description: 'Installiert nur echte neue Tools aus späteren Updates'
     },
     {
       label: 'Setup',
@@ -85,7 +85,7 @@ export function getHelpMenuOptions(language = 'de') {
     {
       label: 'Whitelist System',
       value: 'whitelist',
-      description: 'DayZ Whitelist-Bewerbungen'
+      description: 'Whitelist-Bewerbungen direkt im Discord'
     },
     {
       label: 'Validator',
@@ -106,45 +106,47 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       dropdown_info: {
         title: '📂 Dropdown Menü',
         description:
-          'Wähle einfach unten eine Kategorie aus.\n\n' +
-          'Dann zeigt dir der Bot die passende Erklärung an.'
+          'Wähle unten einfach eine Kategorie aus.\n\n' +
+          'Der Bot zeigt dir dann die passende Erklärung und Übersicht an.'
       },
       quicksetup: {
         title: '⚡ Step BOT Schnell Einrichtung',
         description:
-          'Mit dieser Option richtet der Bot die komplette Grundstruktur automatisch ein.\n\n' +
-          '**Automatisch erstellt werden:**\n' +
-          '• Welcome\n' +
+          'Mit dieser Funktion richtet der Bot die komplette Grundstruktur automatisch ein.\n\n' +
+          '**Dabei werden eingerichtet:**\n' +
           '• Verification\n' +
+          '• Welcome\n' +
           '• Ticket\n' +
           '• Whitelist\n' +
           '• Validator\n\n' +
-          'Diese Funktion darf nur der Server-Besitzer nutzen.'
+          'Diese Funktion ist für die erste komplette Einrichtung gedacht.'
       },
       update_tools: {
         title: '🆕 Neue Tools übernehmen',
         description:
-          'Mit dieser Option installiert der Bot **nur neue fehlende Tools und Bereiche**, die nach einem späteren Bot-Update hinzugekommen sind.\n\n' +
+          'Mit dieser Funktion installiert der Bot **nur wirklich neue Tools**, die durch spätere Updates neu hinzugekommen sind.\n\n' +
           '**Wichtig:**\n' +
-          '• Bereits vorhandene Kanäle werden nicht neu eingerichtet\n' +
-          '• Bereits vorhandene Kategorien werden nicht neu gesendet\n' +
-          '• Nur wirklich neue fehlende Bot-Bereiche werden ergänzt\n\n' +
-          'Wenn keine neuen Tools vorhanden sind, bekommst du eine Meldung, dass der Bot bereits auf dem neuesten Stand ist.'
+          '• Bereits vorhandene Kanäle werden nicht neu erstellt\n' +
+          '• Bereits vorhandene Kategorien werden nicht neu eingerichtet\n' +
+          '• Vorhandene Bereiche bleiben unverändert\n' +
+          '• Es werden nur echte neue Erweiterungen nachgerüstet\n\n' +
+          'Wenn es keine neuen Tools gibt, bekommst du die Meldung:\n' +
+          '**„✅ Du hast das neueste Update.“**'
       },
       setup: {
         title: '⚙️ Setup',
         description:
-          'Hier wird erklärt, wie du den Bot manuell einrichtest und einzelne Systeme selbst konfigurierst.'
+          'Hier wird erklärt, wie du den Bot manuell einrichtest und einzelne Systeme selbst anpasst.'
       },
       verify: {
         title: '🔐 Verify System',
         description:
-          'Das Verify-System sorgt dafür, dass User erst nach Regelbestätigung und Verifizierung Zugriff auf die geschützten Serverbereiche erhalten.'
+          'Das Verify-System sorgt dafür, dass User erst nach Regelbestätigung und Verifizierung Zugriff auf geschützte Serverbereiche erhalten.'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
-          'Mit dem Ticket-System können Mitglieder private Support-Tickets per Button öffnen und Hilfe vom Team erhalten.'
+          'Mit dem Ticket-System können Mitglieder private Support-Tickets erstellen und Hilfe direkt im Discord erhalten.'
       },
       whitelist: {
         title: '📋 Whitelist System',
@@ -167,44 +169,46 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
         title: '📂 Dropdown Menu',
         description:
           'Simply choose a category below.\n\n' +
-          'The bot will then show you the matching explanation.'
+          'The bot will then show you the matching explanation and overview.'
       },
       quicksetup: {
         title: '⚡ Step BOT Quick Setup',
         description:
-          'This option automatically creates the full base structure.\n\n' +
-          '**Automatically created:**\n' +
-          '• Welcome\n' +
+          'This function automatically creates the full base structure.\n\n' +
+          '**It sets up:**\n' +
           '• Verification\n' +
+          '• Welcome\n' +
           '• Ticket\n' +
           '• Whitelist\n' +
           '• Validator\n\n' +
-          'Only the server owner can use this.'
+          'This is meant for the first complete setup.'
       },
       update_tools: {
         title: '🆕 Install New Tools',
         description:
-          'This option installs **only new missing tools and areas** that were added in later bot updates.\n\n' +
+          'This function installs **only real new tools** added by later bot updates.\n\n' +
           '**Important:**\n' +
           '• Existing channels are not rebuilt\n' +
-          '• Existing categories are not reposted\n' +
-          '• Only truly missing new bot areas will be added\n\n' +
-          'If no new tools exist, the bot will tell you that everything is already up to date.'
+          '• Existing categories are not recreated\n' +
+          '• Existing areas remain unchanged\n' +
+          '• Only real new extensions are installed\n\n' +
+          'If no new tools exist, you will get this message:\n' +
+          '**“✅ You already have the latest update.”**'
       },
       setup: {
         title: '⚙️ Setup',
         description:
-          'Explains how to manually configure the bot and set up systems yourself.'
+          'Explains how to manually configure the bot and adjust systems yourself.'
       },
       verify: {
         title: '🔐 Verify System',
         description:
-          'The verify system makes sure users only get access to protected areas after confirming the rules and verifying.'
+          'The verify system ensures users only get access to protected server areas after confirming the rules and verifying.'
       },
       tickets: {
         title: '🎫 Ticket System',
         description:
-          'The ticket system allows members to open private support tickets via button.'
+          'The ticket system allows members to create private support tickets directly in Discord.'
       },
       whitelist: {
         title: '📋 Whitelist System',

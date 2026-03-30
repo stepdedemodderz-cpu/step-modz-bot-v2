@@ -345,6 +345,45 @@ export default {
           if (selected === 'quicksetup') {
             await interaction.deferReply({ ephemeral: true });
 
+          if (selected === 'update_tools') {
+  await interaction.deferReply({ ephemeral: true });
+
+  const result = await runAutoSetup(interaction.guild, { mode: 'update' });
+
+  const embed = new EmbedBuilder()
+    .setTitle('🆕 Neue Tools übernehmen')
+    .setDescription(
+      !result.createdAnything
+        ? '✅ Bot hat bereits das neueste Update. Es wurden keine neuen Tools gefunden.'
+        : '✅ Der Bot hat neue fehlende Tools und Bereiche ergänzt.'
+    )
+    .addFields(
+      {
+        name: 'Bedeutung',
+        value:
+          'Diese Funktion ergänzt nur neue fehlende Bot-Bereiche, die nach späteren Updates hinzugekommen sind.\n' +
+          'Bereits vorhandene Kanäle und Kategorien werden nicht neu eingerichtet.',
+        inline: false
+      },
+      {
+        name: 'Neu ergänzt',
+        value: !result.createdAnything
+          ? '• Keine neuen Tools gefunden'
+          : result.createdList.map((x) => `• ${x}`).join('\n'),
+        inline: false
+      }
+    )
+    .setColor(0x22c55e)
+    .setFooter({ text: 'Step Mod!Z BOT' })
+    .setTimestamp();
+
+  await interaction.editReply({
+    embeds: [embed],
+    components: [buildCloseRow()]
+  });
+  return;
+}
+
             const result = await runAutoSetup(interaction.guild, { mode: 'full' });
 
             const embed = new EmbedBuilder()

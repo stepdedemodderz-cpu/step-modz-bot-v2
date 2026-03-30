@@ -104,21 +104,43 @@ const TOOL_MIGRATIONS = [
       if (statusResult.created) {
         created.push('📡 server-status Kanal');
 
-        await statusResult.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setTitle('🧟 Server Status')
-              .setDescription(
-                '⚙️ Server Status System wurde installiert.\n\n' +
-                'Nutze den Command:\n' +
-                '`/server-status-setup`\n\n' +
-                'um deinen DayZ Server zu verbinden.'
-              )
-              .setColor(0x22c55e)
-              .setFooter({ text: 'Step Mod!Z BOT • Server Status' })
-              .setTimestamp()
-          ]
-        });
+        await infoResult.channel.send(
+  [
+    '# 🖥️ Server Status Info',
+    '',
+    'Mit diesem System kannst du deinen DayZ Server Status im Discord anzeigen lassen.',
+    '',
+    'Angezeigt werden später zum Beispiel:',
+    '• Server Online / Offline',
+    '• Spieleranzahl',
+    '• Server Status im Discord',
+    '',
+    '## Einrichtung',
+    '',
+    'Nutze den Befehl:',
+    '`/server-status-setup`',
+    '',
+    'Danach musst du eingeben:',
+    '• `ip` = deine Server-IP',
+    '• `port` = dein Server-Port',
+    '',
+    '## Wo finde ich IP und Port bei Nitrado?',
+    '',
+    '1. Logge dich bei Nitrado ein',
+    '2. Öffne „Meine Dienste / My Services“',
+    '3. Wähle deinen DayZ Server aus',
+    '4. Öffne das Webinterface',
+    '5. Schau im Dashboard nach deiner Server-IP und dem Port',
+    '',
+    '## Wichtig',
+    '',
+    '• Für eine direkte Serververbindung wird meistens der Game Port verwendet',
+    '• Für Steam / Favoriten wird oft der Query Port verwendet',
+    '• Wenn du unsicher bist, prüfe zuerst die Angaben im Nitrado Dashboard',
+    '',
+    '⚠️ Für dieses System wird kein Nitrado Token benötigt.'
+  ].join('\n')
+);
       }
 
       // Info Channel

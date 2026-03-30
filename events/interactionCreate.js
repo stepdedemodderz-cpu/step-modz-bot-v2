@@ -343,9 +343,46 @@ export default {
           }
 
           if (selected === 'quicksetup') {
-            await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ ephemeral: true });
 
-          if (selected === 'update_tools') {
+  const result = await runAutoSetup(interaction.guild, { mode: 'full' });
+
+  const embed = new EmbedBuilder()
+    .setTitle(
+      language === 'en'
+        ? '⚡ Quick setup completed'
+        : '⚡ Schnell Einrichtung abgeschlossen'
+    )
+    .setDescription(
+      language === 'en'
+        ? 'The bot has automatically created the main categories for you.'
+        : 'Der Bot hat die wichtigsten Kategorien automatisch für dich eingerichtet.'
+    )
+    .addFields(
+      {
+        name: 'Erstellte Kategorien',
+        value: [
+          `• ${result.verificationCategory.name}`,
+          `• ${result.welcomeCategory.name}`,
+          `• ${result.ticketCategory.name}`,
+          `• ${result.whitelistCategory.name}`,
+          `• ${result.validatorCategory.name}`
+        ].join('\n'),
+        inline: false
+      }
+    )
+    .setColor(0x22c55e)
+    .setFooter({ text: 'Step Mod!Z BOT' })
+    .setTimestamp();
+
+  await interaction.editReply({
+    embeds: [embed],
+    components: [buildCloseRow()]
+  });
+  return;
+}
+
+if (selected === 'update_tools') {
   await interaction.deferReply({ ephemeral: true });
 
   const result = await runAutoSetup(interaction.guild, { mode: 'update' });
@@ -383,43 +420,6 @@ export default {
   });
   return;
 }
-
-            const result = await runAutoSetup(interaction.guild, { mode: 'full' });
-
-            const embed = new EmbedBuilder()
-              .setTitle(
-                language === 'en'
-                  ? '⚡ Quick setup completed'
-                  : '⚡ Schnell Einrichtung abgeschlossen'
-              )
-              .setDescription(
-                language === 'en'
-                  ? 'The bot has automatically created the main categories for you.'
-                  : 'Der Bot hat die wichtigsten Kategorien automatisch für dich eingerichtet.'
-              )
-              .addFields(
-                {
-                  name: 'Erstellte Kategorien',
-                  value: [
-                    `• ${result.verificationCategory.name}`,
-                    `• ${result.welcomeCategory.name}`,
-                    `• ${result.ticketCategory.name}`,
-                    `• ${result.whitelistCategory.name}`,
-                    `• ${result.validatorCategory.name}`
-                  ].join('\n'),
-                  inline: false
-                }
-              )
-              .setColor(0x22c55e)
-              .setFooter({ text: 'Step Mod!Z BOT' })
-              .setTimestamp();
-
-            await interaction.editReply({
-              embeds: [embed],
-              components: [buildCloseRow()]
-            });
-            return;
-          }
 
           await interaction.reply({
             embeds: [buildHelpEmbed(language, selected)],

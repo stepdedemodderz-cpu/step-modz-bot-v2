@@ -28,7 +28,7 @@ export default {
 
     await interaction.editReply({
       content:
-        `✅ Neue Tools wurden ergänzt.\n\n` +
+        '✅ Neue Tools wurden installiert:\n\n' +
         result.createdList.map((x) => `• ${x}`).join('\n')
     });
   }

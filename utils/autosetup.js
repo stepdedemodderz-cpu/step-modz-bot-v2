@@ -63,7 +63,97 @@ const DEFAULT_WELCOME_MESSAGE = [
  *   }
  * }
  */
-const TOOL_MIGRATIONS = [];
+const TOOL_MIGRATIONS = [
+  {
+    id: 'server-status-v1',
+    label: 'Server Status System',
+    run: async ({
+      guild,
+      ownerId,
+      botId,
+      everyoneId,
+      ensureCategory,
+      ensureTextChannel,
+      ownerOnlyOverwrites
+    }) => {
+      const created = [];
+
+      // Kategorie erstellen
+      const categoryResult = await ensureCategory(
+        guild,
+        '🖥️ Server',
+        ownerOnlyOverwrites(ownerId, botId, everyoneId),
+        ['Server']
+      );
+
+      if (categoryResult.created) {
+        created.push('🖥️ Server Kategorie');
+      }
+
+      const category = categoryResult.channel;
+
+      // Status Kanal
+      const statusResult = await ensureTextChannel(
+        guild,
+        '📡 server-status',
+        category.id,
+        ownerOnlyOverwrites(ownerId, botId, everyoneId),
+        ['server-status']
+      );
+
+      if (statusResult.created) {
+        created.push('📡 server-status Kanal');
+
+        await statusResult.channel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle('🧟 Server Status')
+              .setDescription(
+                '⚙️ Server Status System wurde installiert.\n\n' +
+                'Nutze den Command:\n' +
+                '`/server-status-setup`\n\n' +
+                'um deinen DayZ Server zu verbinden.'
+              )
+              .setColor(0x22c55e)
+              .setFooter({ text: 'Step Mod!Z BOT • Server Status' })
+              .setTimestamp()
+          ]
+        });
+      }
+
+      // Info Channel
+      const infoResult = await ensureTextChannel(
+        guild,
+        'server-info',
+        category.id,
+        ownerOnlyOverwrites(ownerId, botId, everyoneId),
+        ['server-info']
+      );
+
+      if (infoResult.created) {
+        created.push('server-info Kanal');
+
+        await infoResult.channel.send(
+          [
+            '# 🖥️ Server Status Info',
+            '',
+            'Dieses System zeigt dir:',
+            '• Server Online / Offline',
+            '• Spieleranzahl',
+            '• Status Anzeige im Discord',
+            '',
+            'Einrichtung:',
+            '`/server-status-setup`',
+            '',
+            '⚠️ Kein Nitrado Token benötigt.'
+          ].join('\n')
+        );
+      }
+
+      return created;
+    }
+  }
+];
 
 function ownerOnlyOverwrites(ownerId, botId, everyoneId) {
   return [

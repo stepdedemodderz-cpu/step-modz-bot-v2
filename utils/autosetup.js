@@ -141,7 +141,7 @@ const TOOL_MIGRATIONS = [
     '⚠️ Für dieses System wird kein Nitrado Token benötigt.'
   ].join('\n')
 );
-      
+   ]   
 
       // Info Channel
       const infoResult = await ensureTextChannel(

@@ -182,9 +182,10 @@ async function ensureRole(guild, name, color = null) {
       color: color || undefined,
       reason: 'Step Mod!Z BOT Schnell Einrichtung'
     });
+    return { role, created: true };
   }
 
-  return role;
+  return { role, created: false };
 }
 
 async function clearBotMessages(channel, botUserId) {
@@ -222,17 +223,30 @@ export async function runAutoSetup(guild, options = {}) {
   const botId = guild.members.me?.id || guild.client.user.id;
   const everyoneId = guild.roles.everyone.id;
 
-  const rulesAcceptedRole =
-    (currentConfig.rulesAcceptedRoleId && guild.roles.cache.get(currentConfig.rulesAcceptedRoleId)) ||
-    await ensureRole(guild, 'RulesAccepted');
+  const createdList = [];
 
-  const verifyRole =
-    (currentConfig.verifyRoleId && guild.roles.cache.get(currentConfig.verifyRoleId)) ||
-    await ensureRole(guild, 'Verify');
+  const rulesAcceptedRoleResult =
+    (currentConfig.rulesAcceptedRoleId && guild.roles.cache.get(currentConfig.rulesAcceptedRoleId))
+      ? { role: guild.roles.cache.get(currentConfig.rulesAcceptedRoleId), created: false }
+      : await ensureRole(guild, 'RulesAccepted');
 
-  const unverifyRole =
-    (currentConfig.unverifiedRoleId && guild.roles.cache.get(currentConfig.unverifiedRoleId)) ||
-    await ensureRole(guild, 'Unverify');
+  const verifyRoleResult =
+    (currentConfig.verifyRoleId && guild.roles.cache.get(currentConfig.verifyRoleId))
+      ? { role: guild.roles.cache.get(currentConfig.verifyRoleId), created: false }
+      : await ensureRole(guild, 'Verify');
+
+  const unverifyRoleResult =
+    (currentConfig.unverifiedRoleId && guild.roles.cache.get(currentConfig.unverifiedRoleId))
+      ? { role: guild.roles.cache.get(currentConfig.unverifiedRoleId), created: false }
+      : await ensureRole(guild, 'Unverify');
+
+  const rulesAcceptedRole = rulesAcceptedRoleResult.role;
+  const verifyRole = verifyRoleResult.role;
+  const unverifyRole = unverifyRoleResult.role;
+
+  if (rulesAcceptedRoleResult.created) createdList.push('RulesAccepted Rolle');
+  if (verifyRoleResult.created) createdList.push('Verify Rolle');
+  if (unverifyRoleResult.created) createdList.push('Unverify Rolle');
 
   const verifiedPerms = verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRole.id);
 
@@ -243,6 +257,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['Verification', '✅ Verification', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕔𝕒𝕥𝕚𝕠𝕟']
   );
   const verificationCategory = verificationCategoryResult.channel;
+  if (verificationCategoryResult.created) createdList.push(NAMES.verificationCategory);
 
   const verifiedResult = await ensureTextChannel(
     guild,
@@ -252,6 +267,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['verified', '✅ Verified', '✅ 𝕍𝕖𝕣𝕚𝕗𝕚𝕖𝕕']
   );
   const verifiedChannel = verifiedResult.channel;
+  if (verifiedResult.created) createdList.push(NAMES.verifiedChannel);
 
   const verificationSetupResult = await ensureTextChannel(
     guild,
@@ -261,6 +277,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['verification-setup']
   );
   const verificationSetupChannel = verificationSetupResult.channel;
+  if (verificationSetupResult.created) createdList.push(NAMES.verificationSetupChannel);
 
   const welcomeCategoryResult = await ensureCategory(
     guild,
@@ -269,6 +286,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['Welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖']
   );
   const welcomeCategory = welcomeCategoryResult.channel;
+  if (welcomeCategoryResult.created) createdList.push(NAMES.welcomeCategory);
 
   const welcomeResult = await ensureTextChannel(
     guild,
@@ -278,6 +296,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['welcome', '👋🏻 Welcome', '👋🏻 𝕎𝕖𝕝𝕔𝕠𝕞𝕖']
   );
   const welcomeChannel = welcomeResult.channel;
+  if (welcomeResult.created) createdList.push(NAMES.welcomeChannel);
 
   const welcomeInfoResult = await ensureTextChannel(
     guild,
@@ -287,6 +306,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['welcome-info']
   );
   const welcomeInfoChannel = welcomeInfoResult.channel;
+  if (welcomeInfoResult.created) createdList.push(NAMES.welcomeInfoChannel);
 
   const ticketCategoryResult = await ensureCategory(
     guild,
@@ -295,6 +315,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['Ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥']
   );
   const ticketCategory = ticketCategoryResult.channel;
+  if (ticketCategoryResult.created) createdList.push(NAMES.ticketCategory);
 
   const ticketResult = await ensureTextChannel(
     guild,
@@ -304,6 +325,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['ticket', '🎫 Ticket', '🎫 𝕋𝕚𝕔𝕜𝕖𝕥']
   );
   const ticketChannel = ticketResult.channel;
+  if (ticketResult.created) createdList.push(NAMES.ticketChannel);
 
   const ticketInfoResult = await ensureTextChannel(
     guild,
@@ -313,6 +335,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['ticket-info']
   );
   const ticketInfoChannel = ticketInfoResult.channel;
+  if (ticketInfoResult.created) createdList.push(NAMES.ticketInfoChannel);
 
   const whitelistCategoryResult = await ensureCategory(
     guild,
@@ -321,6 +344,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['Whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥']
   );
   const whitelistCategory = whitelistCategoryResult.channel;
+  if (whitelistCategoryResult.created) createdList.push(NAMES.whitelistCategory);
 
   const whitelistResult = await ensureTextChannel(
     guild,
@@ -330,6 +354,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['whitelist', '🛡️ Whitelist', '🛡️ 𝕎𝕙𝕚𝕥𝕖𝕝𝕚𝕤𝕥']
   );
   const whitelistChannel = whitelistResult.channel;
+  if (whitelistResult.created) createdList.push(NAMES.whitelistChannel);
 
   const whitelistInfoResult = await ensureTextChannel(
     guild,
@@ -339,6 +364,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['whitelist-info']
   );
   const whitelistInfoChannel = whitelistInfoResult.channel;
+  if (whitelistInfoResult.created) createdList.push(NAMES.whitelistInfoChannel);
 
   const validatorCategoryResult = await ensureCategory(
     guild,
@@ -347,6 +373,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['Validator', '🧬 Validator', '🧬 𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣']
   );
   const validatorCategory = validatorCategoryResult.channel;
+  if (validatorCategoryResult.created) createdList.push(NAMES.validatorCategory);
 
   const validatorResult = await ensureTextChannel(
     guild,
@@ -356,6 +383,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['json-xml-validator', '🧬 Json-Xml-Validator', '🧬 𝕁𝕤𝕠𝕟-𝕏𝕞𝕝-𝕍𝕒𝕝𝕚𝕕𝕒𝕥𝕠𝕣']
   );
   const validatorChannel = validatorResult.channel;
+  if (validatorResult.created) createdList.push(NAMES.validatorChannel);
 
   const validatorInfoResult = await ensureTextChannel(
     guild,
@@ -365,6 +393,7 @@ export async function runAutoSetup(guild, options = {}) {
     ['validator-info']
   );
   const validatorInfoChannel = validatorInfoResult.channel;
+  if (validatorInfoResult.created) createdList.push(NAMES.validatorInfoChannel);
 
   const newConfig = {
     ...currentConfig,
@@ -638,6 +667,8 @@ export async function runAutoSetup(guild, options = {}) {
   }
 
   return {
+    createdAnything: createdList.length > 0,
+    createdList,
     verificationCategory,
     welcomeCategory,
     ticketCategory,

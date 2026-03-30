@@ -36,12 +36,24 @@ export default {
 
   async execute(interaction, client) {
     try {
-      const isOwner = interaction.guild && interaction.user.id === interaction.guild.ownerId;
-      const config = interaction.guild ? getGuildConfig(interaction.guild.id) || {} : {};
+      const isOwner =
+        interaction.guild && interaction.user.id === interaction.guild.ownerId;
+
+      const config = interaction.guild
+        ? getGuildConfig(interaction.guild.id) || {}
+        : {};
+
       let language = config.language || 'de';
 
+      // SLASH COMMANDS
       if (interaction.isChatInputCommand()) {
-        if (interaction.commandName !== 'validate' && interaction.commandName !== 'update-server' && !isOwner) {
+        if (
+          interaction.commandName !== 'validate' &&
+          interaction.commandName !== 'update-server' &&
+          interaction.commandName !== 'server-status-setup' &&
+          interaction.commandName !== 'server-status-refresh' &&
+          !isOwner
+        ) {
           await interaction.reply({
             content: '❌ Diesen Befehl darf nur der Server-Besitzer benutzen.',
             ephemeral: true
@@ -74,6 +86,7 @@ export default {
         return;
       }
 
+      // BUTTONS
       if (interaction.isButton()) {
         if (interaction.customId === 'stepmodz_lang_de') {
           if (!isOwner) {
@@ -85,6 +98,7 @@ export default {
           }
 
           setGuildConfig(interaction.guild.id, { ...config, language: 'de' });
+
           await interaction.reply({
             content: t('de', 'languageSetGerman'),
             ephemeral: true
@@ -102,6 +116,7 @@ export default {
           }
 
           setGuildConfig(interaction.guild.id, { ...config, language: 'en' });
+
           await interaction.reply({
             content: t('en', 'languageSetEnglish'),
             ephemeral: true
@@ -180,9 +195,14 @@ export default {
         if (interaction.customId === 'stepmodz_verify') {
           await interaction.deferReply({ ephemeral: true });
 
-          if (!config.verifyRoleId || !config.unverifiedRoleId || !config.rulesAcceptedRoleId) {
+          if (
+            !config.verifyRoleId ||
+            !config.unverifiedRoleId ||
+            !config.rulesAcceptedRoleId
+          ) {
             await interaction.editReply({
-              content: '❌ Verify / Unverify / RulesAccepted Rollen fehlen. Nutze Schnell Einrichtung oder `/setup`.'
+              content:
+                '❌ Verify / Unverify / RulesAccepted Rollen fehlen. Nutze Schnell Einrichtung erneut.'
             });
             return;
           }
@@ -212,7 +232,7 @@ export default {
             }
 
             if (unverifyRole && member.roles.cache.has(unverifyRole.id)) {
-              await member.roles.remove(unverifyRole);
+              await member.roles.remove(unverifyRole).catch(() => null);
             }
 
             if (rulesAcceptedRole && member.roles.cache.has(rulesAcceptedRole.id)) {
@@ -248,7 +268,8 @@ export default {
             console.error('TICKET BUTTON ERROR:', error);
 
             await interaction.reply({
-              content: '❌ Ticket konnte nicht erstellt werden. Prüfe Ticket-Kategorie und Bot-Rechte.',
+              content:
+                '❌ Ticket konnte nicht erstellt werden. Prüfe Ticket-Kategorie und Bot-Rechte.',
               ephemeral: true
             });
           }
@@ -292,6 +313,7 @@ export default {
           }
 
           await handleWhitelistDecision(interaction, true);
+
           await interaction.reply({
             content: '✅ Bewerbung angenommen.',
             ephemeral: true
@@ -309,6 +331,7 @@ export default {
           }
 
           await handleWhitelistDecision(interaction, false);
+
           await interaction.reply({
             content: '❌ Bewerbung abgelehnt.',
             ephemeral: true
@@ -319,6 +342,7 @@ export default {
         return;
       }
 
+      // DROPDOWN
       if (interaction.isStringSelectMenu()) {
         if (!isOwner) {
           await interaction.reply({
@@ -343,83 +367,81 @@ export default {
           }
 
           if (selected === 'quicksetup') {
-  await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ ephemeral: true });
 
-  const result = await runAutoSetup(interaction.guild, { mode: 'full' });
+            const result = await runAutoSetup(interaction.guild, { mode: 'full' });
 
-  const embed = new EmbedBuilder()
-    .setTitle(
-      language === 'en'
-        ? '⚡ Quick setup completed'
-        : '⚡ Schnell Einrichtung abgeschlossen'
-    )
-    .setDescription(
-      language === 'en'
-        ? 'The bot has automatically created the main categories for you.'
-        : 'Der Bot hat die wichtigsten Kategorien automatisch für dich eingerichtet.'
-    )
-    .addFields(
-      {
-        name: 'Erstellte Kategorien',
-        value: [
-          `• ${result.verificationCategory.name}`,
-          `• ${result.welcomeCategory.name}`,
-          `• ${result.ticketCategory.name}`,
-          `• ${result.whitelistCategory.name}`,
-          `• ${result.validatorCategory.name}`
-        ].join('\n'),
-        inline: false
-      }
-    )
-    .setColor(0x22c55e)
-    .setFooter({ text: 'Step Mod!Z BOT' })
-    .setTimestamp();
+            const embed = new EmbedBuilder()
+              .setTitle(
+                language === 'en'
+                  ? '⚡ Quick setup completed'
+                  : '⚡ Schnell Einrichtung abgeschlossen'
+              )
+              .setDescription(
+                language === 'en'
+                  ? 'The bot has automatically created the main categories for you.'
+                  : 'Der Bot hat die wichtigsten Kategorien automatisch für dich eingerichtet.'
+              )
+              .addFields({
+                name: 'Erstellte Kategorien',
+                value: [
+                  `• ${result.verificationCategory.name}`,
+                  `• ${result.welcomeCategory.name}`,
+                  `• ${result.ticketCategory.name}`,
+                  `• ${result.whitelistCategory.name}`,
+                  `• ${result.validatorCategory.name}`
+                ].join('\n'),
+                inline: false
+              })
+              .setColor(0x22c55e)
+              .setFooter({ text: 'Step Mod!Z BOT' })
+              .setTimestamp();
 
-  await interaction.editReply({
-    embeds: [embed],
-    components: [buildCloseRow()]
-  });
-  return;
-}
+            await interaction.editReply({
+              embeds: [embed],
+              components: [buildCloseRow()]
+            });
+            return;
+          }
 
-if (selected === 'update_tools') {
-  await interaction.deferReply({ ephemeral: true });
+          if (selected === 'update_tools') {
+            await interaction.deferReply({ ephemeral: true });
 
-  const result = await runAutoSetup(interaction.guild, { mode: 'update' });
+            const result = await runAutoSetup(interaction.guild, { mode: 'update' });
 
-  const embed = new EmbedBuilder()
-    .setTitle('🆕 Neue Tools übernehmen')
-    .setDescription(
-      !result.createdAnything
-        ? '✅ Du hast das neueste Update.'
-        : '✅ Der Bot hat neue fehlende Tools ergänzt.'
-    )
-    .addFields(
-      {
-        name: 'Bedeutung',
-        value:
-          'Diese Funktion installiert nur echte neue Tools aus späteren Bot-Updates.\n' +
-          'Bereits vorhandene Kanäle und Kategorien bleiben unverändert.',
-        inline: false
-      },
-      {
-        name: 'Ergebnis',
-        value: !result.createdAnything
-          ? '• Keine neuen Tools gefunden'
-          : result.createdList.map((x) => `• ${x}`).join('\n'),
-        inline: false
-      }
-    )
-    .setColor(0x22c55e)
-    .setFooter({ text: 'Step Mod!Z BOT' })
-    .setTimestamp();
+            const embed = new EmbedBuilder()
+              .setTitle('🆕 Neue Tools übernehmen')
+              .setDescription(
+                !result.createdAnything
+                  ? '✅ Du hast das neueste Update.'
+                  : '✅ Der Bot hat neue fehlende Tools ergänzt.'
+              )
+              .addFields(
+                {
+                  name: 'Bedeutung',
+                  value:
+                    'Diese Funktion installiert nur echte neue Tools aus späteren Bot-Updates.\n' +
+                    'Bereits vorhandene Kanäle und Kategorien bleiben unverändert.',
+                  inline: false
+                },
+                {
+                  name: 'Ergebnis',
+                  value: !result.createdAnything
+                    ? '• Keine neuen Tools gefunden'
+                    : result.createdList.map((x) => `• ${x}`).join('\n'),
+                  inline: false
+                }
+              )
+              .setColor(0x22c55e)
+              .setFooter({ text: 'Step Mod!Z BOT' })
+              .setTimestamp();
 
-  await interaction.editReply({
-    embeds: [embed],
-    components: [buildCloseRow()]
-  });
-  return;
-}
+            await interaction.editReply({
+              embeds: [embed],
+              components: [buildCloseRow()]
+            });
+            return;
+          }
 
           await interaction.reply({
             embeds: [buildHelpEmbed(language, selected)],
@@ -432,6 +454,7 @@ if (selected === 'update_tools') {
         return;
       }
 
+      // MODALS
       if (interaction.isModalSubmit()) {
         if (interaction.customId !== 'stepmodz_whitelist_modal') return;
 

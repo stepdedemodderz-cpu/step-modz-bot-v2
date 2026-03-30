@@ -133,44 +133,68 @@ function verifiedOnlyOverwrites(ownerId, botId, everyoneId, verifyRoleId) {
   ];
 }
 
-async function ensureCategory(guild, name, overwrites, aliases = []) {
-  let category = guild.channels.cache.find(
-    (c) =>
-      c.type === ChannelType.GuildCategory &&
-      (c.name === name || aliases.includes(c.name))
-  );
+async function refreshChannels(guild) {
+  await guild.channels.fetch().catch(() => null);
+}
 
-  if (!category) {
-    category = await guild.channels.create({
-      name,
-      type: ChannelType.GuildCategory,
-      permissionOverwrites: overwrites
-    });
-    return { channel: category, created: true };
+async function ensureCategory(guild, name, overwrites, aliases = []) {
+  await refreshChannels(guild);
+
+  const category =
+    guild.channels.cache.find(
+      (c) =>
+        c.type === ChannelType.GuildCategory &&
+        (c.name === name || aliases.includes(c.name))
+    ) || null;
+
+  if (category) {
+    return { channel: category, created: false };
   }
 
-  return { channel: category, created: false };
+  const created = await guild.channels.create({
+    name,
+    type: ChannelType.GuildCategory,
+    permissionOverwrites: overwrites
+  });
+
+  return { channel: created, created: true };
 }
 
 async function ensureTextChannel(guild, name, parentId, overwrites, aliases = []) {
-  let channel = guild.channels.cache.find(
-    (c) =>
-      c.type === ChannelType.GuildText &&
-      (c.name === name || aliases.includes(c.name)) &&
-      c.parentId === parentId
-  );
+  await refreshChannels(guild);
 
-  if (!channel) {
-    channel = await guild.channels.create({
-      name,
-      type: ChannelType.GuildText,
-      parent: parentId,
-      permissionOverwrites: overwrites
-    });
-    return { channel, created: true };
+  let channel =
+    guild.channels.cache.find(
+      (c) =>
+        c.type === ChannelType.GuildText &&
+        (c.name === name || aliases.includes(c.name)) &&
+        c.parentId === parentId
+    ) || null;
+
+  if (channel) {
+    return { channel, created: false };
   }
 
-  return { channel, created: false };
+  // Fallback: finde ggf. einen gleichnamigen Channel auch außerhalb der Parent-Kategorie
+  channel =
+    guild.channels.cache.find(
+      (c) =>
+        c.type === ChannelType.GuildText &&
+        (c.name === name || aliases.includes(c.name))
+    ) || null;
+
+  if (channel) {
+    return { channel, created: false };
+  }
+
+  const created = await guild.channels.create({
+    name,
+    type: ChannelType.GuildText,
+    parent: parentId,
+    permissionOverwrites: overwrites
+  });
+
+  return { channel: created, created: true };
 }
 
 async function ensureRole(guild, name, color = null) {

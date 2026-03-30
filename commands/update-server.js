@@ -21,16 +21,15 @@ export default {
 
     if (!result.createdAnything) {
       await interaction.editReply({
-        content: '✅ Bot hat bereits das neueste Update. Es wurden keine neuen Tools gefunden.'
+        content: '✅ Du hast das neueste Update.'
       });
       return;
     }
 
     await interaction.editReply({
       content:
-        `✅ Server wurde aktualisiert.\n` +
-        `Es wurden nur neue fehlende Tools ergänzt.\n\n` +
-        `Neu erstellt: ${result.createdList.join(', ')}`
+        `✅ Neue Tools wurden ergänzt.\n\n` +
+        result.createdList.map((x) => `• ${x}`).join('\n')
     });
   }
 };

@@ -31,6 +31,7 @@ const TOOL_MIGRATIONS = [
         ['Server']
       );
 
+
       if (categoryResult.created) {
         created.push('🖥️ Server Kategorie');
       }

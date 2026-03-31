@@ -47,13 +47,13 @@ export default {
 
       // SLASH COMMANDS
       if (
-  interaction.commandName !== 'validate' &&
-  interaction.commandName !== 'update-server' &&
-  interaction.commandName !== 'server-status-setup' &&
-  interaction.commandName !== 'server-status-refresh' &&
-  interaction.commandName !== 'killfeed-setup' &&
-  !isOwner
-) {
+        interaction.commandName !== 'validate' &&
+        interaction.commandName !== 'update-server' &&
+        interaction.commandName !== 'server-status-setup' &&
+        interaction.commandName !== 'server-status-refresh' &&
+        interaction.commandName !== 'killfeed-setup' &&
+        !isOwner
+      ) {
           await interaction.reply({
             content: '❌ Diesen Befehl darf nur der Server-Besitzer benutzen.',
             ephemeral: true

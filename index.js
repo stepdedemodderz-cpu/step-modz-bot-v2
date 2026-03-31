@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { Client, Collection, GatewayIntentBits, Partials } from 'discord.js';
 import { ensureGuildFile } from './utils/config.js';
+import { startKillfeed } from './utils/killfeed.js';
 
 dotenv.config();
 
@@ -65,3 +66,7 @@ for (const file of eventFiles) {
 }
 
 client.login(process.env.DISCORD_TOKEN);
+client.once('ready', () => {
+  console.log('Killfeed gestartet');
+  startKillfeed(client);
+});

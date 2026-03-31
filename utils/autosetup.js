@@ -31,7 +31,6 @@ const TOOL_MIGRATIONS = [
         ['Server']
       );
 
-
       if (categoryResult.created) {
         created.push('🖥️ Server Kategorie');
       }
@@ -61,9 +60,10 @@ const TOOL_MIGRATIONS = [
               .setTitle('🧟 Server Status')
               .setDescription(
                 '⚙️ Server Status System wurde installiert.\n\n' +
-                'Nutze den Command:\n' +
-                '`/server-status-setup`\n\n' +
-                'um deinen DayZ Server zu verbinden.'
+                'Nutze:\n' +
+                '`/server-status-setup manual`\n' +
+                'oder\n' +
+                '`/server-status-setup nitrado`'
               )
               .setColor(0x22c55e)
               .setFooter({ text: 'Step Mod!Z BOT • Server Status' })
@@ -84,62 +84,179 @@ const TOOL_MIGRATIONS = [
         created.push('server-info Kanal');
 
         await infoResult.channel.send(
-  [
-    '# 🖥️ DayZ Server Verbindung',
-    '',
-    'Mit diesem System kannst du deinen DayZ Server direkt mit dem Bot verbinden.',
-    '',
-    'Du hast **2 Möglichkeiten**:',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '🔹 **1. Empfohlen (Nitrado Verbindung)**',
-    '',
-    'Nutze:',
-    '`/server-status-setup nitrado`',
-    '',
-    'Du benötigst:',
-    '• Nitrado Token',
-    '• Service ID',
-    '',
-    '## 🔑 Token erstellen',
-    '',
-    '1. Gehe auf Nitrado',
-    '2. Öffne dein Profil → Developer / API',
-    '3. Erstelle einen neuen Token',
-    '4. **Setze NUR den Haken bei "service"**',
-    '5. Name eingeben (egal welcher)',
-    '6. Token erstellen',
-    '7. Token kopieren',
-    '',
-    '👉 Danach im Discord einfügen',
-    '',
-    '## 🆔 Service ID finden',
-    '',
-    '1. Nitrado öffnen',
-    '2. „Meine Dienste“',
-    '3. Deinen DayZ Server auswählen',
-    '4. Service ID wird dort angezeigt',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '🔹 **2. Manuell (ohne Token)**',
-    '',
-    'Nutze:',
-    '`/server-status-setup manual ip:... port:...`',
-    '',
-    'Du brauchst:',
-    '• Server IP',
-    '• Port (meist 2302)',
-    '',
-    '⚠️ Kann ungenau sein, daher wird Nitrado empfohlen.',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '',
-    '💡 Empfehlung:',
-    'Nutze Nitrado → einfacher + zuverlässiger',
-    '',
-    '⚠️ Token wird nur für DayZ Tools genutzt (nicht für den ganzen Bot)'
-  ].join('\n')
-);
+          [
+            '# 🖥️ DayZ Server Verbindung',
+            '',
+            'Mit diesem System kannst du deinen DayZ Server direkt mit dem Bot verbinden.',
+            '',
+            'Du hast **2 Möglichkeiten**:',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '🔹 **1. Empfohlen (Nitrado Verbindung)**',
+            '',
+            'Nutze:',
+            '`/server-status-setup nitrado token:DEIN_TOKEN service_id:DEINE_SERVICE_ID`',
+            '',
+            'Du benötigst:',
+            '• Nitrado Token',
+            '• Service ID',
+            '',
+            '## 🔑 Token erstellen',
+            '',
+            '1. Gehe auf Nitrado',
+            '2. Öffne dein Profil → Developer / API',
+            '3. Erstelle einen neuen Token',
+            '4. **Setze NUR den Haken bei "service"**',
+            '5. Namen eingeben',
+            '6. Token erstellen',
+            '7. Token kopieren',
+            '',
+            '👉 Danach im Discord einfügen',
+            '',
+            '## 🆔 Service ID finden',
+            '',
+            '1. Nitrado öffnen',
+            '2. „Meine Dienste“',
+            '3. Deinen DayZ Server auswählen',
+            '4. Service ID dort ablesen',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '🔹 **2. Manuell (ohne Token)**',
+            '',
+            'Nutze:',
+            '`/server-status-setup manual ip:DEINE_IP port:DEIN_PORT`',
+            '',
+            'Du brauchst:',
+            '• Server IP',
+            '• Port',
+            '',
+            '⚠️ Für direkte Verbindungen wird meistens der Game Port verwendet.',
+            '⚠️ Für Steam / Favoriten wird oft der Query Port verwendet.',
+            '',
+            '💡 Empfehlung:',
+            'Nutze Nitrado → einfacher + zuverlässiger',
+            '',
+            '⚠️ Token wird nur für DayZ Tools genutzt, nicht für den ganzen Bot.'
+          ].join('\n')
+        );
+      }
+
+      return created;
+    }
+  },
+  {
+    id: 'killfeed-v1',
+    label: 'Killfeed System',
+    run: async ({
+      guild,
+      ownerId,
+      botId,
+      everyoneId,
+      ensureCategory,
+      ensureTextChannel,
+      ownerOnlyOverwrites
+    }) => {
+      const created = [];
+
+      const categoryResult = await ensureCategory(
+        guild,
+        '💀 Killfeed',
+        ownerOnlyOverwrites(ownerId, botId, everyoneId),
+        ['Killfeed']
+      );
+
+      if (categoryResult.created) {
+        created.push('💀 Killfeed Kategorie');
+      }
+
+      const category = categoryResult.channel;
+
+      const feedResult = await ensureTextChannel(
+        guild,
+        '💀 killfeed',
+        category.id,
+        ownerOnlyOverwrites(ownerId, botId, everyoneId),
+        ['killfeed']
+      );
+
+      const currentConfig = getGuildConfig(guild.id) || {};
+      setGuildConfig(guild.id, {
+        ...currentConfig,
+        killfeedChannelId: feedResult.channel.id
+      });
+
+      if (feedResult.created) {
+        created.push('💀 killfeed Kanal');
+
+        await feedResult.channel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle('💀 Killfeed System')
+              .setDescription(
+                [
+                  'Das Killfeed System wurde vorbereitet.',
+                  '',
+                  'Nutze jetzt:',
+                  '`/killfeed-setup`',
+                  '',
+                  'oder direkt:',
+                  '`/killfeed-setup token:DEIN_TOKEN service_id:DEINE_SERVICE_ID`'
+                ].join('\n')
+              )
+              .setColor(0x22c55e)
+              .setFooter({ text: 'Step Mod!Z BOT • Killfeed' })
+              .setTimestamp()
+          ]
+        });
+      }
+
+      const infoResult = await ensureTextChannel(
+        guild,
+        'killfeed-info',
+        category.id,
+        ownerOnlyOverwrites(ownerId, botId, everyoneId),
+        ['killfeed-info']
+      );
+
+      if (infoResult.created) {
+        created.push('killfeed-info Kanal');
+
+        await infoResult.channel.send(
+          [
+            '# 💀 Killfeed Info',
+            '',
+            'Mit diesem System wird später dein DayZ Killfeed im Discord angezeigt.',
+            '',
+            'Geplant sind zum Beispiel:',
+            '• Spieler tötet Spieler',
+            '• Waffe',
+            '• Distanz',
+            '• Headshot Informationen',
+            '',
+            '## Einrichtung',
+            '',
+            'Empfohlen:',
+            '`/killfeed-setup token:DEIN_TOKEN service_id:DEINE_SERVICE_ID`',
+            '',
+            'Oder nutze zuerst:',
+            '`/server-status-setup nitrado token:DEIN_TOKEN service_id:DEINE_SERVICE_ID`',
+            '',
+            'Danach:',
+            '`/killfeed-setup`',
+            '',
+            '## Token erstellen',
+            '',
+            '1. Nitrado öffnen',
+            '2. Developer / API öffnen',
+            '3. Token erstellen',
+            '4. **Nur Haken bei "service" setzen**',
+            '5. Namen eingeben',
+            '6. Token erstellen',
+            '7. Token kopieren und im Discord eintragen',
+            '',
+            '⚠️ Token wird nur für DayZ Tools verwendet.'
+          ].join('\n')
+        );
       }
 
       return created;

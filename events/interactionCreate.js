@@ -371,6 +371,7 @@ export default {
             await interaction.deferReply({ ephemeral: true });
 
             const result = await runAutoSetup(interaction.guild, { mode: 'full' });
+            const updateResult = await runAutoSetup(interaction.guild, { mode: 'update' });
 
             const embed = new EmbedBuilder()
               .setTitle(
@@ -380,20 +381,29 @@ export default {
               )
               .setDescription(
                 language === 'en'
-                  ? 'The bot has automatically created the main categories for you.'
-                  : 'Der Bot hat die wichtigsten Kategorien automatisch für dich eingerichtet.'
+                  ? 'Der Bot hat alles automatisch eingerichtet.'
+                  : 'Der Bot hat alles automatisch eingerichtet.'
               )
-              .addFields({
-                name: 'Erstellte Kategorien',
-                value: [
-                  `• ${result.verificationCategory.name}`,
-                  `• ${result.welcomeCategory.name}`,
-                  `• ${result.ticketCategory.name}`,
-                  `• ${result.whitelistCategory.name}`,
-                  `• ${result.validatorCategory.name}`
-                ].join('\n'),
-                inline: false
-              })
+              .addFields(
+                {
+                  name: 'Erstellte Kategorien',
+                  value: [
+                    `• ${result.verificationCategory.name}`,
+                    `• ${result.welcomeCategory.name}`,
+                    `• ${result.ticketCategory.name}`,
+                    `• ${result.whitelistCategory.name}`,
+                    `• ${result.validatorCategory.name}`
+                  ].join('\n'),
+                  inline: false
+                },
+                {
+                  name: 'Neue Tools',
+                  value: !updateResult.createdAnything
+                    ? '• Keine neuen Tools gefunden'
+                    : updateResult.createdList.map((x) => `• ${x}`).join('\n'),
+                  inline: false
+                }
+              )
               .setColor(0x22c55e)
               .setFooter({ text: 'Step Mod!Z BOT' })
               .setTimestamp();

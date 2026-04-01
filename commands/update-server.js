@@ -19,6 +19,19 @@ export default {
 
     const result = await runAutoSetup(interaction.guild, { mode: 'update' });
 
+if (!result.createdAnything) {
+  await interaction.reply({
+    content: '✅ Du hast das neuste Update.',
+    ephemeral: true
+  });
+  return;
+}
+
+await interaction.reply({
+  content: `🆕 Neue Tools installiert:\n${result.createdList.map(x => `• ${x}`).join('\n')}`,
+  ephemeral: true
+});
+
     if (!result.createdAnything) {
       await interaction.editReply({
         content: '✅ Du hast das neueste Update.'

@@ -368,52 +368,49 @@ export default {
           }
 
           if (selected === 'quicksetup') {
-            await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ ephemeral: true });
 
-            const result = await runAutoSetup(interaction.guild, { mode: 'full' });
-            const updateResult = await runAutoSetup(interaction.guild, { mode: 'update' });
+  // 🔥 ALLES KOMPLETT EINRICHTEN
+  const fullSetup = await runAutoSetup(interaction.guild, { mode: 'full' });
 
-            const embed = new EmbedBuilder()
-              .setTitle(
-                language === 'en'
-                  ? '⚡ Quick setup completed'
-                  : '⚡ Schnell Einrichtung abgeschlossen'
-              )
-              .setDescription(
-                language === 'en'
-                  ? 'Der Bot hat alles automatisch eingerichtet.'
-                  : 'Der Bot hat alles automatisch eingerichtet.'
-              )
-              .addFields(
-                {
-                  name: 'Erstellte Kategorien',
-                  value: [
-                    `• ${result.verificationCategory.name}`,
-                    `• ${result.welcomeCategory.name}`,
-                    `• ${result.ticketCategory.name}`,
-                    `• ${result.whitelistCategory.name}`,
-                    `• ${result.validatorCategory.name}`
-                  ].join('\n'),
-                  inline: false
-                },
-                {
-                  name: 'Neue Tools',
-                  value: !updateResult.createdAnything
-                    ? '• Keine neuen Tools gefunden'
-                    : updateResult.createdList.map((x) => `• ${x}`).join('\n'),
-                  inline: false
-                }
-              )
-              .setColor(0x22c55e)
-              .setFooter({ text: 'Step Mod!Z BOT' })
-              .setTimestamp();
+  // 🔥 DIREKT DANACH ALLE NEUEN TOOLS LADEN
+  const updateTools = await runAutoSetup(interaction.guild, { mode: 'update' });
 
-            await interaction.editReply({
-              embeds: [embed],
-              components: [buildCloseRow()]
-            });
-            return;
-          }
+  const embed = new EmbedBuilder()
+    .setTitle('⚡ Step Mod!Z Komplett Einrichtung')
+    .setDescription('✅ Der Bot hat ALLE Systeme vollständig eingerichtet.')
+    .addFields(
+      {
+        name: '📦 Hauptsysteme',
+        value: [
+          `• ${fullSetup.verificationCategory.name}`,
+          `• ${fullSetup.welcomeCategory.name}`,
+          `• ${fullSetup.ticketCategory.name}`,
+          `• ${fullSetup.whitelistCategory.name}`,
+          `• ${fullSetup.validatorCategory.name}`
+        ].join('\n'),
+        inline: false
+      },
+      {
+        name: '🆕 Zusätzliche Tools',
+        value: !updateTools.createdAnything
+          ? '• Keine neuen Tools'
+          : updateTools.createdList.map(x => `• ${x}`).join('\n'),
+        inline: false
+      }
+    )
+    .setColor(0x22c55e)
+    .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png') // LOGO
+    .setFooter({ text: 'Step Mod!Z BOT' })
+    .setTimestamp();
+
+  await interaction.editReply({
+    embeds: [embed],
+    components: [buildCloseRow()]
+  });
+
+  return;
+}
 
           if (selected === 'update_tools') {
             await interaction.deferReply({ ephemeral: true });

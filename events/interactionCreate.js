@@ -367,7 +367,9 @@ export default {
             return;
           }
 
-          if (selected === 'quicksetup') {
+          // WICHTIG: NUR DER DROPDOWN TEIL HIER IST NEU LOGISCH SAUBER
+
+if (selected === 'quicksetup') {
   await interaction.deferReply({ ephemeral: true });
 
   // 🔥 ALLES KOMPLETT EINRICHTEN

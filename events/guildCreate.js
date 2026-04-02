@@ -10,10 +10,10 @@ import {
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { getHelpMenuOptions } from '../utils/helpMenu.js';
-import { runAutoSetup } from '../utils/autosetup.js';
 
 const STEP_CATEGORY_NAME = 'Step Mod!Z BOT';
 const STEP_CHANNEL_NAME = 'step-modz-bot';
+const LOGO_URL = 'https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png';
 
 function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
@@ -126,58 +126,54 @@ export default {
       }
 
       const alreadyPosted = await botPanelAlreadyExists(channel, botId);
+      if (alreadyPosted) return;
 
-      if (!alreadyPosted) {
-        const embed = new EmbedBuilder()
-          .setTitle('Step Mod!Z BOT')
-          .setDescription(
-            [
-              'Ich bin **Step Mod!Z BOT**.',
-              '',
-              'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
-              '',
-              'Wähle eine Kategorie aus dem Dropdown-Menü,',
-              'um meine Befehlsliste anzuzeigen.',
-              'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
-              'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.',
-              'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
-            ].join('\n')
-          )
-          .setColor(0x5865f2)
-          .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
-          .setFooter({ text: t(language, 'checkedBy') })
-          .setTimestamp();
+      const embed = new EmbedBuilder()
+        .setTitle('Step Mod!Z BOT')
+        .setDescription(
+          [
+            'Ich bin **Step Mod!Z BOT**.',
+            '',
+            'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
+            '',
+            'Wähle eine Kategorie aus dem Dropdown-Menü,',
+            'um meine Befehlsliste anzuzeigen.',
+            'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
+            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.',
+            'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
+          ].join('\n')
+        )
+        .setColor(0x5865f2)
+        .setImage(LOGO_URL)
+        .setFooter({ text: t(language, 'checkedBy') })
+        .setTimestamp();
 
-        const buttonRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('stepmodz_open_info')
-            .setLabel(t(language, 'buttonInfo'))
-            .setStyle(ButtonStyle.Primary),
-          new ButtonBuilder()
-            .setCustomId('stepmodz_lang_de')
-            .setLabel('Deutsch')
-            .setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder()
-            .setCustomId('stepmodz_lang_en')
-            .setLabel('English')
-            .setStyle(ButtonStyle.Secondary)
-        );
+      const buttonRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('stepmodz_open_info')
+          .setLabel(t(language, 'buttonInfo'))
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('stepmodz_lang_de')
+          .setLabel('Deutsch')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('stepmodz_lang_en')
+          .setLabel('English')
+          .setStyle(ButtonStyle.Secondary)
+      );
 
-        const menuRow = new ActionRowBuilder().addComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId('stepmodz_help_menu')
-            .setPlaceholder(language === 'en' ? 'Dropdown Menu' : 'Dropdown Menü')
-            .addOptions(getHelpMenuOptions(language))
-        );
+      const menuRow = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('stepmodz_help_menu')
+          .setPlaceholder(language === 'en' ? 'Dropdown Menu' : 'Dropdown Menü')
+          .addOptions(getHelpMenuOptions(language))
+      );
 
-        await channel.send({
-          embeds: [embed],
-          components: [buttonRow, menuRow]
-        });
-      }
-
-      // Neue Tool-Kanäle automatisch nachladen
-      await runAutoSetup(guild, { mode: 'update' });
+      await channel.send({
+        embeds: [embed],
+        components: [buttonRow, menuRow]
+      });
     } catch (err) {
       console.error('guildCreate Fehler:', err);
     }

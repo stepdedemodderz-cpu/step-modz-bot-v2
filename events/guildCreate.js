@@ -11,9 +11,8 @@ import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
 import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
-const STEP_CATEGORY_NAME = 'Step Mod!Z BOT';
-const STEP_CHANNEL_NAME = 'step-modz-bot';
-const LOGO_URL = 'https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png';
+const BOT_CATEGORY_NAME = 'Step Mod!Z BOT';
+const BOT_CHANNEL_NAME = 'step-modz-bot';
 
 function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
@@ -46,49 +45,28 @@ function botBaseOverwrites(ownerId, botId, everyoneId) {
   ];
 }
 
-async function findExistingCategory(guild) {
-  await guild.channels.fetch().catch(() => null);
+async function findExistingIntroMessage(channel, botUserId) {
+  const messages = await channel.messages.fetch({ limit: 50 }).catch(() => null);
+  if (!messages) return null;
 
-  return guild.channels.cache.find(
-    (c) => c.type === ChannelType.GuildCategory && c.name === STEP_CATEGORY_NAME
-  ) || null;
-}
-
-async function findExistingTextChannel(guild, categoryId = null) {
-  await guild.channels.fetch().catch(() => null);
-
-  let channel = guild.channels.cache.find(
-    (c) =>
-      c.type === ChannelType.GuildText &&
-      c.name === STEP_CHANNEL_NAME &&
-      (!categoryId || c.parentId === categoryId)
-  );
-
-  if (!channel) {
-    channel = guild.channels.cache.find(
-      (c) => c.type === ChannelType.GuildText && c.name === STEP_CHANNEL_NAME
-    );
-  }
-
-  return channel || null;
-}
-
-async function botPanelAlreadyExists(channel, botId) {
-  const messages = await channel.messages.fetch({ limit: 15 }).catch(() => null);
-  if (!messages) return false;
-
-  return messages.some(
-    (msg) =>
-      msg.author.id === botId &&
-      msg.embeds?.[0]?.title === 'Step Mod!Z BOT'
+  return (
+    messages.find(
+      (m) =>
+        m.author.id === botUserId &&
+        m.embeds.length > 0 &&
+        m.embeds[0]?.title === 'Step Mod!Z BOT'
+    ) || null
   );
 }
 
 export default {
   name: 'guildCreate',
-
   async execute(guild) {
     try {
+      console.log(`Bot wurde zu Server hinzugefügt: ${guild.name}`);
+
+      await guild.channels.fetch().catch(() => null);
+
       const config = getGuildConfig(guild.id) || {};
       const language = config.language || 'de';
 
@@ -102,31 +80,76 @@ export default {
       const everyoneId = guild.roles.everyone.id;
       const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
-      let category = await findExistingCategory(guild);
+      let category =
+        (config.botIntroCategoryId && guild.channels.cache.get(config.botIntroCategoryId)) ||
+        guild.channels.cache.find(
+          (c) => c.type === ChannelType.GuildCategory && c.name === BOT_CATEGORY_NAME
+        ) ||
+        null;
 
       if (!category) {
         category = await guild.channels.create({
-          name: STEP_CATEGORY_NAME,
+          name: BOT_CATEGORY_NAME,
           type: ChannelType.GuildCategory,
           permissionOverwrites: overwrites
         });
+      } else {
+        await category.permissionOverwrites.set(overwrites).catch(() => null);
       }
 
-      let channel = await findExistingTextChannel(guild, category.id);
+      const duplicateCategories = guild.channels.cache.filter(
+        (c) =>
+          c.type === ChannelType.GuildCategory &&
+          c.name === BOT_CATEGORY_NAME &&
+          c.id !== category.id
+      );
+
+      for (const [, duplicate] of duplicateCategories) {
+        const children = guild.channels.cache.filter((c) => c.parentId === duplicate.id);
+        for (const [, child] of children) {
+          await child.setParent(category.id).catch(() => null);
+        }
+        await duplicate.delete().catch(() => null);
+      }
+
+      let channel =
+        (config.botIntroChannelId && guild.channels.cache.get(config.botIntroChannelId)) ||
+        guild.channels.cache.find(
+          (c) => c.type === ChannelType.GuildText && c.name === BOT_CHANNEL_NAME
+        ) ||
+        null;
 
       if (!channel) {
         channel = await guild.channels.create({
-          name: STEP_CHANNEL_NAME,
+          name: BOT_CHANNEL_NAME,
           type: ChannelType.GuildText,
           parent: category.id,
           permissionOverwrites: overwrites
         });
-      } else if (channel.parentId !== category.id) {
-        await channel.setParent(category.id).catch(() => null);
+      } else {
+        if (channel.parentId !== category.id) {
+          await channel.setParent(category.id).catch(() => null);
+        }
+        await channel.permissionOverwrites.set(overwrites).catch(() => null);
       }
 
-      const alreadyPosted = await botPanelAlreadyExists(channel, botId);
-      if (alreadyPosted) return;
+      const duplicateChannels = guild.channels.cache.filter(
+        (c) =>
+          c.type === ChannelType.GuildText &&
+          c.name === BOT_CHANNEL_NAME &&
+          c.id !== channel.id
+      );
+
+      for (const [, duplicate] of duplicateChannels) {
+        await duplicate.delete().catch(() => null);
+      }
+
+      setGuildConfig(guild.id, {
+        ...getGuildConfig(guild.id),
+        language,
+        botIntroCategoryId: category.id,
+        botIntroChannelId: channel.id
+      });
 
       const embed = new EmbedBuilder()
         .setTitle('Step Mod!Z BOT')
@@ -144,7 +167,7 @@ export default {
           ].join('\n')
         )
         .setColor(0x5865f2)
-        .setImage(LOGO_URL)
+        .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
         .setFooter({ text: t(language, 'checkedBy') })
         .setTimestamp();
 
@@ -170,10 +193,19 @@ export default {
           .addOptions(getHelpMenuOptions(language))
       );
 
-      await channel.send({
-        embeds: [embed],
-        components: [buttonRow, menuRow]
-      });
+      const existingIntro = await findExistingIntroMessage(channel, botId);
+
+      if (existingIntro) {
+        await existingIntro.edit({
+          embeds: [embed],
+          components: [buttonRow, menuRow]
+        }).catch(() => null);
+      } else {
+        await channel.send({
+          embeds: [embed],
+          components: [buttonRow, menuRow]
+        });
+      }
     } catch (err) {
       console.error('guildCreate Fehler:', err);
     }

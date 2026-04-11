@@ -14,9 +14,9 @@ export function getHelpMenuOptions(language = 'de') {
         description: 'Create the full base structure automatically'
       },
       {
-        label: 'Install New Tools',
+        label: 'Update BOT/TOOLS',
         value: 'update_tools',
-        description: 'Only install real new tools from later updates'
+        description: 'Install new tools only'
       },
       {
         label: 'Setup',
@@ -63,9 +63,9 @@ export function getHelpMenuOptions(language = 'de') {
       description: 'Erstellt die komplette Grundstruktur automatisch'
     },
     {
-      label: 'Neue Tools übernehmen',
+      label: 'Aktualisieren BOT/TOOLS',
       value: 'update_tools',
-      description: 'Installiert nur echte neue Tools aus späteren Updates'
+      description: '🆕 Neue Tools übernehmen'
     },
     {
       label: 'Setup',
@@ -121,18 +121,20 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
           '• Validator\n\n' +
           'Diese Funktion ist für die erste komplette Einrichtung gedacht.'
       },
+
+      // 🔥 DEIN NEUER TEXT
       update_tools: {
-        title: '🆕 Neue Tools übernehmen',
+        title: '🆕 Aktualisieren BOT / TOOLS',
         description:
-          'Mit dieser Funktion installiert der Bot **nur wirklich neue Tools**, die durch spätere Updates neu hinzugekommen sind.\n\n' +
-          '**Wichtig:**\n' +
-          '• Bereits vorhandene Kanäle werden nicht neu erstellt\n' +
-          '• Bereits vorhandene Kategorien werden nicht neu eingerichtet\n' +
-          '• Vorhandene Bereiche bleiben unverändert\n' +
-          '• Es werden nur echte neue Erweiterungen nachgerüstet\n\n' +
+          '🆕 **Neue Tools übernehmen**\n\n' +
+          'Mit dieser Funktion installiert der Bot nur wirklich neue Tools,\n' +
+          'die durch spätere Updates neu hinzugekommen sind.\n\n' +
+          'Gebe den Befehl `/update-server` ein,\n' +
+          'um den Bot zu aktualisieren und neue Tools hinzuzufügen.\n\n' +
           'Wenn es keine neuen Tools gibt, bekommst du die Meldung:\n' +
           '**„✅ Du hast das neueste Update.“**'
       },
+
       setup: {
         title: '⚙️ Setup',
         description:
@@ -164,6 +166,7 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
           'Hier siehst du gespeicherte Bot-Einstellungen und wichtige Konfigurationsdaten.'
       }
     },
+
     en: {
       dropdown_info: {
         title: '📂 Dropdown Menu',
@@ -184,15 +187,12 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
           'This is meant for the first complete setup.'
       },
       update_tools: {
-        title: '🆕 Install New Tools',
+        title: '🆕 Update BOT / TOOLS',
         description:
-          'This function installs **only real new tools** added by later bot updates.\n\n' +
-          '**Important:**\n' +
-          '• Existing channels are not rebuilt\n' +
-          '• Existing categories are not recreated\n' +
-          '• Existing areas remain unchanged\n' +
-          '• Only real new extensions are installed\n\n' +
-          'If no new tools exist, you will get this message:\n' +
+          '🆕 **Install new tools**\n\n' +
+          'This function installs only real new tools added by later updates.\n\n' +
+          'Use the command `/update-server` to update the bot and install new tools.\n\n' +
+          'If there are no new tools, you will get:\n' +
           '**“✅ You already have the latest update.”**'
       },
       setup: {

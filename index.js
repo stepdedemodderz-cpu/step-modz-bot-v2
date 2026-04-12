@@ -65,8 +65,11 @@ for (const file of eventFiles) {
   }
 }
 
-client.login(process.env.DISCORD_TOKEN);
 client.once('ready', () => {
+  console.log(`${client.user.tag} ist online.`);
+  console.log('Step Mod!Z BOT ist bereit.');
   console.log('Killfeed gestartet');
   startKillfeed(client);
 });
+
+client.login(process.env.DISCORD_TOKEN);

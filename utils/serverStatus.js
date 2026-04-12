@@ -1,22 +1,57 @@
 import { EmbedBuilder } from 'discord.js';
-import { getGuildConfig } from './config.js';
+import { getGuildConfig, setGuildConfig } from './config.js';
 
-let lastStatusMessage = new Map();
-let lastOnlineState = new Map();
-
-async function fetchServer(token, serviceId) {
+async function fetchNitradoServer(token, serviceId) {
   const res = await fetch(`https://api.nitrado.net/services/${serviceId}/gameservers`, {
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json'
     }
-  });
+  }).catch(() => null);
 
-  const data = await res.json();
-  return data.data.gameserver;
+  if (!res || !res.ok) {
+    return null;
+  }
+
+  const json = await res.json().catch(() => null);
+  return json?.data?.gameserver || null;
 }
 
-function buildEmbed(server) {
+function buildServerStatusEmbed(server) {
+  if (!server) {
+    return new EmbedBuilder()
+      .setTitle('🧟 DayZ Server Status')
+      .setDescription(
+        [
+          '🔴 **Offline / Nicht erreichbar**',
+          '',
+          'Der Server konnte aktuell nicht geladen werden.',
+          'Prüfe Token, Service oder versuche es später erneut.'
+        ].join('\n')
+      )
+      .setColor(0xef4444)
+      .setFooter({ text: 'Step Mod!Z BOT • Live Status' })
+      .setTimestamp();
+  }
+
   const online = server.status === 'started';
+  const hostname = server?.settings?.config?.hostname || 'Unbekannter Server';
+  const map =
+    server?.game_specific?.map ||
+    server?.settings?.config?.template ||
+    server?.settings?.config?.map ||
+    'Unbekannt';
+
+  const currentPlayers =
+    server?.query?.player_current ??
+    server?.player_current ??
+    0;
+
+  const maxPlayers =
+    server?.query?.player_max ??
+    server?.slots ??
+    server?.player_max ??
+    '?';
 
   return new EmbedBuilder()
     .setTitle('🧟 DayZ Server Status')
@@ -24,9 +59,9 @@ function buildEmbed(server) {
       [
         `${online ? '🟢 **Online**' : '🔴 **Offline**'}`,
         '',
-        `**Server:** ${server.settings?.config?.hostname || 'Unbekannt'}`,
-        `**Spieler:** ${server.query?.player_current || 0} / ${server.query?.player_max || 0}`,
-        `**Map:** ${server.settings?.config?.map || 'Unbekannt'}`
+        `**Server:** ${hostname}`,
+        `**Spieler:** ${currentPlayers} / ${maxPlayers}`,
+        `**Map:** ${map}`
       ].join('\n')
     )
     .setColor(online ? 0x22c55e : 0xef4444)
@@ -35,46 +70,44 @@ function buildEmbed(server) {
 }
 
 export async function updateServerStatusMessage(guild) {
-  const config = getGuildConfig(guild.id);
+  const config = getGuildConfig(guild.id) || {};
 
   if (!config?.nitradoToken || !config?.nitradoServiceId || !config?.serverStatusChannelId) {
-    return;
+    return { ok: false, reason: 'missing_config' };
   }
 
-  const channel = guild.channels.cache.get(config.serverStatusChannelId);
-  if (!channel) return;
+  const channel =
+    guild.channels.cache.get(config.serverStatusChannelId) ||
+    await guild.channels.fetch(config.serverStatusChannelId).catch(() => null);
 
-  try {
-    const server = await fetchServer(config.nitradoToken, config.nitradoServiceId);
-    const embed = buildEmbed(server);
-
-    let messageId = lastStatusMessage.get(guild.id);
-
-    if (messageId) {
-      const msg = await channel.messages.fetch(messageId).catch(() => null);
-      if (msg) {
-        await msg.edit({ embeds: [embed] });
-      }
-    } else {
-      const msg = await channel.send({ embeds: [embed] });
-      lastStatusMessage.set(guild.id, msg.id);
-    }
-
-    // 🔴 Offline Alert
-    const wasOnline = lastOnlineState.get(guild.id);
-    const isOnline = server.status === 'started';
-
-    if (wasOnline !== undefined && wasOnline !== isOnline) {
-      if (!isOnline) {
-        await channel.send('🔴 **Server ist OFFLINE gegangen!**');
-      } else {
-        await channel.send('🟢 **Server ist wieder ONLINE!**');
-      }
-    }
-
-    lastOnlineState.set(guild.id, isOnline);
-
-  } catch (err) {
-    console.error('Server Status Fehler:', err);
+  if (!channel) {
+    return { ok: false, reason: 'missing_channel' };
   }
+
+  const server = await fetchNitradoServer(config.nitradoToken, config.nitradoServiceId);
+  const embed = buildServerStatusEmbed(server);
+
+  let message = null;
+
+  if (config.serverStatusMessageId) {
+    message = await channel.messages.fetch(config.serverStatusMessageId).catch(() => null);
+  }
+
+  if (message) {
+    await message.edit({ embeds: [embed] }).catch(() => null);
+    return { ok: true, updated: true };
+  }
+
+  const sent = await channel.send({ embeds: [embed] }).catch(() => null);
+
+  if (!sent) {
+    return { ok: false, reason: 'send_failed' };
+  }
+
+  setGuildConfig(guild.id, {
+    ...config,
+    serverStatusMessageId: sent.id
+  });
+
+  return { ok: true, updated: false };
 }

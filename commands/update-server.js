@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { runAutoSetup } from '../utils/autosetup.js';
 
 export default {
@@ -10,39 +10,36 @@ export default {
     if (interaction.user.id !== interaction.guild.ownerId) {
       await interaction.reply({
         content: '❌ Nur der Server-Besitzer darf das.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
-
-    const result = await runAutoSetup(interaction.guild, { mode: 'update' });
-
-if (!result.createdAnything) {
-  await interaction.reply({
-    content: '✅ Du hast das neuste Update.',
-    ephemeral: true
-  });
-  return;
-}
-
-await interaction.reply({
-  content: `🆕 Neue Tools installiert:\n${result.createdList.map(x => `• ${x}`).join('\n')}`,
-  ephemeral: true
-});
-
-    if (!result.createdAnything) {
-      await interaction.editReply({
-        content: '✅ Du hast das neueste Update.'
-      });
-      return;
-    }
-
-    await interaction.editReply({
-      content:
-        '✅ Neue Tools wurden installiert:\n\n' +
-        result.createdList.map((x) => `• ${x}`).join('\n')
+    await interaction.deferReply({
+      flags: MessageFlags.Ephemeral
     });
+
+    try {
+      const result = await runAutoSetup(interaction.guild, { mode: 'update' });
+
+      if (!result.createdAnything) {
+        await interaction.editReply({
+          content: '✅ Du hast das neueste Update.'
+        });
+        return;
+      }
+
+      await interaction.editReply({
+        content:
+          '🆕 Neue Tools wurden installiert:\n\n' +
+          result.createdList.map((x) => `• ${x}`).join('\n')
+      });
+    } catch (error) {
+      console.error('Update-Server Fehler:', error);
+
+      await interaction.editReply({
+        content: '❌ Fehler beim Update. Schau in die Konsole.'
+      });
+    }
   }
 };

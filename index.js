@@ -65,7 +65,7 @@ for (const file of eventFiles) {
   }
 }
 
-client.once('ready', () => {
+client.once('clientReady', async () => {
   console.log(`${client.user.tag} ist online.`);
   console.log('Step Mod!Z BOT ist bereit.');
   console.log('Killfeed gestartet');

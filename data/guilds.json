@@ -53,5 +53,18 @@
     "nitradoToken": "jNqueTZH2dFOffJR22rwJBoCFXgbbnX41msuxEKx_7RcCDfuoeVzqAtJOvKaqr9UXBjxvhjayi8FewiGHZSk8B_AqZ7v8OYA-afp",
     "killfeedEnabled": true,
     "killfeedChannelId": null
+  },
+  "1492704997245452328": {
+    "language": "de",
+    "botIntroCategoryId": "1492705034952249459",
+    "botIntroChannelId": "1492705030006902874",
+    "dayzConnectionMode": "nitrado",
+    "serverIP": "95.156.224.145:12100",
+    "serverPort": 12100,
+    "serverStatusChannelId": null,
+    "nitradoToken": "6u1bDntwxQHATzFXLAHGH6A4T7rb4CWkVRU3AVVhUCS15gYc5Z9nsNqAcIpgh1CUtxMNII28k1JTy3zeuWgxgP-xVTp-oXa9L1v-",
+    "nitradoServiceId": "95.156.224.145:12100",
+    "killfeedEnabled": true,
+    "killfeedChannelId": null
   }
 }

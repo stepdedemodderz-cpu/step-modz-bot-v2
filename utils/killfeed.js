@@ -1,7 +1,7 @@
 import { getGuildConfig } from './config.js';
 import { findAdmLogFile, downloadFileText } from './nitrado.js';
 
-const lastProcessedLineByGuild = new Map();
+const lastProcessedIndexByGuild = new Map();
 const pollState = {
   started: false
 };
@@ -139,15 +139,14 @@ async function processGuildKillfeed(guild) {
 
   if (lines.length === 0) return;
 
-  const lastSeen = lastProcessedLineByGuild.get(guild.id);
+let lastIndex = lastProcessedIndexByGuild.get(guild.id) ?? -1;
 
-  if (!lastSeen) {
-    lastProcessedLineByGuild.set(guild.id, lines[lines.length - 1]);
-    return;
-  }
+// Wenn Log neu oder kleiner geworden → reset
+if (lastIndex >= lines.length) {
+  lastIndex = -1;
+}
 
-  const lastIndex = lines.lastIndexOf(lastSeen);
-  const newLines = lastIndex >= 0 ? lines.slice(lastIndex + 1) : lines.slice(-50);
+const newLines = lines.slice(lastIndex + 1);
 
   for (const line of newLines) {
     const kill = parseKillLine(line);
@@ -158,7 +157,7 @@ async function processGuildKillfeed(guild) {
     }).catch(() => null);
   }
 
-  lastProcessedLineByGuild.set(guild.id, lines[lines.length - 1]);
+  lastProcessedIndexByGuild.set(guild.id, lines.length - 1);
 }
 
 export function startKillfeed(client) {

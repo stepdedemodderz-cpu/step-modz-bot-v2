@@ -92,10 +92,15 @@ const TOOL_MIGRATIONS = [
     '━━━━━━━━━━━━━━━━━━━━━━',
     '🔧 **Einrichtung**',
     '',
-    'Nutze den Command:',
-    '`/server-status-setup nitrado token:DEIN_TOKEN`',
+    'Nutze nur diesen Command:',
+    '`/killfeed-setup token:DEIN_TOKEN`',
     '',
-    '👉 Fertig ✅',
+    '👉 Damit wird automatisch aktiviert:',
+    '• 💀 Killfeed',
+    '• 📡 Server Activity',
+    '• 🧟 Server Status',
+    '',
+    'Es ist **kein weiterer Setup-Befehl nötig**.',
     '',
     '━━━━━━━━━━━━━━━━━━━━━━',
     '🔑 **Token erstellen (Nitrado)**',
@@ -113,6 +118,7 @@ const TOOL_MIGRATIONS = [
     '',
     '• Der Bot erkennt deinen Server automatisch',
     '• Es wird KEINE Service ID benötigt',
+    '• Es wird nur EIN Token für alles benötigt',
     '',
     '━━━━━━━━━━━━━━━━━━━━━━',
     '📡 **Was wird angezeigt?**',
@@ -120,10 +126,11 @@ const TOOL_MIGRATIONS = [
     '• Server online / offline',
     '• Spieleranzahl',
     '• Map',
-    '• weitere Infos folgen',
+    '• Join / Leave',
+    '• Killfeed',
     '',
     '━━━━━━━━━━━━━━━━━━━━━━',
-    '🚀 Status wird automatisch aktualisiert'
+    '🚀 Alles läuft über nur einen einzigen Token'
   ].join('\n')
 );
       }

@@ -59,12 +59,18 @@ const TOOL_MIGRATIONS = [
             new EmbedBuilder()
               .setTitle('🧟 Server Status')
               .setDescription(
-                '⚙️ Server Status System wurde installiert.\n\n' +
-                'Nutze:\n' +
-                '`/server-status-setup manual`\n' +
-                'oder\n' +
-                '`/server-status-setup nitrado`'
-              )
+  [
+    '⚙️ Server Status System wurde installiert.',
+    '',
+    'Nutze nur noch:',
+    '`/killfeed-setup token:DEIN_TOKEN`',
+    '',
+    'Damit werden automatisch aktiviert:',
+    '• 💀 Killfeed',
+    '• 📡 Server Activity',
+    '• 🧟 Server Status'
+  ].join('\n')
+)
               .setColor(0x22c55e)
               .setFooter({ text: 'Step Mod!Z BOT • Server Status' })
               .setTimestamp()

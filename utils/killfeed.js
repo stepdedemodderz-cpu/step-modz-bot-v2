@@ -1,6 +1,6 @@
 import { getGuildConfig } from './config.js';
 import { findAdmLogFile, downloadFileText } from './nitrado.js';
-import { addKill } from './stats.js'; // 🔥 NEU
+import { addKill } from './stats.js';
 
 const lastProcessedIndexByGuild = new Map();
 const pollState = {
@@ -11,7 +11,6 @@ function normalizeLine(line) {
   return String(line || '').trim();
 }
 
-// 🔫 Waffe
 function parseWeapon(line) {
   const match =
     line.match(/\bwith\s+([A-Za-z0-9_\-\. ]{2,60})/i) ||
@@ -20,7 +19,6 @@ function parseWeapon(line) {
   return match?.[1]?.trim() || null;
 }
 
-// 📏 Distanz
 function parseDistance(line) {
   const match =
     line.match(/\bfrom\s+([0-9]+(?:\.[0-9]+)?)\s*m\b/i) ||
@@ -29,14 +27,12 @@ function parseDistance(line) {
   return match?.[1] ? `${match[1]}m` : null;
 }
 
-// 🎯 Headshot
 function parseHeadshot(line) {
   return /\bheadshot\b/i.test(line);
 }
 
-// 👤 Spieler
 function parsePlayers(line) {
-  const quoted = [...line.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+  const quoted = [...line.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
 
   if (quoted.length >= 2) {
     return { killer: quoted[0], victim: quoted[1] };
@@ -45,9 +41,8 @@ function parsePlayers(line) {
   return null;
 }
 
-// 💀 Kill
 function parseKillLine(line) {
-  if (!line.includes('killed')) return null;
+  if (!line.toLowerCase().includes('killed')) return null;
 
   const players = parsePlayers(line);
   if (!players) return null;
@@ -61,7 +56,6 @@ function parseKillLine(line) {
   };
 }
 
-// 📡 JOIN / LEAVE
 function parseConnection(line) {
   if (/connected/i.test(line)) {
     const match = line.match(/"(.+?)"/);
@@ -76,7 +70,6 @@ function parseConnection(line) {
   return null;
 }
 
-// 🎨 Embed
 function buildKillEmbed(kill) {
   return {
     title: '💀 Killfeed',
@@ -106,25 +99,74 @@ function buildKillEmbed(kill) {
 async function processGuildKillfeed(guild) {
   const config = getGuildConfig(guild.id);
 
-  if (!config?.killfeedEnabled || !config?.killfeedChannelId) return;
+  if (!config?.killfeedEnabled) {
+    console.log(`[KILLFEED] ${guild.name}: killfeedEnabled fehlt`);
+    return;
+  }
 
-  const channel = guild.channels.cache.get(config.killfeedChannelId);
-  if (!channel) return;
+  if (!config?.killfeedChannelId) {
+    console.log(`[KILLFEED] ${guild.name}: killfeedChannelId fehlt`);
+    return;
+  }
+
+  if (!config?.nitradoToken) {
+    console.log(`[KILLFEED] ${guild.name}: nitradoToken fehlt`);
+    return;
+  }
+
+  if (!config?.nitradoServiceId) {
+    console.log(`[KILLFEED] ${guild.name}: nitradoServiceId fehlt`);
+    return;
+  }
+
+  const channel =
+    guild.channels.cache.get(config.killfeedChannelId) ||
+    await guild.channels.fetch(config.killfeedChannelId).catch(() => null);
+
+  if (!channel) {
+    console.log(`[KILLFEED] ${guild.name}: killfeed channel nicht gefunden`);
+    return;
+  }
 
   const activityChannel = config.serverActivityChannelId
-    ? guild.channels.cache.get(config.serverActivityChannelId)
+    ? (
+        guild.channels.cache.get(config.serverActivityChannelId) ||
+        await guild.channels.fetch(config.serverActivityChannelId).catch(() => null)
+      )
     : null;
 
-  const admFile = await findAdmLogFile(config.nitradoToken, config.nitradoServiceId);
-  if (!admFile?.path) return;
+  const admFile = await findAdmLogFile(config.nitradoToken, config.nitradoServiceId).catch((err) => {
+    console.error(`[KILLFEED] ${guild.name}: ADM Suche fehlgeschlagen`, err);
+    return null;
+  });
+
+  if (!admFile?.path) {
+    console.log(`[KILLFEED] ${guild.name}: keine ADM Logdatei gefunden`);
+    return;
+  }
+
+  console.log(`[KILLFEED] ${guild.name}: ADM Datei -> ${admFile.path}`);
 
   const content = await downloadFileText(
     config.nitradoToken,
     config.nitradoServiceId,
     admFile.path
-  );
+  ).catch((err) => {
+    console.error(`[KILLFEED] ${guild.name}: Download fehlgeschlagen`, err);
+    return null;
+  });
 
-  const lines = content.split('\n').map(normalizeLine).filter(Boolean);
+  if (!content) {
+    console.log(`[KILLFEED] ${guild.name}: keine Log-Inhalte geladen`);
+    return;
+  }
+
+  const lines = content.split(/\r?\n/).map(normalizeLine).filter(Boolean);
+
+  if (!lines.length) {
+    console.log(`[KILLFEED] ${guild.name}: Log ist leer`);
+    return;
+  }
 
   let lastIndex = lastProcessedIndexByGuild.get(guild.id) ?? -1;
 
@@ -134,28 +176,30 @@ async function processGuildKillfeed(guild) {
 
   const newLines = lines.slice(lastIndex + 1);
 
+  console.log(`[KILLFEED] ${guild.name}: ${newLines.length} neue Zeilen`);
+
   for (const line of newLines) {
-    // 💀 KILLS + STATS
     const kill = parseKillLine(line);
     if (kill) {
+      console.log(`[KILLFEED] ${guild.name}: Kill erkannt -> ${kill.killer} vs ${kill.victim}`);
 
-      // 🔥 STATS SPEICHERN
       addKill(guild.id, kill.killer, kill.victim);
 
       await channel.send({
         embeds: [buildKillEmbed(kill)]
-      }).catch(() => null);
+      }).catch((err) => {
+        console.error(`[KILLFEED] ${guild.name}: Senden Kill fehlgeschlagen`, err);
+      });
     }
 
-    // 📡 JOIN / LEAVE
     const activity = parseConnection(line);
     if (activity && activityChannel) {
       if (activity.type === 'join') {
-        await activityChannel.send(`📥 **${activity.player}** ist dem Server beigetreten`);
+        await activityChannel.send(`📥 **${activity.player}** ist dem Server beigetreten`).catch(() => null);
       }
 
       if (activity.type === 'leave') {
-        await activityChannel.send(`📤 **${activity.player}** hat den Server verlassen`);
+        await activityChannel.send(`📤 **${activity.player}** hat den Server verlassen`).catch(() => null);
       }
     }
   }
@@ -167,12 +211,14 @@ export function startKillfeed(client) {
   if (pollState.started) return;
   pollState.started = true;
 
+  console.log('[KILLFEED] Polling gestartet');
+
   setInterval(async () => {
     for (const guild of client.guilds.cache.values()) {
       try {
         await processGuildKillfeed(guild);
       } catch (err) {
-        console.error('Killfeed Fehler:', err);
+        console.error(`[KILLFEED] Fehler auf ${guild.name}:`, err);
       }
     }
   }, 20000);

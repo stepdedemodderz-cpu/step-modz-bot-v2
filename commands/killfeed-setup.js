@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { getFirstDayZService } from '../utils/nitrado.js';
 
@@ -17,16 +17,43 @@ export default {
     const config = getGuildConfig(interaction.guild.id) || {};
     const token = interaction.options.getString('token', true);
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({
+      flags: MessageFlags.Ephemeral
+    });
 
     const killfeedChannel = interaction.guild.channels.cache.find(
       (c) => c.name === '💀 killfeed' || c.name === 'killfeed'
     );
 
+    const activityChannel = interaction.guild.channels.cache.find(
+      (c) => c.name === '📡 server-activity' || c.name === 'server-activity'
+    );
+
+    if (!killfeedChannel) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Killfeed Kanal fehlt')
+        .setDescription(
+          [
+            'Der Kanal **💀 killfeed** wurde nicht gefunden.',
+            '',
+            'Nutze zuerst:',
+            '`/update-server`',
+            '',
+            'Danach führe `/killfeed-setup token:DEIN_TOKEN` erneut aus.'
+          ].join('\n')
+        )
+        .setColor(0xef4444)
+        .setFooter({ text: 'Step Mod!Z BOT • Killfeed Setup' })
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [embed] });
+      return;
+    }
+
     try {
       const service = await getFirstDayZService(token);
 
-      if (!service) {
+      if (!service?.id) {
         const embed = new EmbedBuilder()
           .setTitle('❌ Kein DayZ Server gefunden')
           .setDescription(
@@ -35,7 +62,7 @@ export default {
               '',
               'Prüfe bitte:',
               '• ob der Token gültig ist',
-              '• ob bei Nitrado beim Token **service** aktiviert ist',
+              '• ob beim Token **service** aktiviert ist',
               '• ob auf dem Account ein DayZ Server vorhanden ist'
             ].join('\n')
           )
@@ -47,12 +74,13 @@ export default {
         return;
       }
 
-      setGuildConfig(interaction.guild.id, {
+      const newConfig = setGuildConfig(interaction.guild.id, {
         ...config,
         nitradoToken: token,
         nitradoServiceId: String(service.id),
         killfeedEnabled: true,
-        killfeedChannelId: killfeedChannel?.id || config.killfeedChannelId || null
+        killfeedChannelId: killfeedChannel.id,
+        serverActivityChannelId: activityChannel?.id || config.serverActivityChannelId || null
       });
 
       const embed = new EmbedBuilder()
@@ -62,13 +90,16 @@ export default {
             '✅ Killfeed wurde erfolgreich aktiviert.',
             '',
             `🎮 **Erkannter Service:** \`${service.id}\``,
+            `📡 **Killfeed Kanal:** <#${newConfig.killfeedChannelId}>`,
+            activityChannel
+              ? `📥 **Server Activity:** <#${activityChannel.id}>`
+              : '📥 **Server Activity:** Nicht gefunden',
             '',
             'Gespeichert wurden:',
             '• Nitrado Token',
             '• erkannte DayZ Service ID',
             '• Killfeed Aktivierung',
-            '',
-            'Der Bot nutzt automatisch den ersten gefundenen DayZ Server.'
+            '• Killfeed Channel ID'
           ].join('\n')
         )
         .setColor(0x22c55e)

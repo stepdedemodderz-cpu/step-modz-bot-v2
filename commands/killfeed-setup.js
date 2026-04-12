@@ -1,11 +1,12 @@
 import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { getFirstDayZService } from '../utils/nitrado.js';
+import { updateServerStatusMessage } from '../utils/serverStatus.js';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('killfeed-setup')
-    .setDescription('Richte das DayZ Killfeed System ein')
+    .setDescription('Richte DayZ Tools über einen Nitrado Token ein')
     .addStringOption((option) =>
       option
         .setName('token')
@@ -27,6 +28,10 @@ export default {
 
     const activityChannel = interaction.guild.channels.cache.find(
       (c) => c.name === '📡 server-activity' || c.name === 'server-activity'
+    );
+
+    const statusChannel = interaction.guild.channels.cache.find(
+      (c) => c.name === '📡 server-status' || c.name === 'server-status'
     );
 
     if (!killfeedChannel) {
@@ -74,36 +79,44 @@ export default {
         return;
       }
 
-      const newConfig = setGuildConfig(interaction.guild.id, {
+      setGuildConfig(interaction.guild.id, {
         ...config,
+        dayzConnectionMode: 'nitrado',
         nitradoToken: token,
         nitradoServiceId: String(service.id),
         killfeedEnabled: true,
         killfeedChannelId: killfeedChannel.id,
-        serverActivityChannelId: activityChannel?.id || config.serverActivityChannelId || null
+        serverActivityChannelId: activityChannel?.id || config.serverActivityChannelId || null,
+        serverStatusChannelId: statusChannel?.id || config.serverStatusChannelId || null
       });
 
+      if (statusChannel) {
+        await updateServerStatusMessage(interaction.guild).catch(() => null);
+      }
+
       const embed = new EmbedBuilder()
-        .setTitle('💀 Killfeed aktiviert')
+        .setTitle('✅ DayZ Tools aktiviert')
         .setDescription(
           [
-            '✅ Killfeed wurde erfolgreich aktiviert.',
+            'Der Token wurde gespeichert und alle verfügbaren DayZ Tools wurden aktiviert.',
             '',
             `🎮 **Erkannter Service:** \`${service.id}\``,
-            `📡 **Killfeed Kanal:** <#${newConfig.killfeedChannelId}>`,
+            `💀 **Killfeed:** <#${killfeedChannel.id}>`,
             activityChannel
-              ? `📥 **Server Activity:** <#${activityChannel.id}>`
-              : '📥 **Server Activity:** Nicht gefunden',
+              ? `📡 **Server Activity:** <#${activityChannel.id}>`
+              : '📡 **Server Activity:** Nicht gefunden',
+            statusChannel
+              ? `🧟 **Server Status:** <#${statusChannel.id}>`
+              : '🧟 **Server Status:** Nicht gefunden',
             '',
-            'Gespeichert wurden:',
-            '• Nitrado Token',
-            '• erkannte DayZ Service ID',
-            '• Killfeed Aktivierung',
-            '• Killfeed Channel ID'
+            'Damit laufen jetzt über denselben Token:',
+            '• Killfeed',
+            '• Join / Leave',
+            '• Server Status'
           ].join('\n')
         )
         .setColor(0x22c55e)
-        .setFooter({ text: 'Step Mod!Z BOT • Killfeed Setup' })
+        .setFooter({ text: 'Step Mod!Z BOT • DayZ Setup' })
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
@@ -111,7 +124,7 @@ export default {
       console.error('KILLFEED_SETUP_ERROR:', error);
 
       const embed = new EmbedBuilder()
-        .setTitle('❌ Killfeed Setup fehlgeschlagen')
+        .setTitle('❌ Setup fehlgeschlagen')
         .setDescription(
           [
             'Die Verbindung zu Nitrado konnte nicht aufgebaut werden.',
@@ -123,7 +136,7 @@ export default {
           ].join('\n')
         )
         .setColor(0xef4444)
-        .setFooter({ text: 'Step Mod!Z BOT • Killfeed Setup' })
+        .setFooter({ text: 'Step Mod!Z BOT • DayZ Setup' })
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });

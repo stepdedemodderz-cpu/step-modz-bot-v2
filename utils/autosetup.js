@@ -132,7 +132,7 @@ const TOOL_MIGRATIONS = [
     }
   },
   {
-    id: 'killfeed-v1',
+    id: 'killfeed-v2',
     label: 'Killfeed System',
     run: async ({
       guild,

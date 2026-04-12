@@ -194,13 +194,11 @@ const TOOL_MIGRATIONS = [
               .setTitle('💀 Killfeed System')
               .setDescription(
                 [
-                  'Das Killfeed System wurde vorbereitet.',
-                  '',
-                  'Nutze jetzt:',
-                  '`/killfeed-setup`',
-                  '',
-                  'oder direkt:',
-                  '`/killfeed-setup token:DEIN_TOKEN service_id:DEINE_SERVICE_ID`'
+                '# 💀 Killfeed',
+    '',
+    'Befolge die Schritte im **killfeed-info** Kanal.',
+    '',
+    'Nach erfolgreichem Setup erscheinen hier automatisch die Killfeeds.'
                 ].join('\n')
               )
               .setColor(0x22c55e)

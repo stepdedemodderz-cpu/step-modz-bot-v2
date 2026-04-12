@@ -78,29 +78,42 @@ function parseKillLine(line) {
   };
 }
 
+function shortenRawLine(raw) {
+  if (!raw) return 'Keine Zusatzinfos';
+  if (raw.length <= 250) return raw;
+  return `${raw.slice(0, 247)}...`;
+}
+
 function buildKillEmbed(kill) {
-  const extra = [];
-
-  if (kill.weapon) {
-    extra.push(`🔫 **Waffe:** ${kill.weapon}`);
-  }
-
-  if (kill.distance) {
-    extra.push(`📏 **Distanz:** ${kill.distance}`);
-  }
-
-  if (kill.headshot) {
-    extra.push('🎯 **Headshot**');
-  }
-
   return {
     title: '💀 Killfeed',
-    description: [
-      `**${kill.killer}** hat **${kill.victim}** getötet`,
-      '',
-      ...extra
-    ].join('\n'),
+    description: `**${kill.killer}** hat **${kill.victim}** getötet`,
     color: 0xef4444,
+    fields: [
+      {
+        name: '🔫 Waffe',
+        value: kill.weapon || 'Unbekannt',
+        inline: true
+      },
+      {
+        name: '📏 Distanz',
+        value: kill.distance || 'Unbekannt',
+        inline: true
+      },
+      {
+        name: '🎯 Treffer',
+        value: kill.headshot ? 'Headshot' : 'Normal',
+        inline: true
+      },
+      {
+        name: '📄 Log',
+        value: `\`${shortenRawLine(kill.raw)}\``,
+        inline: false
+      }
+    ],
+    footer: {
+      text: 'Step Mod!Z BOT • Killfeed'
+    },
     timestamp: new Date().toISOString()
   };
 }

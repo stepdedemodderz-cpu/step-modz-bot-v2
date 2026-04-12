@@ -45,5 +45,13 @@
     "nitradoToken": "YPVca9pqWHYe5JKf1DcgdBujKNX3M2GaD2fyW374olht3QY_JaoUEpgjKBpJnYN4Uk6CjQz76smrzouI9x_DYr7iDM5-DaQNyxU3",
     "killfeedEnabled": true,
     "killfeedChannelId": null
+  },
+  "1492689195829952602": {
+    "language": "de",
+    "botIntroCategoryId": "1492689223898235033",
+    "botIntroChannelId": "1492689225332686998",
+    "nitradoToken": "jNqueTZH2dFOffJR22rwJBoCFXgbbnX41msuxEKx_7RcCDfuoeVzqAtJOvKaqr9UXBjxvhjayi8FewiGHZSk8B_AqZ7v8OYA-afp",
+    "killfeedEnabled": true,
+    "killfeedChannelId": null
   }
 }

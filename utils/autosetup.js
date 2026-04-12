@@ -179,10 +179,19 @@ const TOOL_MIGRATIONS = [
         ['killfeed']
       );
 
+      const activityResult = await ensureTextChannel(
+        guild,
+        '📡 server-activity',
+        category.id,
+        ownerOnlyOverwrites(ownerId, botId, everyoneId),
+        ['server-activity']
+      );
+
       const currentConfig = getGuildConfig(guild.id) || {};
       setGuildConfig(guild.id, {
         ...currentConfig,
-        killfeedChannelId: feedResult.channel.id
+        killfeedChannelId: feedResult.channel.id,
+        serverActivityChannelId: activityResult.channel.id
       });
 
       if (feedResult.created) {
@@ -194,11 +203,11 @@ const TOOL_MIGRATIONS = [
               .setTitle('💀 Killfeed System')
               .setDescription(
                 [
-                '# 💀 Killfeed',
-    '',
-    'Befolge die Schritte im **killfeed-info** Kanal.',
-    '',
-    'Nach erfolgreichem Setup erscheinen hier automatisch die Killfeeds.'
+                  '# 💀 Killfeed',
+                  '',
+                  'Befolge die Schritte im **killfeed-info** Kanal.',
+                  '',
+                  'Nach erfolgreichem Setup erscheinen hier automatisch die Killfeeds.'
                 ].join('\n')
               )
               .setColor(0x22c55e)
@@ -206,6 +215,20 @@ const TOOL_MIGRATIONS = [
               .setTimestamp()
           ]
         });
+      }
+
+      if (activityResult.created) {
+        created.push('📡 server-activity Kanal');
+
+        await activityResult.channel.send(
+          [
+            '# 📡 Server Activity',
+            '',
+            'Hier wird angezeigt:',
+            '• wer dem DayZ Server beitritt 📥',
+            '• wer den Server verlässt 📤'
+          ].join('\n')
+        );
       }
 
       const infoResult = await ensureTextChannel(
@@ -220,61 +243,61 @@ const TOOL_MIGRATIONS = [
         created.push('killfeed-info Kanal');
 
         await infoResult.channel.send(
-  [
-    '# 💀 Killfeed Info',
-    '',
-    'Dieses System zeigt dir **DayZ Kills automatisch im Discord** an.',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '🔧 **Einrichtung**',
-    '',
-    '1. Erstelle einen Nitrado Token',
-    '2. Nutze den Command:',
-    '`/killfeed-setup token:DEIN_TOKEN`',
-    '',
-    'Fertig ✅',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '🔑 **Token erstellen (Nitrado)**',
-    '',
-    '1. Nitrado öffnen',
-    '2. Profil → Developer / API',
-    '3. Neuen Token erstellen',
-    '4. **Nur "service" anhaken**',
-    '5. Namen eingeben',
-    '6. Token erstellen',
-    '7. Token kopieren',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '⚙️ **Wichtig**',
-    '',
-    '• Der Bot erkennt deinen ersten DayZ Server automatisch',
-    '• Es wird KEINE Service ID manuell benötigt',
-    '• DayZ Admin Logs müssen aktiviert sein',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '📡 **Voraussetzung**',
-    '',
-    'DayZ Admin Logs aktivieren:',
-    '• Server stoppen',
-    '• Logs aktivieren',
-    '• Server starten',
-    '',
-    'Die Logs findest du danach im Nitrado Webinterface unter',
-    '**Informationen > Logdateien** oder im **Dateibrowser**.', 
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '💀 **Was wird angezeigt?**',
-    '',
-    '• Spieler tötet Spieler',
-    '• Waffe',
-    '• Distanz',
-    '• Headshot, wenn in der Logzeile vorhanden',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '🚀 Killfeed startet automatisch nach dem Setup'
-  ].join('\n')
-);
+          [
+            '# 💀 Killfeed Info',
+            '',
+            'Dieses System zeigt dir **DayZ Kills automatisch im Discord** an.',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '🔧 **Einrichtung**',
+            '',
+            '1. Erstelle einen Nitrado Token',
+            '2. Nutze den Command:',
+            '`/killfeed-setup token:DEIN_TOKEN`',
+            '',
+            'Fertig ✅',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '🔑 **Token erstellen (Nitrado)**',
+            '',
+            '1. Nitrado öffnen',
+            '2. Profil → Developer / API',
+            '3. Neuen Token erstellen',
+            '4. **Nur "service" anhaken**',
+            '5. Namen eingeben',
+            '6. Token erstellen',
+            '7. Token kopieren',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '⚙️ **Wichtig**',
+            '',
+            '• Der Bot erkennt deinen ersten DayZ Server automatisch',
+            '• Es wird KEINE Service ID manuell benötigt',
+            '• DayZ Admin Logs müssen aktiviert sein',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '📡 **Voraussetzung**',
+            '',
+            'DayZ Admin Logs aktivieren:',
+            '• Server stoppen',
+            '• Logs aktivieren',
+            '• Server starten',
+            '',
+            'Die Logs findest du danach im Nitrado Webinterface unter',
+            '**Informationen > Logdateien** oder im **Dateibrowser**.',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '💀 **Was wird angezeigt?**',
+            '',
+            '• Spieler tötet Spieler',
+            '• Waffe',
+            '• Distanz',
+            '• Headshot, wenn in der Logzeile vorhanden',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '🚀 Killfeed startet automatisch nach dem Setup'
+          ].join('\n')
+        );
       }
 
       return created;

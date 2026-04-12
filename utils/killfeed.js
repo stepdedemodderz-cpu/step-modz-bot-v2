@@ -10,22 +10,16 @@ function normalizeLine(line) {
   return String(line || '').trim();
 }
 
+// 🔫 Waffe
 function parseWeapon(line) {
-  const weaponPatterns = [
-    /\bwith\s+([A-Za-z0-9_\-\. ]{2,60})/i,
-    /\bweapon\s*[:\-]\s*([A-Za-z0-9_\-\. ]{2,60})/i
-  ];
+  const match =
+    line.match(/\bwith\s+([A-Za-z0-9_\-\. ]{2,60})/i) ||
+    line.match(/\bweapon\s*[:\-]\s*([A-Za-z0-9_\-\. ]{2,60})/i);
 
-  for (const pattern of weaponPatterns) {
-    const match = line.match(pattern);
-    if (match?.[1]) {
-      return match[1].trim();
-    }
-  }
-
-  return null;
+  return match?.[1]?.trim() || null;
 }
 
+// 📏 Distanz
 function parseDistance(line) {
   const match =
     line.match(/\bfrom\s+([0-9]+(?:\.[0-9]+)?)\s*m\b/i) ||
@@ -34,56 +28,54 @@ function parseDistance(line) {
   return match?.[1] ? `${match[1]}m` : null;
 }
 
+// 🎯 Headshot
 function parseHeadshot(line) {
   return /\bheadshot\b/i.test(line);
 }
 
+// 👤 Spieler
 function parsePlayers(line) {
-  const quoted = [...line.matchAll(/"([^"]+)"/g)].map((m) => m[1]).filter(Boolean);
+  const quoted = [...line.matchAll(/"([^"]+)"/g)].map(m => m[1]);
 
   if (quoted.length >= 2) {
-    return {
-      killer: quoted[0],
-      victim: quoted[1]
-    };
-  }
-
-  const killedMatch = line.match(/([A-Za-z0-9_\-\.]+)\s+killed\s+([A-Za-z0-9_\-\.]+)/i);
-  if (killedMatch) {
-    return {
-      killer: killedMatch[1],
-      victim: killedMatch[2]
-    };
+    return { killer: quoted[0], victim: quoted[1] };
   }
 
   return null;
 }
 
+// 💀 Kill
 function parseKillLine(line) {
-  const clean = normalizeLine(line);
+  if (!line.includes('killed')) return null;
 
-  if (!clean) return null;
-  if (!/\bkilled\b/i.test(clean)) return null;
-
-  const players = parsePlayers(clean);
+  const players = parsePlayers(line);
   if (!players) return null;
 
   return {
     killer: players.killer,
     victim: players.victim,
-    weapon: parseWeapon(clean),
-    distance: parseDistance(clean),
-    headshot: parseHeadshot(clean),
-    raw: clean
+    weapon: parseWeapon(line),
+    distance: parseDistance(line),
+    headshot: parseHeadshot(line)
   };
 }
 
-function shortenRawLine(raw) {
-  if (!raw) return 'Keine Zusatzinfos';
-  if (raw.length <= 250) return raw;
-  return `${raw.slice(0, 247)}...`;
+// 📡 JOIN / LEAVE
+function parseConnection(line) {
+  if (/connected/i.test(line)) {
+    const match = line.match(/"(.+?)"/);
+    if (match) return { type: 'join', player: match[1] };
+  }
+
+  if (/disconnected/i.test(line)) {
+    const match = line.match(/"(.+?)"/);
+    if (match) return { type: 'leave', player: match[1] };
+  }
+
+  return null;
 }
 
+// 🎨 Embed
 function buildKillEmbed(kill) {
   return {
     title: '💀 Killfeed',
@@ -104,16 +96,8 @@ function buildKillEmbed(kill) {
         name: '🎯 Treffer',
         value: kill.headshot ? 'Headshot' : 'Normal',
         inline: true
-      },
-      {
-        name: '📄 Log',
-        value: `\`${shortenRawLine(kill.raw)}\``,
-        inline: false
       }
     ],
-    footer: {
-      text: 'Step Mod!Z BOT • Killfeed'
-    },
     timestamp: new Date().toISOString()
   };
 }
@@ -121,40 +105,54 @@ function buildKillEmbed(kill) {
 async function processGuildKillfeed(guild) {
   const config = getGuildConfig(guild.id);
 
-  if (!config?.killfeedEnabled || !config?.killfeedChannelId || !config?.nitradoToken || !config?.nitradoServiceId) {
-    return;
-  }
+  if (!config?.killfeedEnabled || !config?.killfeedChannelId) return;
 
   const channel = guild.channels.cache.get(config.killfeedChannelId);
   if (!channel) return;
 
+  const activityChannel = config.serverActivityChannelId
+    ? guild.channels.cache.get(config.serverActivityChannelId)
+    : null;
+
   const admFile = await findAdmLogFile(config.nitradoToken, config.nitradoServiceId);
   if (!admFile?.path) return;
 
-  const content = await downloadFileText(config.nitradoToken, config.nitradoServiceId, admFile.path);
-  const lines = content
-    .split(/\r?\n/)
-    .map(normalizeLine)
-    .filter(Boolean);
+  const content = await downloadFileText(
+    config.nitradoToken,
+    config.nitradoServiceId,
+    admFile.path
+  );
 
-  if (lines.length === 0) return;
+  const lines = content.split('\n').map(normalizeLine).filter(Boolean);
 
-let lastIndex = lastProcessedIndexByGuild.get(guild.id) ?? -1;
+  let lastIndex = lastProcessedIndexByGuild.get(guild.id) ?? -1;
 
-// Wenn Log neu oder kleiner geworden → reset
-if (lastIndex >= lines.length) {
-  lastIndex = -1;
-}
+  if (lastIndex >= lines.length) {
+    lastIndex = -1;
+  }
 
-const newLines = lines.slice(lastIndex + 1);
+  const newLines = lines.slice(lastIndex + 1);
 
   for (const line of newLines) {
+    // 💀 KILLS
     const kill = parseKillLine(line);
-    if (!kill) continue;
+    if (kill) {
+      await channel.send({
+        embeds: [buildKillEmbed(kill)]
+      }).catch(() => null);
+    }
 
-    await channel.send({
-      embeds: [buildKillEmbed(kill)]
-    }).catch(() => null);
+    // 📡 JOIN / LEAVE
+    const activity = parseConnection(line);
+    if (activity && activityChannel) {
+      if (activity.type === 'join') {
+        await activityChannel.send(`📥 **${activity.player}** ist dem Server beigetreten`);
+      }
+
+      if (activity.type === 'leave') {
+        await activityChannel.send(`📤 **${activity.player}** hat den Server verlassen`);
+      }
+    }
   }
 
   lastProcessedIndexByGuild.set(guild.id, lines.length - 1);
@@ -168,8 +166,8 @@ export function startKillfeed(client) {
     for (const guild of client.guilds.cache.values()) {
       try {
         await processGuildKillfeed(guild);
-      } catch (error) {
-        console.error(`Killfeed Fehler auf ${guild.name}:`, error);
+      } catch (err) {
+        console.error('Killfeed Fehler:', err);
       }
     }
   }, 20000);

@@ -852,6 +852,7 @@ async function runUpdateOnly(guild, currentConfig) {
 
   const createdList = [];
   const newInstalled = [...installed];
+  let createdAnything = false;
 
   for (const migration of TOOL_MIGRATIONS) {
     if (installed.includes(migration.id)) continue;
@@ -874,8 +875,7 @@ async function runUpdateOnly(guild, currentConfig) {
 
     if (Array.isArray(result) && result.length > 0) {
       createdList.push(...result);
-    } else {
-      createdList.push(migration.label || migration.id);
+      createdAnything = true;
     }
   }
 
@@ -885,7 +885,7 @@ async function runUpdateOnly(guild, currentConfig) {
   });
 
   return {
-    createdAnything: createdList.length > 0,
+    createdAnything,
     createdList
   };
 }

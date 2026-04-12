@@ -250,16 +250,20 @@ const TOOL_MIGRATIONS = [
     '━━━━━━━━━━━━━━━━━━━━━━',
     '⚙️ **Wichtig**',
     '',
-    '• Der Bot erkennt deinen Server automatisch',
-    '• Es wird KEINE Service ID benötigt',
+    '• Der Bot erkennt deinen ersten DayZ Server automatisch',
+    '• Es wird KEINE Service ID manuell benötigt',
+    '• DayZ Admin Logs müssen aktiviert sein',
     '',
     '━━━━━━━━━━━━━━━━━━━━━━',
     '📡 **Voraussetzung**',
     '',
-    'DayZ Admin Logs müssen aktiv sein:',
+    'DayZ Admin Logs aktivieren:',
     '• Server stoppen',
     '• Logs aktivieren',
     '• Server starten',
+    '',
+    'Die Logs findest du danach im Nitrado Webinterface unter',
+    '**Informationen > Logdateien** oder im **Dateibrowser**.', 
     '',
     '━━━━━━━━━━━━━━━━━━━━━━',
     '💀 **Was wird angezeigt?**',
@@ -267,10 +271,10 @@ const TOOL_MIGRATIONS = [
     '• Spieler tötet Spieler',
     '• Waffe',
     '• Distanz',
-    '• weitere Infos folgen',
+    '• Headshot, wenn in der Logzeile vorhanden',
     '',
     '━━━━━━━━━━━━━━━━━━━━━━',
-    '🚀 Killfeed startet automatisch nach Setup'
+    '🚀 Killfeed startet automatisch nach dem Setup'
   ].join('\n')
 );
       }

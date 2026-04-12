@@ -37,5 +37,13 @@
     "language": "de",
     "botIntroCategoryId": "1492666644508446982",
     "botIntroChannelId": "1492666645833842698"
+  },
+  "1492679353136578670": {
+    "language": "de",
+    "botIntroCategoryId": "1492679392625823955",
+    "botIntroChannelId": "1492679393733116064",
+    "nitradoToken": "YPVca9pqWHYe5JKf1DcgdBujKNX3M2GaD2fyW374olht3QY_JaoUEpgjKBpJnYN4Uk6CjQz76smrzouI9x_DYr7iDM5-DaQNyxU3",
+    "killfeedEnabled": true,
+    "killfeedChannelId": null
   }
 }

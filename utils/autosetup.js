@@ -892,5 +892,16 @@ export async function runAutoSetup(guild, options = {}) {
     return await runUpdateOnly(guild, currentConfig);
   }
 
-  return await runFullSetup(guild, currentConfig);
+  // 🔥 Full Setup = Basis + ALLE Tools
+  const fullResult = await runFullSetup(guild, currentConfig);
+
+  // nach dem Full Setup Config neu laden, weil runFullSetup speichert
+  const refreshedConfig = getGuildConfig(guild.id) || {};
+  const updateResult = await runUpdateOnly(guild, refreshedConfig);
+
+  return {
+    ...fullResult,
+    createdAnything: updateResult.createdAnything,
+    createdList: updateResult.createdList
+  };
 }

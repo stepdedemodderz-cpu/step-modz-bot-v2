@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { updateServerStatusMessage } from '../utils/serverStatus.js';
 
@@ -45,6 +45,7 @@ export default {
       (c) => c.name === '📡 server-status' || c.name === 'server-status'
     );
 
+    // 🔹 MANUAL MODE
     if (sub === 'manual') {
       const ip = interaction.options.getString('ip');
       const port = interaction.options.getInteger('port');
@@ -57,18 +58,17 @@ export default {
         serverStatusChannelId: statusChannel?.id || config.serverStatusChannelId || null
       });
 
-      const result = await updateServerStatusMessage(interaction.guild);
+      // 🔥 WICHTIG: KEIN result mehr!
+      await updateServerStatusMessage(interaction.guild).catch(() => null);
 
       const embed = new EmbedBuilder()
-        .setTitle('🧟 Server Status (Manuell) eingerichtet')
+        .setTitle('🧟 Server Status eingerichtet')
         .setDescription(
           [
             `🌐 **IP:** \`${ip}\``,
             `🔌 **Port:** \`${port}\``,
             '',
-            result.ok
-              ? '✅ Die Status-Nachricht wurde erstellt oder aktualisiert.'
-              : '⚠️ Daten wurden gespeichert, aber die Status-Nachricht konnte noch nicht aktualisiert werden.'
+            '✅ Status wird jetzt automatisch aktualisiert.'
           ].join('\n')
         )
         .setColor(0x22c55e)
@@ -77,11 +77,13 @@ export default {
 
       await interaction.reply({
         embeds: [embed],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
+
       return;
     }
 
+    // 🔹 NITRADO MODE
     if (sub === 'nitrado') {
       const token = interaction.options.getString('token');
       const serviceId = interaction.options.getString('service_id');
@@ -102,13 +104,10 @@ export default {
             '',
             `🆔 **Service ID:** \`${serviceId}\``,
             '',
-            'Diese Verbindung wird für DayZ Tools genutzt, z. B.:',
-            '• Server Tools',
+            'Diese Verbindung wird für DayZ Tools genutzt:',
             '• Killfeed',
-            '• weitere DayZ Funktionen',
-            '',
-            'Hinweis:',
-            'Der aktuelle Live-Status nutzt weiterhin dein bestehendes Status-System.'
+            '• Server Tools',
+            '• weitere Features'
           ].join('\n')
         )
         .setColor(0x22c55e)
@@ -117,7 +116,7 @@ export default {
 
       await interaction.reply({
         embeds: [embed],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

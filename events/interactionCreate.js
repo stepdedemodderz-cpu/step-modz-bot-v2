@@ -3,7 +3,8 @@ import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  MessageFlags
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
@@ -44,7 +45,7 @@ export default {
         if (interaction.commandName !== 'validate' && interaction.commandName !== 'update-server' && !isOwner) {
           await interaction.reply({
             content: '❌ Diesen Befehl darf nur der Server-Besitzer benutzen.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -54,7 +55,7 @@ export default {
           if (validatorChannelId && interaction.channelId !== validatorChannelId) {
             await interaction.reply({
               content: '❌ `/validate` darf nur im Validator-Channel benutzt werden.',
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
             return;
           }
@@ -65,7 +66,7 @@ export default {
         if (!command) {
           await interaction.reply({
             content: `❌ Command nicht gefunden: ${interaction.commandName}`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -79,7 +80,7 @@ export default {
           setGuildConfig(interaction.guild.id, { ...config, language: 'de' });
           await interaction.reply({
             content: t('de', 'languageSetGerman'),
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -88,7 +89,7 @@ export default {
           setGuildConfig(interaction.guild.id, { ...config, language: 'en' });
           await interaction.reply({
             content: t('en', 'languageSetEnglish'),
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -108,7 +109,7 @@ export default {
           await interaction.reply({
             embeds: [buildInfoEmbed(language)],
             components: [buildCloseRow()],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -117,7 +118,7 @@ export default {
           await interaction.reply({
             embeds: [buildRulesEmbed('de')],
             components: [buildRulesAcceptRow('de')],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -126,13 +127,13 @@ export default {
           await interaction.reply({
             embeds: [buildRulesEmbed('en')],
             components: [buildRulesAcceptRow('en')],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
 
         if (interaction.customId === 'stepmodz_rules_accept') {
-          await interaction.deferReply({ ephemeral: true });
+          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
           if (!config.rulesAcceptedRoleId) {
             await interaction.editReply({
@@ -162,7 +163,7 @@ export default {
         }
 
         if (interaction.customId === 'stepmodz_verify') {
-          await interaction.deferReply({ ephemeral: true });
+          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
           if (!config.verifyRoleId || !config.unverifiedRoleId || !config.rulesAcceptedRoleId) {
             await interaction.editReply({
@@ -226,14 +227,14 @@ export default {
               content: result.exists
                 ? `ℹ️ Du hast bereits ein Ticket: ${result.channel}`
                 : `✅ Dein Ticket wurde erstellt: ${result.channel}`,
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           } catch (error) {
             console.error('TICKET BUTTON ERROR:', error);
 
             await interaction.reply({
               content: '❌ Ticket konnte nicht erstellt werden. Prüfe Ticket-Kategorie und Bot-Rechte.',
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           }
           return;
@@ -242,7 +243,7 @@ export default {
         if (interaction.customId === 'stepmodz_close_ticket') {
           await interaction.reply({
             content: '🔒 Ticket wird geschlossen...',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
 
           setTimeout(async () => {
@@ -260,7 +261,7 @@ export default {
 
             await interaction.reply({
               content: '❌ Whitelist-Formular konnte nicht geöffnet werden.',
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           }
           return;
@@ -270,7 +271,7 @@ export default {
           if (!isOwner) {
             await interaction.reply({
               content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
             return;
           }
@@ -278,7 +279,7 @@ export default {
           await handleWhitelistDecision(interaction, true);
           await interaction.reply({
             content: '✅ Bewerbung angenommen.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -287,7 +288,7 @@ export default {
           if (!isOwner) {
             await interaction.reply({
               content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
             return;
           }
@@ -295,7 +296,7 @@ export default {
           await handleWhitelistDecision(interaction, false);
           await interaction.reply({
             content: '❌ Bewerbung abgelehnt.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -313,7 +314,7 @@ export default {
             await interaction.reply({
               embeds: [buildHelpEmbed(language, selected)],
               components: [buildCloseRow()],
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
             return;
           }
@@ -322,12 +323,12 @@ export default {
             if (!isOwner) {
               await interaction.reply({
                 content: '❌ Diese Funktion darf nur der Server-Besitzer benutzen.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
               });
               return;
             }
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             const result = await runAutoSetup(interaction.guild, { mode: 'full' });
 
@@ -369,7 +370,7 @@ export default {
           await interaction.reply({
             embeds: [buildHelpEmbed(language, selected)],
             components: [buildCloseRow()],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -391,7 +392,7 @@ export default {
 
         await interaction.reply({
           content: `✅ Deine Whitelist-Bewerbung wurde gesendet: ${channel}`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     } catch (error) {
@@ -401,12 +402,12 @@ export default {
         if (interaction.replied || interaction.deferred) {
           await interaction.followUp({
             content: '❌ Fehler beim Ausführen des Commands.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         } else {
           await interaction.reply({
             content: '❌ Fehler beim Ausführen des Commands.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
       } catch (replyError) {

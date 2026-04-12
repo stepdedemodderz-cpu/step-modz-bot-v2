@@ -65,10 +65,12 @@ const TOOL_MIGRATIONS = [
     'Nutze nur noch:',
     '`/killfeed-setup token:DEIN_TOKEN`',
     '',
-    'Damit werden automatisch aktiviert:',
+    '👉 Damit wird automatisch aktiviert:',
     '• 💀 Killfeed',
     '• 📡 Server Activity',
-    '• 🧟 Server Status'
+    '• 🧟 Server Status',
+    '',
+    '❗ Es ist kein weiterer Setup-Befehl nötig'
   ].join('\n')
 )
               .setColor(0x22c55e)

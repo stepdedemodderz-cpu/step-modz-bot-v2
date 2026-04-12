@@ -9,105 +9,64 @@ async function fetchNitradoServer(token, serviceId) {
     }
   }).catch(() => null);
 
-  if (!res || !res.ok) {
-    return null;
-  }
+  if (!res || !res.ok) return null;
 
   const json = await res.json().catch(() => null);
   return json?.data?.gameserver || null;
 }
 
-function buildServerStatusEmbed(server) {
+function buildEmbed(server) {
   if (!server) {
     return new EmbedBuilder()
       .setTitle('🧟 DayZ Server Status')
-      .setDescription(
-        [
-          '🔴 **Offline / Nicht erreichbar**',
-          '',
-          'Der Server konnte aktuell nicht geladen werden.',
-          'Prüfe Token, Service oder versuche es später erneut.'
-        ].join('\n')
-      )
-      .setColor(0xef4444)
-      .setFooter({ text: 'Step Mod!Z BOT • Live Status' })
-      .setTimestamp();
+      .setDescription('🔴 Server nicht erreichbar')
+      .setColor(0xef4444);
   }
 
   const online = server.status === 'started';
-  const hostname = server?.settings?.config?.hostname || 'Unbekannter Server';
-  const map =
-    server?.game_specific?.map ||
-    server?.settings?.config?.template ||
-    server?.settings?.config?.map ||
-    'Unbekannt';
-
-  const currentPlayers =
-    server?.query?.player_current ??
-    server?.player_current ??
-    0;
-
-  const maxPlayers =
-    server?.query?.player_max ??
-    server?.slots ??
-    server?.player_max ??
-    '?';
 
   return new EmbedBuilder()
     .setTitle('🧟 DayZ Server Status')
     .setDescription(
       [
-        `${online ? '🟢 **Online**' : '🔴 **Offline**'}`,
+        online ? '🟢 Online' : '🔴 Offline',
         '',
-        `**Server:** ${hostname}`,
-        `**Spieler:** ${currentPlayers} / ${maxPlayers}`,
-        `**Map:** ${map}`
+        `**Server:** ${server?.settings?.config?.hostname || 'Unbekannt'}`,
+        `**Spieler:** ${server?.query?.player_current ?? 0} / ${server?.query?.player_max ?? '?'}`,
+        `**Map:** ${server?.game_specific?.map || 'Unbekannt'}`
       ].join('\n')
     )
-    .setColor(online ? 0x22c55e : 0xef4444)
-    .setFooter({ text: 'Step Mod!Z BOT • Live Status' })
-    .setTimestamp();
+    .setColor(online ? 0x22c55e : 0xef4444);
 }
 
 export async function updateServerStatusMessage(guild) {
   const config = getGuildConfig(guild.id) || {};
 
-  if (!config?.nitradoToken || !config?.nitradoServiceId || !config?.serverStatusChannelId) {
-    return { ok: false, reason: 'missing_config' };
+  if (!config.nitradoToken || !config.nitradoServiceId || !config.serverStatusChannelId) {
+    return;
   }
 
-  const channel =
-    guild.channels.cache.get(config.serverStatusChannelId) ||
-    await guild.channels.fetch(config.serverStatusChannelId).catch(() => null);
-
-  if (!channel) {
-    return { ok: false, reason: 'missing_channel' };
-  }
+  const channel = await guild.channels.fetch(config.serverStatusChannelId).catch(() => null);
+  if (!channel) return;
 
   const server = await fetchNitradoServer(config.nitradoToken, config.nitradoServiceId);
-  const embed = buildServerStatusEmbed(server);
+  const embed = buildEmbed(server);
 
-  let message = null;
+  let msg = null;
 
   if (config.serverStatusMessageId) {
-    message = await channel.messages.fetch(config.serverStatusMessageId).catch(() => null);
+    msg = await channel.messages.fetch(config.serverStatusMessageId).catch(() => null);
   }
 
-  if (message) {
-    await message.edit({ embeds: [embed] }).catch(() => null);
-    return { ok: true, updated: true };
+  if (msg) {
+    await msg.edit({ embeds: [embed] }).catch(() => null);
+  } else {
+    const sent = await channel.send({ embeds: [embed] }).catch(() => null);
+    if (sent) {
+      setGuildConfig(guild.id, {
+        ...config,
+        serverStatusMessageId: sent.id
+      });
+    }
   }
-
-  const sent = await channel.send({ embeds: [embed] }).catch(() => null);
-
-  if (!sent) {
-    return { ok: false, reason: 'send_failed' };
-  }
-
-  setGuildConfig(guild.id, {
-    ...config,
-    serverStatusMessageId: sent.id
-  });
-
-  return { ok: true, updated: false };
 }

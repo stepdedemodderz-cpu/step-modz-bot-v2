@@ -1,5 +1,6 @@
 import { getGuildConfig } from './config.js';
 import { findAdmLogFile, downloadFileText } from './nitrado.js';
+import { addKill } from './stats.js'; // 🔥 NEU
 
 const lastProcessedIndexByGuild = new Map();
 const pollState = {
@@ -134,9 +135,13 @@ async function processGuildKillfeed(guild) {
   const newLines = lines.slice(lastIndex + 1);
 
   for (const line of newLines) {
-    // 💀 KILLS
+    // 💀 KILLS + STATS
     const kill = parseKillLine(line);
     if (kill) {
+
+      // 🔥 STATS SPEICHERN
+      addKill(guild.id, kill.killer, kill.victim);
+
       await channel.send({
         embeds: [buildKillEmbed(kill)]
       }).catch(() => null);

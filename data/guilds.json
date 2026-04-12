@@ -66,5 +66,10 @@
     "nitradoServiceId": "95.156.224.145:12100",
     "killfeedEnabled": true,
     "killfeedChannelId": null
+  },
+  "1492964814212038786": {
+    "language": "de",
+    "botIntroCategoryId": "1492964844708565042",
+    "botIntroChannelId": "1492964846323503215"
   }
 }

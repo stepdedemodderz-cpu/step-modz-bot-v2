@@ -154,18 +154,37 @@ export default {
       const embed = new EmbedBuilder()
         .setTitle('Step Mod!Z BOT')
         .setDescription(
-          [
-            'Ich bin **Step Mod!Z BOT**.',
-            '',
-            'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
-            '',
-            'Wähle eine Kategorie aus dem Dropdown-Menü,',
-            'um meine Befehlsliste anzuzeigen.',
-            'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
-            'Lasse über das DropDown Menü, **Step BOT** alles Einrichten.',
-            'Wähle dazu **Step BOT Schnell Einrichtung** aus.'
-          ].join('\n')
-        )
+  [
+    'Ich bin **Step Mod!Z BOT** 👋',
+    '',
+    'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
+    '',
+    'Wähle eine Kategorie aus dem Dropdown-Menü,',
+    'um meine Befehlsliste anzuzeigen.',
+    'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
+    '',
+    '━━━━━━━━━━━━━━━━━━━━━━',
+    '⚡ **Schnell Einrichtung**',
+    '',
+    'Lasse über das Dropdown Menü den Bot alles automatisch einrichten.',
+    'Wähle dazu **Step BOT Schnell Einrichtung** aus.',
+    '',
+    '⏳ Die Einrichtung kann bis zu **1 Minute** dauern.',
+    '',
+    '━━━━━━━━━━━━━━━━━━━━━━',
+    '🔑 **DayZ Server verbinden**',
+    '',
+    'Nutze danach nur diesen Command:',
+    '`/killfeed-setup token:DEIN_TOKEN`',
+    '',
+    '👉 Damit wird automatisch aktiviert:',
+    '• 💀 Killfeed',
+    '• 📡 Server Activity',
+    '• 🧟 Server Status',
+    '',
+    '❗ Es ist kein weiterer Setup-Befehl nötig'
+  ].join('\n')
+)
         .setColor(0x5865f2)
         .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
         .setFooter({ text: t(language, 'checkedBy') })

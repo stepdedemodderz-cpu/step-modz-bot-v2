@@ -26,21 +26,40 @@ export async function getFirstDayZService(token) {
 
   console.log(`[NITRADO] Services gefunden: ${services.length}`);
 
-  const dayzService =
-    services.find((s) => s?.details?.folder_short === 'dayzstandalone') ||
-    services.find((s) => s?.details?.folder_short === 'dayz') ||
-    services.find((s) => String(s?.details?.game || '').toLowerCase().includes('dayz')) ||
-    null;
+  const dayzServices = services.filter(
+    (s) =>
+      s?.details?.folder_short === 'dayzstandalone' ||
+      s?.details?.folder_short === 'dayz' ||
+      String(s?.details?.game || '').toLowerCase().includes('dayz')
+  );
 
-  if (dayzService) {
-    console.log(
-      `[NITRADO] DayZ Service erkannt: id=${dayzService.id} game=${dayzService?.details?.game || 'unknown'} folder_short=${dayzService?.details?.folder_short || 'unknown'}`
-    );
-  } else {
-    console.log('[NITRADO] Kein DayZ Service erkannt');
+  console.log(`[NITRADO] DayZ Kandidaten: ${dayzServices.length}`);
+
+  for (const service of dayzServices) {
+    try {
+      const entries = await getFileServerList(token, service.id, '/').catch(() => []);
+      console.log(
+        `[NITRADO] Prüfe Service ${service.id} (${service?.details?.game || 'unknown'}) -> root entries=${entries.length}`
+      );
+
+      if (entries.length > 0) {
+        console.log(`[NITRADO] File-fähiger DayZ Service gefunden: ${service.id}`);
+        return service;
+      }
+    } catch (err) {
+      console.log(`[NITRADO] Service ${service.id} File-Check fehlgeschlagen: ${err.message}`);
+    }
   }
 
-  return dayzService;
+  const fallback = dayzServices[0] || null;
+
+  if (fallback) {
+    console.log(`[NITRADO] Fallback DayZ Service gewählt: ${fallback.id}`);
+  } else {
+    console.log('[NITRADO] Kein DayZ Service gefunden');
+  }
+
+  return fallback;
 }
 
 export async function getFileServerList(token, serviceId, dir = '/') {

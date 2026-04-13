@@ -142,5 +142,10 @@
     "welcomeMessage": "aswefrgh",
     "ticketPanelMessage": "afwerterg",
     "whitelistPanelMessage": "egkns"
+  },
+  "1493285756855128254": {
+    "language": "de",
+    "botIntroCategoryId": "1493286441843953836",
+    "botIntroChannelId": "1493286442972090518"
   }
 }

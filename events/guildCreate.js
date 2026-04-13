@@ -191,20 +191,7 @@ export default {
             'Lasse über das Dropdown Menü den Bot alles automatisch einrichten.',
             'Wähle dazu **Step BOT Schnell Einrichtung** aus.',
             '',
-            '⏳ Die Einrichtung kann bis zu **1 Minute** dauern.',
-            '',
-            '━━━━━━━━━━━━━━━━━━━━━━',
-            '🔑 **DayZ Server verbinden**',
-            '',
-            'Nutze danach nur diesen Command:',
-            '`/killfeed-setup token:DEIN_TOKEN`',
-            '',
-            '👉 Damit wird automatisch aktiviert:',
-            '• 💀 Killfeed',
-            '• 📡 Server Activity',
-            '• 🧟 Server Status',
-            '',
-            '❗ Es ist kein weiterer Setup-Befehl nötig'
+            '⏳ Die Einrichtung kann bis zu **1 Minute** dauern.'
           ].join('\n')
         )
         .setColor(0x5865f2)

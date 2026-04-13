@@ -11,7 +11,7 @@ export function getHelpMenuOptions(language = 'de') {
       {
         label: 'Step BOT Quick Setup',
         value: 'quicksetup',
-        description: 'Create all systems and DayZ tools automatically'
+        description: 'Create all main systems automatically'
       },
       {
         label: 'Update BOT/TOOLS',
@@ -60,7 +60,7 @@ export function getHelpMenuOptions(language = 'de') {
     {
       label: 'Step BOT Schnell Einrichtung',
       value: 'quicksetup',
-      description: 'Erstellt alle Systeme inkl. DayZ Tools automatisch'
+      description: 'Erstellt alle Hauptsysteme automatisch'
     },
     {
       label: 'Aktualisieren BOT/TOOLS',
@@ -112,24 +112,15 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       quicksetup: {
         title: '⚡ Step BOT Schnell Einrichtung',
         description:
-          'Mit dieser Funktion richtet der Bot jetzt **alle Systeme inklusive DayZ Tools** automatisch ein.\n\n' +
+          'Mit dieser Funktion richtet der Bot die wichtigsten Hauptsysteme automatisch ein.\n\n' +
           '**Dabei werden eingerichtet:**\n' +
           '• Verification\n' +
           '• Welcome\n' +
           '• Ticket\n' +
           '• Whitelist\n' +
-          '• Validator\n' +
-          '• 🖥️ Server\n' +
-          '• 💀 Killfeed\n\n' +
-          'Danach musst du nur noch diesen Command nutzen:\n' +
-          '`/killfeed-setup token:DEIN_TOKEN`\n\n' +
-          '👉 Damit werden automatisch aktiviert:\n' +
-          '• 💀 Killfeed\n' +
-          '• 📡 Server Activity\n' +
-          '• 🧟 Server Status\n\n' +
+          '• Validator\n\n' +
           '⏳ Die komplette Einrichtung kann bis zu **1 Minute** dauern.'
       },
-
       update_tools: {
         title: '🆕 Aktualisieren BOT / TOOLS',
         description:
@@ -141,7 +132,6 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
           'Wenn es keine neuen Tools gibt, bekommst du die Meldung:\n' +
           '**„✅ Du hast das neueste Update.“**'
       },
-
       setup: {
         title: '⚙️ Setup',
         description:
@@ -184,21 +174,13 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
       quicksetup: {
         title: '⚡ Step BOT Quick Setup',
         description:
-          'This function now automatically creates **all systems including DayZ tools**.\n\n' +
+          'This function automatically creates the main systems.\n\n' +
           '**It sets up:**\n' +
           '• Verification\n' +
           '• Welcome\n' +
           '• Ticket\n' +
           '• Whitelist\n' +
-          '• Validator\n' +
-          '• 🖥️ Server\n' +
-          '• 💀 Killfeed\n\n' +
-          'After that, you only need this command:\n' +
-          '`/killfeed-setup token:YOUR_TOKEN`\n\n' +
-          '👉 This automatically activates:\n' +
-          '• 💀 Killfeed\n' +
-          '• 📡 Server Activity\n' +
-          '• 🧟 Server Status\n\n' +
+          '• Validator\n\n' +
           '⏳ The full setup can take up to **1 minute**.'
       },
       update_tools: {

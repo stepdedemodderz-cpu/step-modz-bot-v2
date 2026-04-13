@@ -31,14 +31,6 @@ function buildCloseRow() {
   );
 }
 
-function updateResultText(createdList = []) {
-  if (!Array.isArray(createdList) || createdList.length === 0) {
-    return '• Keine zusätzlichen Tools neu erstellt';
-  }
-
-  return createdList.map((item) => `• ${item}`).join('\n');
-}
-
 export default {
   name: Events.InteractionCreate,
   once: false,
@@ -352,25 +344,18 @@ export default {
                   : 'Der Bot hat die wichtigsten Kategorien automatisch für dich eingerichtet.'
               )
               .addFields(
-  {
-    name: 'Erstellte Kategorien',
-    value: [
-      `• ${result.verificationCategory.name}`,
-      `• ${result.welcomeCategory.name}`,
-      `• ${result.ticketCategory.name}`,
-      `• ${result.whitelistCategory.name}`,
-      `• ${result.validatorCategory.name}`,
-      '• 🖥️ Server',
-      '• 💀 Killfeed'
-    ].join('\n'),
-    inline: false
-  },
-  {
-    name: 'Zusätzliche DayZ Tools',
-    value: updateResultText(result.createdList),
-    inline: false
-  }
-)
+                {
+                  name: 'Erstellte Kategorien',
+                  value: [
+                    `• ${result.verificationCategory.name}`,
+                    `• ${result.welcomeCategory.name}`,
+                    `• ${result.ticketCategory.name}`,
+                    `• ${result.whitelistCategory.name}`,
+                    `• ${result.validatorCategory.name}`
+                  ].join('\n'),
+                  inline: false
+                }
+              )
               .setColor(0x22c55e)
               .setFooter({ text: 'Step Mod!Z BOT' })
               .setTimestamp();

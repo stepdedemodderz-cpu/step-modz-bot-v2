@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { Client, Collection, GatewayIntentBits, Partials } from 'discord.js';
 import { ensureGuildFile } from './utils/config.js';
-import { startKillfeed } from './utils/killfeed.js';
 
 dotenv.config();
 
@@ -49,8 +48,8 @@ const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
 
 for (const file of eventFiles) {
-  const filePath = path.join(eventsPath, file);
-  const eventModule = await import(`file://${filePath}`);
+  const filePath = path.join(__dirname, file);
+  const eventModule = await import(`file://${path.join(eventsPath, file)}`);
   const event = eventModule.default;
 
   if (!event?.name || !event?.execute) {
@@ -64,12 +63,5 @@ for (const file of eventFiles) {
     client.on(event.name, (...args) => event.execute(...args, client));
   }
 }
-
-client.once('clientReady', async () => {
-  console.log(`${client.user.tag} ist online.`);
-  console.log('Step Mod!Z BOT ist bereit.');
-  console.log('Killfeed gestartet');
-  startKillfeed(client);
-});
 
 client.login(process.env.DISCORD_TOKEN);

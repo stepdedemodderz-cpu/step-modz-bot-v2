@@ -47,6 +47,11 @@ function botBaseOverwrites(ownerId, botId, everyoneId) {
   ];
 }
 
+async function safeFetchChannel(guild, channelId) {
+  if (!channelId) return null;
+  return await guild.channels.fetch(channelId).catch(() => null);
+}
+
 async function removeAllBotMessages(channel, botUserId) {
   const messages = await channel.messages.fetch({ limit: 100 }).catch(() => null);
   if (!messages) return;
@@ -78,8 +83,9 @@ export default {
       const everyoneId = guild.roles.everyone.id;
       const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
+      // Kategorie sicher laden
       let category =
-        (config.botIntroCategoryId && guild.channels.cache.get(config.botIntroCategoryId)) ||
+        (await safeFetchChannel(guild, config.botIntroCategoryId)) ||
         guild.channels.cache.find(
           (c) => c.type === ChannelType.GuildCategory && c.name === BOT_CATEGORY_NAME
         ) ||
@@ -95,6 +101,7 @@ export default {
         await category.permissionOverwrites.set(overwrites).catch(() => null);
       }
 
+      // Doppelte Kategorien bereinigen
       const duplicateCategories = guild.channels.cache.filter(
         (c) =>
           c.type === ChannelType.GuildCategory &&
@@ -110,8 +117,9 @@ export default {
         await duplicate.delete().catch(() => null);
       }
 
+      // Kanal sicher laden
       let channel =
-        (config.botIntroChannelId && guild.channels.cache.get(config.botIntroChannelId)) ||
+        (await safeFetchChannel(guild, config.botIntroChannelId)) ||
         guild.channels.cache.find(
           (c) => c.type === ChannelType.GuildText && c.name === BOT_CHANNEL_NAME
         ) ||
@@ -131,6 +139,7 @@ export default {
         await channel.permissionOverwrites.set(overwrites).catch(() => null);
       }
 
+      // Doppelte Kanäle bereinigen
       const duplicateChannels = guild.channels.cache.filter(
         (c) =>
           c.type === ChannelType.GuildText &&
@@ -140,6 +149,26 @@ export default {
 
       for (const [, duplicate] of duplicateChannels) {
         await duplicate.delete().catch(() => null);
+      }
+
+      // Kanal nach dem Cleanup nochmal frisch holen
+      channel =
+        (await safeFetchChannel(guild, channel.id)) ||
+        guild.channels.cache.find(
+          (c) =>
+            c.type === ChannelType.GuildText &&
+            c.name === BOT_CHANNEL_NAME &&
+            c.parentId === category.id
+        ) ||
+        null;
+
+      if (!channel) {
+        channel = await guild.channels.create({
+          name: BOT_CHANNEL_NAME,
+          type: ChannelType.GuildText,
+          parent: category.id,
+          permissionOverwrites: overwrites
+        });
       }
 
       setGuildConfig(guild.id, {

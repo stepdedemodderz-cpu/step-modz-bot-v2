@@ -174,24 +174,40 @@ export default {
       });
 
       const embed = new EmbedBuilder()
-        .setTitle('Step Mod!Z BOT')
+        .setTitle('🤖 Step Mod!Z BOT')
         .setDescription(
           [
-            'Ich bin **Step Mod!Z BOT** 👋',
+            'Willkommen 👋',
             '',
-            'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
+            'Ich bin **Step Mod!Z BOT** und helfe dir bei der Einrichtung deiner wichtigsten Discord-Systeme.',
             '',
-            'Wähle eine Kategorie aus dem Dropdown-Menü,',
-            'um meine Befehlsliste anzuzeigen.',
-            'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '📘 **Was du hier machen kannst**',
+            '',
+            '• Klicke auf **Info**, um eine Übersicht zu bekommen',
+            '• Nutze das **Dropdown-Menü**, um Hilfe zu einzelnen Bereichen zu sehen',
+            '• Starte über **Step BOT Schnell Einrichtung** die automatische Einrichtung',
             '',
             '━━━━━━━━━━━━━━━━━━━━━━',
             '⚡ **Schnell Einrichtung**',
             '',
-            'Lasse über das Dropdown Menü den Bot alles automatisch einrichten.',
-            'Wähle dazu **Step BOT Schnell Einrichtung** aus.',
+            'Mit **Step BOT Schnell Einrichtung** erstellt der Bot automatisch die wichtigsten Hauptsysteme für deinen Server.',
             '',
-            '⏳ Die Einrichtung kann bis zu **1 Minute** dauern.'
+            '⏳ Die Einrichtung kann bis zu **1 Minute** dauern.',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '✅ **Enthaltene Systeme**',
+            '',
+            '• Verification',
+            '• Welcome',
+            '• Ticket',
+            '• Whitelist',
+            '• Validator',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '🛠️ **Tipp**',
+            '',
+            'Wähle unten einfach den Bereich aus, bei dem du Hilfe brauchst.'
           ].join('\n')
         )
         .setColor(0x5865f2)

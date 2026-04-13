@@ -14,11 +14,6 @@ export function getHelpMenuOptions(language = 'de') {
         description: 'Create all main systems automatically'
       },
       {
-        label: 'Update BOT/TOOLS',
-        value: 'update_tools',
-        description: 'Install new tools only'
-      },
-      {
         label: 'Setup',
         value: 'setup',
         description: 'How manual setup works'
@@ -61,11 +56,6 @@ export function getHelpMenuOptions(language = 'de') {
       label: 'Step BOT Schnell Einrichtung',
       value: 'quicksetup',
       description: 'Erstellt alle Hauptsysteme automatisch'
-    },
-    {
-      label: 'Aktualisieren BOT/TOOLS',
-      value: 'update_tools',
-      description: '🆕 Neue Tools übernehmen'
     },
     {
       label: 'Setup',
@@ -121,17 +111,6 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
           '• Validator\n\n' +
           '⏳ Die komplette Einrichtung kann bis zu **1 Minute** dauern.'
       },
-      update_tools: {
-        title: '🆕 Aktualisieren BOT / TOOLS',
-        description:
-          '🆕 **Neue Tools übernehmen**\n\n' +
-          'Mit dieser Funktion installiert der Bot nur wirklich neue Tools,\n' +
-          'die durch spätere Updates neu hinzugekommen sind.\n\n' +
-          'Gebe den Befehl `/update-server` ein,\n' +
-          'um den Bot zu aktualisieren und neue Tools hinzuzufügen.\n\n' +
-          'Wenn es keine neuen Tools gibt, bekommst du die Meldung:\n' +
-          '**„✅ Du hast das neueste Update.“**'
-      },
       setup: {
         title: '⚙️ Setup',
         description:
@@ -182,15 +161,6 @@ export function buildHelpEmbed(language = 'de', topic = 'setup') {
           '• Whitelist\n' +
           '• Validator\n\n' +
           '⏳ The full setup can take up to **1 minute**.'
-      },
-      update_tools: {
-        title: '🆕 Update BOT / TOOLS',
-        description:
-          '🆕 **Install new tools**\n\n' +
-          'This function installs only real new tools added by later updates.\n\n' +
-          'Use the command `/update-server` to update the bot and install new tools.\n\n' +
-          'If there are no new tools, you will get:\n' +
-          '**“✅ You already have the latest update.”**'
       },
       setup: {
         title: '⚙️ Setup',

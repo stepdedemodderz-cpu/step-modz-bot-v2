@@ -134,5 +134,13 @@
     "language": "de",
     "botIntroCategoryId": "1493230896000532584",
     "botIntroChannelId": "1493230897627922492"
+  },
+  "1493275757743570985": {
+    "language": "de",
+    "botIntroCategoryId": "1493275973062361190",
+    "botIntroChannelId": "1493275974140301483",
+    "welcomeMessage": "aswefrgh",
+    "ticketPanelMessage": "afwerterg",
+    "whitelistPanelMessage": "egkns"
   }
 }

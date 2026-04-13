@@ -57,13 +57,15 @@ function parseKillLine(line) {
 }
 
 function parseConnection(line) {
-  if (/connected/i.test(line)) {
-    const match = line.match(/"(.+?)"/);
+  // JOIN aus echten ADM Logs
+  if (/is connected/i.test(line)) {
+    const match = line.match(/Player "(.+?)"/);
     if (match) return { type: 'join', player: match[1] };
   }
 
-  if (/disconnected/i.test(line)) {
-    const match = line.match(/"(.+?)"/);
+  // LEAVE aus echten ADM Logs
+  if (/has been disconnected/i.test(line)) {
+    const match = line.match(/Player "(.+?)"/);
     if (match) return { type: 'leave', player: match[1] };
   }
 
@@ -92,6 +94,9 @@ function buildKillEmbed(kill) {
         inline: true
       }
     ],
+    footer: {
+      text: 'Step Mod!Z BOT • Killfeed'
+    },
     timestamp: new Date().toISOString()
   };
 }

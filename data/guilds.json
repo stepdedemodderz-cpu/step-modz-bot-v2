@@ -109,7 +109,20 @@
   },
   "1493041016389898240": {
     "language": "de",
-    "botIntroCategoryId": "1493041371056046170",
-    "botIntroChannelId": "1493041372087718008"
+    "botIntroCategoryId": "1493044925212790905",
+    "botIntroChannelId": "1493044925892133056"
+  },
+  "1493045495730405496": {
+    "language": "de",
+    "botIntroCategoryId": "1493045529116938372",
+    "botIntroChannelId": "1493045531142787102",
+    "verifyRoleId": null,
+    "unverifiedRoleId": null,
+    "welcomeChannelId": null,
+    "ticketCategoryId": null,
+    "ticketSupportRoleId": null,
+    "whitelistCategoryId": null,
+    "whitelistReviewRoleId": "1493045495730405496",
+    "whitelistApprovedRoleId": null
   }
 }

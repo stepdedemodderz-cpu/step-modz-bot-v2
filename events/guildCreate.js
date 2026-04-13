@@ -14,7 +14,7 @@ import { getHelpMenuOptions } from '../utils/helpMenu.js';
 const BOT_CATEGORY_NAME = 'Step Mod!Z BOT';
 const BOT_CHANNEL_NAME = 'step-modz-bot';
 const LOGO_URL =
-    'https://cdn.discordapp.com/attachments/1493286442972090518/1493286862695956702/25882009-b8b1-4350-bdaa-9652c0bfead3.png';
+  'https://cdn.discordapp.com/attachments/1493286442972090518/1493286862695956702/25882009-b8b1-4350-bdaa-9652c0bfead3.png';
 
 function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
@@ -52,7 +52,6 @@ async function removeAllBotMessages(channel, botUserId) {
   if (!messages) return;
 
   const botMessages = messages.filter((m) => m.author.id === botUserId);
-
   for (const [, msg] of botMessages) {
     await msg.delete().catch(() => null);
   }
@@ -215,7 +214,6 @@ export default {
           .addOptions(getHelpMenuOptions(language))
       );
 
-      // Alles Alte weg, damit garantiert nur 1 Intro bleibt
       await removeAllBotMessages(channel, botId);
 
       await channel.send({

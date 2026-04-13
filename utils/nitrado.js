@@ -24,11 +24,21 @@ export async function getServices(token) {
 export async function getFirstDayZService(token) {
   const services = await getServices(token);
 
+  console.log(`[NITRADO] Services gefunden: ${services.length}`);
+
   const dayzService =
     services.find((s) => s?.details?.folder_short === 'dayzstandalone') ||
     services.find((s) => s?.details?.folder_short === 'dayz') ||
     services.find((s) => String(s?.details?.game || '').toLowerCase().includes('dayz')) ||
     null;
+
+  if (dayzService) {
+    console.log(
+      `[NITRADO] DayZ Service erkannt: id=${dayzService.id} game=${dayzService?.details?.game || 'unknown'} folder_short=${dayzService?.details?.folder_short || 'unknown'}`
+    );
+  } else {
+    console.log('[NITRADO] Kein DayZ Service erkannt');
+  }
 
   return dayzService;
 }
@@ -68,7 +78,13 @@ export async function downloadFileText(token, serviceId, filePath) {
 async function walkDir(token, serviceId, dir, depth = 0, maxDepth = 12) {
   if (depth > maxDepth) return [];
 
-  const entries = await getFileServerList(token, serviceId, dir).catch(() => []);
+  const entries = await getFileServerList(token, serviceId, dir).catch((err) => {
+    console.log(`[NITRADO] list fehlgeschlagen: dir=${dir} -> ${err.message}`);
+    return [];
+  });
+
+  console.log(`[NITRADO] dir=${dir} depth=${depth} entries=${entries.length}`);
+
   const files = [];
 
   for (const entry of entries) {
@@ -101,8 +117,10 @@ function isAdmFile(file) {
 }
 
 export async function findAdmLogFile(token, serviceId) {
-  // Erst gezielte typische Ordner versuchen
+  console.log(`[NITRADO] ADM Suche gestartet für serviceId=${serviceId}`);
+
   const preferredDirs = [
+    '/',
     '/games',
     '/games/servers',
     '/games/servers/dayzxb',
@@ -110,8 +128,7 @@ export async function findAdmLogFile(token, serviceId) {
     '/games/servers/dayzstandalone',
     '/profiles',
     '/profiles/default',
-    '/logs',
-    '/'
+    '/logs'
   ];
 
   let files = [];
@@ -121,12 +138,11 @@ export async function findAdmLogFile(token, serviceId) {
     files.push(...partial);
   }
 
-  // Fallback: kompletter tiefer Suchlauf
   if (!files.length) {
+    console.log('[NITRADO] Bevorzugte Ordner leer, starte Tiefensuche ab /');
     files = await walkDir(token, serviceId, '/', 0, 12);
   }
 
-  // Duplikate raus
   const unique = [];
   const seen = new Set();
 
@@ -148,9 +164,15 @@ export async function findAdmLogFile(token, serviceId) {
     return admFiles[0];
   }
 
+  const preview = unique.slice(0, 20).map((f) => f.path || f.name).join(' | ');
+
   console.log(
     `[NITRADO] Keine ADM Datei gefunden. Durchsuchte Dateien: ${unique.length}`
   );
+
+  if (preview) {
+    console.log(`[NITRADO] Dateivorschau: ${preview}`);
+  }
 
   return null;
 }

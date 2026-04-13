@@ -45,18 +45,40 @@ function botBaseOverwrites(ownerId, botId, everyoneId) {
   ];
 }
 
-async function findExistingIntroMessage(channel, botUserId) {
+async function removeOldBotIntroMessages(channel, botUserId) {
   const messages = await channel.messages.fetch({ limit: 50 }).catch(() => null);
   if (!messages) return null;
 
-  return (
-    messages.find(
-      (m) =>
-        m.author.id === botUserId &&
-        m.embeds.length > 0 &&
-        m.embeds[0]?.title === 'Step Mod!Z BOT'
-    ) || null
+  const introMessages = messages.filter((m) => {
+    if (m.author.id !== botUserId) return false;
+
+    const embed = m.embeds?.[0];
+    const title = embed?.title || '';
+    const description = embed?.description || '';
+
+    return (
+      title === 'Step Mod!Z BOT' ||
+      description.includes('Ich bin **Step Mod!Z BOT**') ||
+      description.includes('Ich bin **Step Mod!Z BOT** 👋') ||
+      description.includes('Klicke auf **Info**') ||
+      description.includes('Step BOT Schnell Einrichtung')
+    );
+  });
+
+  let newestMessage = null;
+  const sorted = [...introMessages.values()].sort(
+    (a, b) => b.createdTimestamp - a.createdTimestamp
   );
+
+  if (sorted.length > 0) {
+    newestMessage = sorted[0];
+  }
+
+  for (let i = 1; i < sorted.length; i++) {
+    await sorted[i].delete().catch(() => null);
+  }
+
+  return newestMessage;
 }
 
 export default {
@@ -154,37 +176,37 @@ export default {
       const embed = new EmbedBuilder()
         .setTitle('Step Mod!Z BOT')
         .setDescription(
-  [
-    'Ich bin **Step Mod!Z BOT** 👋',
-    '',
-    'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
-    '',
-    'Wähle eine Kategorie aus dem Dropdown-Menü,',
-    'um meine Befehlsliste anzuzeigen.',
-    'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '⚡ **Schnell Einrichtung**',
-    '',
-    'Lasse über das Dropdown Menü den Bot alles automatisch einrichten.',
-    'Wähle dazu **Step BOT Schnell Einrichtung** aus.',
-    '',
-    '⏳ Die Einrichtung kann bis zu **1 Minute** dauern.',
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━',
-    '🔑 **DayZ Server verbinden**',
-    '',
-    'Nutze danach nur diesen Command:',
-    '`/killfeed-setup token:DEIN_TOKEN`',
-    '',
-    '👉 Damit wird automatisch aktiviert:',
-    '• 💀 Killfeed',
-    '• 📡 Server Activity',
-    '• 🧟 Server Status',
-    '',
-    '❗ Es ist kein weiterer Setup-Befehl nötig'
-  ].join('\n')
-)
+          [
+            'Ich bin **Step Mod!Z BOT** 👋',
+            '',
+            'Klicke auf **Info** und bekomme eine Übersicht & Befehle der Einrichtung.',
+            '',
+            'Wähle eine Kategorie aus dem Dropdown-Menü,',
+            'um meine Befehlsliste anzuzeigen.',
+            'Klicke auf den entsprechenden Tab, je nachdem, wobei du Hilfe benötigst.',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '⚡ **Schnell Einrichtung**',
+            '',
+            'Lasse über das Dropdown Menü den Bot alles automatisch einrichten.',
+            'Wähle dazu **Step BOT Schnell Einrichtung** aus.',
+            '',
+            '⏳ Die Einrichtung kann bis zu **1 Minute** dauern.',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '🔑 **DayZ Server verbinden**',
+            '',
+            'Nutze danach nur diesen Command:',
+            '`/killfeed-setup token:DEIN_TOKEN`',
+            '',
+            '👉 Damit wird automatisch aktiviert:',
+            '• 💀 Killfeed',
+            '• 📡 Server Activity',
+            '• 🧟 Server Status',
+            '',
+            '❗ Es ist kein weiterer Setup-Befehl nötig'
+          ].join('\n')
+        )
         .setColor(0x5865f2)
         .setImage('https://cdn.discordapp.com/attachments/1485785120270061751/1486064187053441096/25882009-b8b1-4350-bdaa-9652c0bfead3.png')
         .setFooter({ text: t(language, 'checkedBy') })
@@ -212,10 +234,10 @@ export default {
           .addOptions(getHelpMenuOptions(language))
       );
 
-      const existingIntro = await findExistingIntroMessage(channel, botId);
+      const introMessage = await removeOldBotIntroMessages(channel, botId);
 
-      if (existingIntro) {
-        await existingIntro.edit({
+      if (introMessage) {
+        await introMessage.edit({
           embeds: [embed],
           components: [buttonRow, menuRow]
         }).catch(() => null);

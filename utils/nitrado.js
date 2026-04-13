@@ -65,7 +65,7 @@ export async function downloadFileText(token, serviceId, filePath) {
   return await res.text();
 }
 
-async function walkDir(token, serviceId, dir, depth = 0, maxDepth = 4) {
+async function walkDir(token, serviceId, dir, depth = 0, maxDepth = 12) {
   if (depth > maxDepth) return [];
 
   const entries = await getFileServerList(token, serviceId, dir).catch(() => []);
@@ -89,16 +89,68 @@ async function walkDir(token, serviceId, dir, depth = 0, maxDepth = 4) {
   return files;
 }
 
+function getTimestamp(file) {
+  return new Date(file.modified_at || file.modifiedAt || file.created_at || 0).getTime();
+}
+
+function isAdmFile(file) {
+  const path = String(file?.path || '');
+  const name = String(file?.name || '');
+
+  return /\.adm$/i.test(path) || /\.adm$/i.test(name);
+}
+
 export async function findAdmLogFile(token, serviceId) {
-  const files = await walkDir(token, serviceId, '/', 0, 5);
+  // Erst gezielte typische Ordner versuchen
+  const preferredDirs = [
+    '/games',
+    '/games/servers',
+    '/games/servers/dayzxb',
+    '/games/servers/dayzps',
+    '/games/servers/dayzstandalone',
+    '/profiles',
+    '/profiles/default',
+    '/logs',
+    '/'
+  ];
 
-  const admFiles = files
-    .filter((f) => /\.adm$/i.test(f.path || f.name || ''))
-    .sort((a, b) => {
-      const aTime = new Date(a.modified_at || a.modifiedAt || 0).getTime();
-      const bTime = new Date(b.modified_at || b.modifiedAt || 0).getTime();
-      return bTime - aTime;
-    });
+  let files = [];
 
-  return admFiles[0] || null;
+  for (const dir of preferredDirs) {
+    const partial = await walkDir(token, serviceId, dir, 0, 6).catch(() => []);
+    files.push(...partial);
+  }
+
+  // Fallback: kompletter tiefer Suchlauf
+  if (!files.length) {
+    files = await walkDir(token, serviceId, '/', 0, 12);
+  }
+
+  // Duplikate raus
+  const unique = [];
+  const seen = new Set();
+
+  for (const file of files) {
+    const key = file.path || file.name;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(file);
+  }
+
+  const admFiles = unique
+    .filter(isAdmFile)
+    .sort((a, b) => getTimestamp(b) - getTimestamp(a));
+
+  if (admFiles.length > 0) {
+    console.log(
+      `[NITRADO] ADM gefunden: ${admFiles[0].path || admFiles[0].name} (${admFiles.length} Dateien)`
+    );
+    return admFiles[0];
+  }
+
+  console.log(
+    `[NITRADO] Keine ADM Datei gefunden. Durchsuchte Dateien: ${unique.length}`
+  );
+
+  return null;
 }

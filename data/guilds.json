@@ -124,5 +124,15 @@
     "whitelistCategoryId": null,
     "whitelistReviewRoleId": "1493045495730405496",
     "whitelistApprovedRoleId": null
+  },
+  "1493230555633029160": {
+    "language": "de",
+    "botIntroCategoryId": "1493230705914941613",
+    "botIntroChannelId": "1493230707739328654"
+  },
+  "1493230828837273621": {
+    "language": "de",
+    "botIntroCategoryId": "1493230896000532584",
+    "botIntroChannelId": "1493230897627922492"
   }
 }

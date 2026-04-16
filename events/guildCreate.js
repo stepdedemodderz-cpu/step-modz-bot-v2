@@ -5,7 +5,8 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder
+  StringSelectMenuBuilder,
+  AttachmentBuilder
 } from 'discord.js';
 import { getGuildConfig, setGuildConfig } from '../utils/config.js';
 import { t } from '../utils/i18n.js';
@@ -13,8 +14,6 @@ import { getHelpMenuOptions } from '../utils/helpMenu.js';
 
 const BOT_CATEGORY_NAME = 'Step Mod!Z BOT';
 const BOT_CHANNEL_NAME = 'step-modz-bot';
-const LOGO_URL =
-  'https://cdn.discordapp.com/attachments/1493286442972090518/1493286862695956702/25882009-b8b1-4350-bdaa-9652c0bfead3.png';
 
 function botBaseOverwrites(ownerId, botId, everyoneId) {
   return [
@@ -83,7 +82,6 @@ export default {
       const everyoneId = guild.roles.everyone.id;
       const overwrites = botBaseOverwrites(ownerId, botId, everyoneId);
 
-      // Kategorie sicher laden
       let category =
         (await safeFetchChannel(guild, config.botIntroCategoryId)) ||
         guild.channels.cache.find(
@@ -101,7 +99,6 @@ export default {
         await category.permissionOverwrites.set(overwrites).catch(() => null);
       }
 
-      // Doppelte Kategorien bereinigen
       const duplicateCategories = guild.channels.cache.filter(
         (c) =>
           c.type === ChannelType.GuildCategory &&
@@ -117,7 +114,6 @@ export default {
         await duplicate.delete().catch(() => null);
       }
 
-      // Kanal sicher laden
       let channel =
         (await safeFetchChannel(guild, config.botIntroChannelId)) ||
         guild.channels.cache.find(
@@ -139,7 +135,6 @@ export default {
         await channel.permissionOverwrites.set(overwrites).catch(() => null);
       }
 
-      // Doppelte Kanäle bereinigen
       const duplicateChannels = guild.channels.cache.filter(
         (c) =>
           c.type === ChannelType.GuildText &&
@@ -151,7 +146,6 @@ export default {
         await duplicate.delete().catch(() => null);
       }
 
-      // Kanal nach dem Cleanup nochmal frisch holen
       channel =
         (await safeFetchChannel(guild, channel.id)) ||
         guild.channels.cache.find(
@@ -176,6 +170,10 @@ export default {
         language,
         botIntroCategoryId: category.id,
         botIntroChannelId: channel.id
+      });
+
+      const attachment = new AttachmentBuilder('./assets/logo.png', {
+        name: 'logo.png'
       });
 
       const embed = new EmbedBuilder()
@@ -216,8 +214,8 @@ export default {
           ].join('\n')
         )
         .setColor(0x5865f2)
-        .setThumbnail(LOGO_URL)
-        .setImage(LOGO_URL)
+        .setThumbnail('attachment://logo.png')
+        .setImage('attachment://logo.png')
         .setFooter({ text: t(language, 'checkedBy') })
         .setTimestamp();
 
@@ -247,7 +245,8 @@ export default {
 
       await channel.send({
         embeds: [embed],
-        components: [buttonRow, menuRow]
+        components: [buttonRow, menuRow],
+        files: [attachment]
       });
     } catch (err) {
       console.error('guildCreate Fehler:', err);
